@@ -7,4 +7,4 @@ clean:
 	rm -rf _build
 
 cleanest: clean
-	rm -f min-ml
+	rm -f mincamlc
