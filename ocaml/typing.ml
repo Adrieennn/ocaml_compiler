@@ -93,7 +93,10 @@ let rec gen_equations env exp expected_type =
 
       (* XXX check folds (here and below) *)
       let fun_body_env =
+        (* Add function arguments to environment of function body *)
         List.fold_right TypingEnvironment.add (List.rev fun_args) env
+        (* Add function name to environment of function body for recursive calls *)
+        |> TypingEnvironment.add fun_name
       in
       let fun_body_typ = Type.Var (ref None) in
       let fun_body_eqs = gen_equations fun_body_env fun_body fun_body_typ in
