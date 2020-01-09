@@ -1,5 +1,5 @@
 let print_ast l =
-  print_string (Asml.to_string (Parser.exp Lexer.token l)); print_newline ()
+  print_string (Asml.to_string_f (Parser.fundef Lexer.token l)); print_newline ()
 
 let file f = 
   let inchan = open_in f in

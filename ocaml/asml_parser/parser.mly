@@ -52,8 +52,8 @@ let addtyp x = (x, Type.gentyp ())
 %type <Asml.exp> exp
 %type <Asml.t> asmt
 %type <Asml.id_or_imm> ident_or_imm
-%start exp
-%start asmt
+%type <Asml.fundef> fundef
+%start fundef
 
 %%
 
@@ -115,7 +115,7 @@ exp: /* expressions */
 | IF IDENT FLE ident_or_imm THEN asmt ELSE asmt
     %prec prec_if
     { IfFLEq($2, $4, $6, $8) }
-| CALL  LABEL formal_args
+| CALL LABEL formal_args
     %prec prec_app
     { CallDir($2, $3) }
 | error
@@ -134,24 +134,13 @@ asmt:
     { Ans($1) }
 
 fundef:
-/*| IDENT formal_args EQUAL exp
-    { {
-      name = $1;
-      args = $2;
-      body = $4
-    } }
-*/
 | LET UNDERSC EQUAL asmt
-    { {
-      name = "_";
-      args = [" "];
-      body = $4
-    } }
+    { Main($4) }
 | LET LABEL EQUAL FLOAT fundef
     %prec prec_let
-    { {name = "_"; args = [" "]; body = Ans(Unit) } }
-/*| LET LABEL formal_args EQUAL asmt fundef
-    { LetRec({name = $2; args = $3; body = $5}, $6) }*/
+    { Fl($2, $4, $5) }
+| LET LABEL formal_args EQUAL asmt fundef
+    { Fu({name = $2; args = $3; body = $5}, $6) }
 
 formal_args:
 | IDENT formal_args

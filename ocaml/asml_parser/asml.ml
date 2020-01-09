@@ -29,11 +29,15 @@ and exp =
   | CallCls of Id.t * Id.t list
   | CallDir of Id.t * Id.t list
 
+type fu =
+        { name: Id.t;
+          args: Id.t list;
+          body: t
+        }
 type fundef =
-  { name: Id.t;
-    args: Id.t list;
-    body: t
-  }
+  | Fu of fu * fundef
+  | Fl of Id.t * float * fundef
+  | Main of t
 
 type prog =
   Program of (Id.t * float) list *
@@ -132,6 +136,24 @@ let rec to_string exp =
 
 and to_string_t t =
   match t with
-  | Ans e -> to_string e
+  | Ans e -> sprintf "hi %s" (to_string e)
   | Let ((id,t), e1, e2) ->
-    sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1) (to_string_t e2)  
+    sprintf "(letting %s = %s in %s)" (Id.to_string id) (to_string e1) (to_string_t e2)
+
+(*let rec to_string_f fd =
+  match fd with
+  | Main t -> to_string_t t
+  | Fl (l, f, fd2) ->
+      sprintf "(let %s = %s) %s" (Id.to_string l) (string_of_float f) (to_string_f fd2)
+  | Fu (fn, fd2) ->
+      sprintf "(let %s %s = %s in %s)" 
+      (let x = fn.name in (Id.to_string x))
+      (infix_to_string (fun (x) -> (Id.to_string x)) fn.args " ")
+      (to_string_t fn.body)
+      (to_string_f fd2)
+*)
+let rec to_string_f fd =
+  match fd with
+  | Main t -> "main"
+  | Fl (l, f, fd2) -> "float"
+  | Fu (fn, fd2) -> "function"
