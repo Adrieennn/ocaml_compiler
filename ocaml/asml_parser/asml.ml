@@ -136,9 +136,9 @@ let rec to_string exp =
 
 and to_string_t t =
   match t with
-  | Ans e -> sprintf "hi %s" (to_string e)
+  | Ans e -> to_string e
   | Let ((id,t), e1, e2) ->
-    sprintf "(letting %s = %s in %s)" (Id.to_string id) (to_string e1) (to_string_t e2)
+    sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1) (to_string_t e2)
 
 (*let rec to_string_f fd =
   match fd with
@@ -154,6 +154,6 @@ and to_string_t t =
 *)
 let rec to_string_f fd =
   match fd with
-  | Main t -> "main"
+  | Main t -> sprintf "let _ = %s" (to_string_t t)
   | Fl (l, f, fd2) -> "float"
   | Fu (fn, fd2) -> "function"

@@ -141,6 +141,11 @@ fundef:
     { Fl($2, $4, $5) }
 | LET LABEL formal_args EQUAL asmt fundef
     { Fu({name = $2; args = $3; body = $5}, $6) }
+| error
+    { failwith
+	(Printf.sprintf "parse error near characters %d-%d"
+	   (Parsing.symbol_start ())
+	   (Parsing.symbol_end ())) }
 
 formal_args:
 | IDENT formal_args
