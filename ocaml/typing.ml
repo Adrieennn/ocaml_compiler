@@ -152,3 +152,62 @@ let rec gen_equations env exp expected_type =
       let element_type = Type.Var (ref None) in
       let eqs2 = gen_equations env e2 element_type in
       ((Type.Array element_type, expected_type) :: eqs1) @ eqs2
+
+let rec unify equations =
+  match equations with
+  | [] -> ()
+  | hd :: tl -> (
+      match hd with
+      (* | (t1, t2) when t1 = t2 -> () (* Equation is actually equal *) *)
+      | Type.Unit, Type.Unit
+      | Type.Bool, Type.Bool
+      | Type.Int, Type.Int
+      | Type.Float, Type.Float ->
+          unify tl
+      | Type.Fun (args1, ret1), Type.Fun (args2, ret2) ->
+          let args1_len = List.length args1 in
+          let args2_len = List.length args2 in
+          if args1_len = args2_len then
+            let arg_equations =
+              List.map2 (fun typ1 typ2 -> (typ1, typ2)) args1 args2
+            in
+            let ret_equation = (ret1, ret2) in
+            unify ((ret_equation :: arg_equations) @ tl)
+          else failwith "Functions have different numbers of arguments."
+      | Type.Tuple elts1, Type.Tuple elts2 ->
+          let len1 = List.length elts1 in
+          let len2 = List.length elts2 in
+          if len1 = len2 then
+            let match_tuple_types =
+              List.map2 (fun typ1 typ2 -> (typ1, typ2)) elts1 elts2
+            in
+            unify (match_tuple_types @ tl)
+          else failwith "Tuple lengths do not match."
+      | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
+      | Type.Var v1, Type.Var v2 -> (
+          match (!v1, !v2) with
+          | None, None -> unify tl
+          | Some t, None ->
+              (* XXX What if t is again Type.Var *)
+              v2 := Some t;
+              unify tl
+          | None, Some t ->
+              v1 := Some t;
+              unify tl
+          | Some t1, Some t2 -> unify ((t1, t2) :: tl) )
+      | Type.Var v, t -> (
+          match !v with
+          | None ->
+              v := Some t;
+              unify tl
+          | Some tv -> unify ((tv, t) :: tl) )
+      | t, Type.Var v -> (
+          match !v with
+          | None ->
+              v := Some t;
+              unify tl
+          | Some tv -> unify ((tv, t) :: tl) )
+      | t1, t2 ->
+          Printf.eprintf "Unification of %s and %s is impossible"
+            (Type.to_string t1) (Type.to_string t2);
+          exit 0 )
