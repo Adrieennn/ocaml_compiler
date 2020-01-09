@@ -17,6 +17,10 @@ rule token = parse
     { LPAREN }
 | ')'
     { RPAREN }
+| digit+ 
+    { INT(int_of_string (Lexing.lexeme lexbuf)) }
+| digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?
+    { FLOAT(float_of_string (Lexing.lexeme lexbuf)) }
 | '+'
     { PLUS }
 | '='
@@ -71,11 +75,7 @@ rule token = parse
     { APPCLO }
 | '_'
     { UNDERSC }
-| digit+ 
-    { INT(int_of_string (Lexing.lexeme lexbuf)) }
-| digit+ ('.' digit*)? (['e' 'E'] ['+' '-']? digit+)?
-    { FLOAT(float_of_string (Lexing.lexeme lexbuf)) }
-| '_' lower (lower|upper|'_')*
+| '_' lower (digit|lower|upper|'_')*
     { LABEL(Lexing.lexeme lexbuf) }
 | lower (digit|lower|upper|'_')*
     { IDENT(Lexing.lexeme lexbuf) }

@@ -137,7 +137,6 @@ fundef:
 | LET UNDERSC EQUAL asmt
     { Main($4) }
 | LET LABEL EQUAL FLOAT fundef
-    %prec prec_let
     { Fl($2, $4, $5) }
 | LET LABEL formal_args EQUAL asmt fundef
     { Fu({name = $2; args = $3; body = $5}, $6) }
