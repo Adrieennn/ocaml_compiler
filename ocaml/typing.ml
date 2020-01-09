@@ -2,7 +2,9 @@ module TypingEnvironment : sig
   type t
 
   val default : unit -> t
+
   val add : Id.t * Type.t -> t -> t
+
   val find_opt : Id.t -> t -> Type.t option
 end = struct
   type t = (Id.t * Type.t) list
@@ -14,15 +16,14 @@ end = struct
   let find_opt x env = List.assoc_opt x env
 
   let default () =
-    empty ()
-    |> add ("print_int", Type.Fun ([Type.Int], Type.Unit))
+    empty () |> add ("print_int", Type.Fun ([ Type.Int ], Type.Unit))
 end
 
 module TypingEquation = struct
   type t = Type.t * Type.t
 
   let to_string eqn =
-    let (t1, t2) = eqn in
+    let t1, t2 = eqn in
     Printf.sprintf "(%s, %s)" (Type.to_string t1) (Type.to_string t2)
 end
 
