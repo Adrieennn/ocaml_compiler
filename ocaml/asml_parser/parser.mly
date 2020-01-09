@@ -33,6 +33,7 @@ let addtyp x = (x, Type.gentyp ())
 %token ADD
 %token SUB
 %token CALL 
+%token CALLCLO
 %token NEW
 %token NOP
 %token APPCLO
@@ -118,6 +119,10 @@ exp: /* expressions */
 | CALL LABEL formal_args
     %prec prec_app
     { CallDir($2, $3) }
+| CALLCLO IDENT formal_args
+    { CallCls($2, $3) }
+| NEW INT
+    { New($2) }
 | error
     { failwith
 	(Printf.sprintf "parse error near characters %d-%d"
@@ -140,11 +145,6 @@ fundef:
     { Fl($2, $4, $5) }
 | LET LABEL formal_args EQUAL asmt fundef
     { Fu({name = $2; args = $3; body = $5}, $6) }
-| error
-    { failwith
-	(Printf.sprintf "parse error near characters %d-%d"
-	   (Parsing.symbol_start ())
-	   (Parsing.symbol_end ())) }
 
 formal_args:
 | IDENT formal_args

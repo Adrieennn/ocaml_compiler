@@ -71,6 +71,8 @@ rule token = parse
     { NEW }
 | "nop"
     { NOP }
+| "call_closure"
+    { CALLCLO }
 | "apply_closure"
     { APPCLO }
 | '_'
@@ -78,6 +80,8 @@ rule token = parse
 | '_' lower (digit|lower|upper|'_')*
     { LABEL(Lexing.lexeme lexbuf) }
 | lower (digit|lower|upper|'_')*
+    { IDENT(Lexing.lexeme lexbuf) }
+| "%self"
     { IDENT(Lexing.lexeme lexbuf) }
 | eof
     { EOF }

@@ -12,6 +12,7 @@ and exp =
   | Sub of Id.t * id_or_imm
   | Ld of Id.t * id_or_imm
   | St of Id.t * id_or_imm * Id.t
+  | New of int
   | Neg of Id.t
   | FNeg of Id.t
   | FAdd of Id.t * Id.t
