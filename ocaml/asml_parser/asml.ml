@@ -31,7 +31,23 @@ type fu = { name : Id.t; args : Id.t list; body : t }
 
 type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
-type prog = Program of (Id.t * float) list * fundef list * t
+type prog = Program of (Id.t * float) list * fu list * t
+
+let rec t_to_reg t var_reg =
+  match t with
+  | Ans e -> var_reg
+  | Let ((variable, _), exp, t2) -> t_to_reg t2 (var_reg @ [ (variable, "fp") ])
+
+let program_to_reg pg var_reg =
+  match pg with
+  | Program (lfu, lfl, t) -> (
+      (* match lfl with
+    | _ -> "float not implemented yet"
+    match lfu with
+    | _ -> "fun list not implemented yet" *)
+      match t with
+      | Let ((variable, _), exp, t2) -> t_to_reg t var_reg
+      | _ -> [] )
 
 let rec infix_to_string (to_s : 'a -> string) (l : 'a list) (op : string) :
     string =
