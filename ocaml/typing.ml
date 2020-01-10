@@ -227,7 +227,9 @@ let rec substitue_type_exn typ =
   | T.Array t -> T.Array (substitue_type_exn t)
   | T.Var v -> (
       match !v with
-      | None -> failwith "Type variable is still undefined"
+      | None ->
+          (* The paper suggests, arbitrarily, instantiating these variables to Type.Int *)
+          failwith "Type variable is still undefined"
       (* XXX What if t is itself Type.Var? *)
       | Some t -> t )
 
@@ -277,3 +279,11 @@ let rec type_ast ast =
   | S.Array (e1, e2) -> S.Array (type_ast e1, type_ast e2)
   | S.Get (e1, e2) -> S.Get (type_ast e1, type_ast e2)
   | S.Put (e1, e2, e3) -> S.Put (type_ast e1, type_ast e2, type_ast e3)
+
+let typed_ast ast =
+  let type_equations =
+    gen_equations (TypingEnvironment.default ()) ast Type.Unit
+  in
+  (* Mutates ast *)
+  unify type_equations;
+  type_ast ast
