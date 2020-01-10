@@ -124,3 +124,20 @@ let rec fd_to_prog fd prog =
       | Main t -> Program (lfl, lfu, t)
       | Fl (l, f, fd2) -> fd_to_prog fd2 (Program (lfl @ [ (l, f) ], lfu, body))
       | Fu (fn, fd2) -> fd_to_prog fd2 (Program (lfl, lfu @ [ fn ], body)) )
+
+
+
+let rec prog_fl_to_fd lfl_reversed fd =
+  match lfl_reversed with
+  | [] -> fd
+  | (label, flt) :: rest -> prog_fl_to_fd rest (Fl(label, flt, fd))
+
+let rec prog_fu_to_fd lfu_reversed lfl_reversed fd =
+  match lfu_reversed with
+  | [] -> prog_fl_to_fd lfl_reversed fd
+  | hd::rest -> prog_fu_to_fd rest lfl_reversed (Fu(hd, fd))
+
+let rec prog_to_fd prog =
+  match prog with
+  | Program (lfl, lfu, body) -> prog_fu_to_fd (List.rev lfu) (List.rev lfl) (Main (body))
+      

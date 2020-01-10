@@ -36,8 +36,9 @@ let () =
   let fundef_test = Parser.fundef Lexer.token (Lexing.from_channel chann) in
   let pg_test = fd_to_prog fundef_test empty_prog in
   let var_reg = Asml.program_to_reg pg_test [] in
-  List.iter (fun (s1, s2) -> Printf.printf "(%s, %s) " s1 s2) var_reg
-
-
+  let pg_from_fd_test = prog_to_fd pg_test in
+  List.iter (fun (s1, s2) -> Printf.printf "(%s, %s) " s1 s2) var_reg;
+  print_newline ();
+  print_string (Asml.to_string_f pg_from_fd_test)
 ;;
 print_newline ()
