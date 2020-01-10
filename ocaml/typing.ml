@@ -211,3 +211,69 @@ let rec unify equations =
           Printf.eprintf "Unification of %s and %s is impossible"
             (Type.to_string t1) (Type.to_string t2);
           exit 0 )
+
+let rec substitue_type_exn typ =
+  let module T = Type in
+  match typ with
+  | T.Unit -> T.Unit
+  | T.Bool -> T.Bool
+  | T.Int -> T.Int
+  | T.Float -> T.Float
+  | T.Fun (args, ret) ->
+      let new_ret = substitue_type_exn ret in
+      let new_args = List.map substitue_type_exn args in
+      T.Fun (new_args, new_ret)
+  | T.Tuple elements -> T.Tuple (List.map substitue_type_exn elements)
+  | T.Array t -> T.Array (substitue_type_exn t)
+  | T.Var v -> (
+      match !v with
+      | None -> failwith "Type variable is still undefined"
+      (* XXX What if t is itself Type.Var? *)
+      | Some t -> t )
+
+let rec type_ast ast =
+  let module S = Syntax in
+  match ast with
+  | S.Unit -> S.Unit
+  | S.Bool _ as b -> b
+  | S.Int _ as i -> i
+  | S.Float _ as f -> f
+  | S.Not e -> S.Not (type_ast e)
+  | S.Neg e -> S.Neg (type_ast e)
+  | S.Add (e1, e2) -> S.Add (type_ast e1, type_ast e2)
+  | S.Sub (e1, e2) -> S.Sub (type_ast e1, type_ast e2)
+  | S.FNeg e -> S.FNeg (type_ast e)
+  | S.FAdd (e1, e2) -> S.FAdd (type_ast e1, type_ast e2)
+  | S.FSub (e1, e2) -> S.FSub (type_ast e1, type_ast e2)
+  | S.FMul (e1, e2) -> S.FMul (type_ast e1, type_ast e2)
+  | S.FDiv (e1, e2) -> S.FDiv (type_ast e1, type_ast e2)
+  | S.Eq (e1, e2) -> S.Eq (type_ast e1, type_ast e2)
+  | S.LE (e1, e2) -> S.LE (type_ast e1, type_ast e2)
+  | S.If (e1, e2, e3) -> S.If (type_ast e1, type_ast e2, type_ast e3)
+  | S.Let ((id, typ), e1, e2) ->
+      S.Let ((id, substitue_type_exn typ), type_ast e1, type_ast e2)
+  | S.Var _ as v -> v
+  | S.LetRec (fd, e) ->
+      let { Syntax.name; args; body } = fd in
+      let new_args =
+        List.map (fun (id, t) -> (id, substitue_type_exn t)) args
+      in
+      let new_body = type_ast body in
+      let id, fun_typ = name in
+      S.LetRec
+        ( {
+            name = (id, substitue_type_exn fun_typ);
+            args = new_args;
+            body = new_body;
+          },
+          type_ast e )
+  | S.App (e1, es) -> S.App (type_ast e1, List.map type_ast es)
+  | S.Tuple es -> S.Tuple (List.map type_ast es)
+  | S.LetTuple (elements, definition, body) ->
+      let new_elements =
+        List.map (fun (id, t) -> (id, substitue_type_exn t)) elements
+      in
+      S.LetTuple (new_elements, type_ast definition, type_ast body)
+  | S.Array (e1, e2) -> S.Array (type_ast e1, type_ast e2)
+  | S.Get (e1, e2) -> S.Get (type_ast e1, type_ast e2)
+  | S.Put (e1, e2, e3) -> S.Put (type_ast e1, type_ast e2, type_ast e3)
