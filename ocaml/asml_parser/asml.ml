@@ -7,7 +7,7 @@ type t = Ans of exp | Let of (Id.t * Type.t) * exp * t
 and exp =
   | Var of Id.t
   | Int of int
-  | Unit (* TODO might not be needed *)
+  | Unit
   | Add of Id.t * id_or_imm
   | Sub of Id.t * id_or_imm
   | Ld of Id.t * id_or_imm
@@ -33,22 +33,6 @@ type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
 type prog = Program of (Id.t * float) list * fu list * t
 
-let rec t_to_reg t var_reg =
-  match t with
-  | Ans e -> var_reg
-  | Let ((variable, _), exp, t2) -> t_to_reg t2 (var_reg @ [ (variable, "fp") ])
-
-let program_to_reg pg var_reg =
-  match pg with
-  | Program (lfu, lfl, t) -> (
-      (* match lfl with
-    | _ -> "float not implemented yet"
-    match lfu with
-    | _ -> "fun list not implemented yet" *)
-      match t with
-      | Let ((variable, _), exp, t2) -> t_to_reg t var_reg
-      | _ -> [] )
-
 let rec infix_to_string (to_s : 'a -> string) (l : 'a list) (op : string) :
     string =
   match l with
@@ -59,6 +43,7 @@ let rec infix_to_string (to_s : 'a -> string) (l : 'a list) (op : string) :
 let rec to_string_id_or_imm (i : id_or_imm) =
   match i with Int i -> string_of_int i | Var id -> Id.to_string id
 
+(* to_string: returns a string out of an expresssion exp *)
 let rec to_string exp =
   match exp with
   | Unit -> "()"
@@ -97,6 +82,7 @@ let rec to_string exp =
         (Id.to_string e3)
   | _ -> "not implemented"
 
+(* to_string_t: match t to correct substring *)
 and to_string_t t =
   match t with
   | Ans e -> to_string e
@@ -104,6 +90,7 @@ and to_string_t t =
       sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1)
         (to_string_t e2)
 
+(* to_string_f: fundef to string *)
 let rec to_string_f fd =
   match fd with
   | Main t -> sprintf "let _ = %s" (to_string_t t)
@@ -117,6 +104,7 @@ let rec to_string_f fd =
         (infix_to_string (fun x -> Id.to_string x) fn.args " ")
         (to_string_t fn.body) (to_string_f fd2)
 
+(* fd_to_prog: changes a tree of fundef to a program *)
 let rec fd_to_prog fd prog =
   match prog with
   | Program (lfl, lfu, body) -> (
@@ -125,19 +113,18 @@ let rec fd_to_prog fd prog =
       | Fl (l, f, fd2) -> fd_to_prog fd2 (Program (lfl @ [ (l, f) ], lfu, body))
       | Fu (fn, fd2) -> fd_to_prog fd2 (Program (lfl, lfu @ [ fn ], body)) )
 
-
-
+(* The three following functions transform a program to fundef *)
 let rec prog_fl_to_fd lfl_reversed fd =
   match lfl_reversed with
   | [] -> fd
-  | (label, flt) :: rest -> prog_fl_to_fd rest (Fl(label, flt, fd))
+  | (label, flt) :: rest -> prog_fl_to_fd rest (Fl (label, flt, fd))
 
 let rec prog_fu_to_fd lfu_reversed lfl_reversed fd =
   match lfu_reversed with
   | [] -> prog_fl_to_fd lfl_reversed fd
-  | hd::rest -> prog_fu_to_fd rest lfl_reversed (Fu(hd, fd))
+  | hd :: rest -> prog_fu_to_fd rest lfl_reversed (Fu (hd, fd))
 
 let rec prog_to_fd prog =
   match prog with
-  | Program (lfl, lfu, body) -> prog_fu_to_fd (List.rev lfu) (List.rev lfl) (Main (body))
-      
+  | Program (lfl, lfu, body) ->
+      prog_fu_to_fd (List.rev lfu) (List.rev lfl) (Main body)
