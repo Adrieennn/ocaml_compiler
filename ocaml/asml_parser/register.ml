@@ -1,17 +1,19 @@
 open Asml
 
 let ref_counter x =
-  let counter = ref (x-4) in
+  let counter = ref (x - 4) in
   fun () ->
     counter := !counter + 4;
     !counter
 
-let rec t_to_reg t var_reg =
+let rec t_to_reg t var_reg count =
   match t with
   | Ans e -> var_reg
-  | Let ((variable, _), exp, t2) -> t_to_reg t2 (var_reg @ [ (variable, 3) ])
+  | Let ((variable, _), exp, t2) ->
+      t_to_reg t2 (var_reg @ [ (variable, (count())) ]) count
 
 let program_to_reg pg var_reg =
+  let count = ref_counter 0 in
   match pg with
   | Program (lfu, lfl, t) -> (
       (* match lfl with
@@ -19,6 +21,5 @@ let program_to_reg pg var_reg =
     match lfu with
     | _ -> "fun list not implemented yet" *)
       match t with
-      | Let ((variable, _), exp, t2) -> t_to_reg t var_reg
+      | Let ((variable, _), exp, t2) -> t_to_reg t var_reg count
       | _ -> [] )
-
