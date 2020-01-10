@@ -39,7 +39,8 @@ let () =
   let pg_from_fd_test = prog_to_fd pg_test in
   List.iter (fun (s1, s2) -> Printf.printf "(%s, %d) " s1 s2) var_reg;
   print_newline ();
-  print_string (Asml.to_string_f pg_from_fd_test)
+  print_string (Asml.to_string_f (prog_to_fd (Register.modify_program pg_test
+  var_reg)))
 ;
 print_newline ();
 let a = Register.ref_counter 0
