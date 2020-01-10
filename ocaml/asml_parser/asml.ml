@@ -116,3 +116,11 @@ let rec to_string_f fd =
          Id.to_string x)
         (infix_to_string (fun x -> Id.to_string x) fn.args " ")
         (to_string_t fn.body) (to_string_f fd2)
+
+let rec fd_to_prog fd prog =
+  match prog with Program (lfl, lfu, body) ->
+  match fd with
+  | Main t -> Program (lfl, lfu, t)
+  | Fl (l, f, fd2) -> fd_to_prog fd2 (Program(lfl @ [(l, f)], lfu, body))
+  | Fu (fn, fd2) -> fd_to_prog fd2 (Program(lfl, lfu @ [fn], body))
+
