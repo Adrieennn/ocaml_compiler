@@ -30,24 +30,21 @@ type fundef = { name : Id.t; args : Id.t list; body : t }
 
 type prog = Program of (Id.t * float) list * fundef list * t
 
-
 let rec t_to_reg t var_reg =
   match t with
-  | Ans e -> []
-  | Let ((variable, _), exp, t2) ->
-      t_to_reg t2 ((variable, "fp") :: var_reg )
+  | Ans e -> var_reg
+  | Let ((variable, _), exp, t2) -> t_to_reg t2 (var_reg @ [ (variable, "fp") ])
 
 let program_to_reg pg var_reg =
   match pg with
-  | Program ( lfu, lfl, t ) ->
-    (* match lfl with
+  | Program (lfu, lfl, t) -> (
+      (* match lfl with
     | _ -> "float not implemented yet"
     match lfu with
     | _ -> "fun list not implemented yet" *)
-    match t with
-    | Let ((variable, _), exp, t) -> t_to_reg t var_reg
-    | _ -> []
-
+      match t with
+      | Let ((variable, _), exp, t2) -> t_to_reg t var_reg
+      | _ -> [] )
 
 (*
 type t = 
@@ -153,18 +150,22 @@ and to_string_t t =
       sprintf "(letting %s = %s in %s)" (Id.to_string id) (to_string e1)
         (to_string_t e2)
 
+let _ =
+  let program =
+    Program
+      ( [],
+        [],
+        Let
+          ( ("x", Type.gentyp ()),
+            Int 0,
+            Let
+              ( ("y", Type.gentyp ()),
+                Int 1,
+                Let (("z", Type.gentyp ()), Add ("x", Var "y"), Ans Unit) ) ) )
+  in
+  List.iter
+    (fun (s1, s2) -> Printf.printf "(%s, %s) " s1 s2)
+    (program_to_reg program [])
 
-let program =
-  Program
-    ( [],
-      [],
-      Let
-        ( ("x", Type.gentyp ()),
-          Int 0,
-          Let
-            ( ("y", Type.gentyp ()),
-              Int 1,
-              Let (("z", Type.gentyp ()), Add ("x", Var "y"), Ans Unit) ) ) );;
-let _ = List.iter ((fun (s1, s2) -> Printf.printf "(a, a)" s1 s2) program_to_reg program []);;
-
-
+;;
+print_newline ()
