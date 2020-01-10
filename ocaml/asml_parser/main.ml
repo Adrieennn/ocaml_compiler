@@ -19,8 +19,7 @@ let () =
   List.iter
     (fun f -> ignore (file f))
     !files;;
-  
-  let program =
+  (* let program =
     Program
       ( [],
         [],
@@ -31,9 +30,14 @@ let () =
               ( ("y", Type.gentyp ()),
                 Int 1,
                 Let (("z", Type.gentyp ()), Add ("x", Var "y"), Ans Unit) ) ) )
-  in
-  let var_reg = Asml.program_to_reg program [] in
+  in *)
+  let empty_prog = Program ( [], [], Ans Unit ) in
+  let chann = open_in "test.asml" in
+  let fundef_test = Parser.fundef Lexer.token (Lexing.from_channel chann) in
+  let pg_test = fd_to_prog fundef_test empty_prog in
+  let var_reg = Asml.program_to_reg pg_test [] in
   List.iter (fun (s1, s2) -> Printf.printf "(%s, %s) " s1 s2) var_reg
+
 
 ;;
 print_newline ()
