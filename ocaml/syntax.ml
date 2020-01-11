@@ -53,19 +53,48 @@ let rec to_string exp =
   | LE (e1, e2) -> sprintf "(%s <= %s)" (to_string e1) (to_string e2)  
   | If (e1, e2, e3) -> 
           sprintf "(if %s then %s else %s)" (to_string e1) (to_string e2) (to_string e3)   
-  | Let ((id,t), e1, e2) -> 
+  | Let ((id,typ), e1, e2) -> 
+      ( match typ with
+      | Type.Var({contents = None}) -> (* ignore undetermined type *)
           sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1) (to_string e2)   
+      | Type.Var({contents = Some(t)})
+      | t -> sprintf "(let (%s : %s) = %s in %s)" (Id.to_string id) (Type.to_string t) (to_string e1) (to_string e2)   
+      )
   | Var id -> Id.to_string id 
   | App (e1, le2) -> sprintf "(%s %s)" (to_string e1) (infix_to_string to_string le2 " ") 
   | LetRec (fd, e) ->  
-          sprintf "(let rec %s %s = %s in %s)" 
-          (let (x, _) = fd.name in (Id.to_string x))
-          (infix_to_string (fun (x,_) -> (Id.to_string x)) fd.args " ") 
+      let (fun_name, fun_typ) = fd.name in
+      let ret_typ_string =
+        (match fun_typ with
+        | Type.Fun(_args, ret) -> " : " ^ Type.to_string ret
+        | Type.Var({contents = None}) -> ""
+        | Type.Var({contents = Some(_)}) -> failwith "Types were not substituted before calling Syntax.to_string"
+        | t ->
+            Printf.eprintf "Expected function received %s" (Type.to_string t);
+            exit 0
+        )
+      in
+          sprintf "(let rec %s %s%s = %s in %s)" 
+          (Id.to_string fun_name)
+          (infix_to_string
+            (fun (x,typ) ->
+              if typ = Type.Var({contents = None}) then
+                Id.to_string x
+              else
+                Printf.sprintf "(%s : %s)" (Id.to_string x) (Type.to_string typ))
+            fd.args " ") 
+          ret_typ_string
           (to_string fd.body)
           (to_string e)
   | LetTuple (l, e1, e2)-> 
           sprintf "(let (%s) = %s in %s)" 
-          (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
+          (infix_to_string
+            (fun (x, typ) ->
+              if typ = Type.Var({contents = None}) then
+                Id.to_string x
+              else
+                Printf.sprintf "(%s : %s)" (Id.to_string x) (Type.to_string typ))
+            l ", ")
           (to_string e1)
           (to_string e2)
   | Get(e1, e2) -> sprintf "%s.(%s)" (to_string e1) (to_string e2)
