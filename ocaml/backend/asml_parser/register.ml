@@ -37,6 +37,11 @@ let modify_exp exp var_reg =
       | Var v ->
           Add (modify_variable s1 var_reg, Var (modify_variable v var_reg))
       | _ -> Add (modify_variable s1 var_reg, s2) )
+  | Sub (s1, s2) -> (
+      match s2 with
+      | Var v ->
+          Sub (modify_variable s1 var_reg, Var (modify_variable v var_reg))
+      | _ -> Sub (modify_variable s1 var_reg, s2) )
   | _ -> exp
 
 let rec modify_t t var_reg =

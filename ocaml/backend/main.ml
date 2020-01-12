@@ -21,8 +21,8 @@ let () =
     (fun f -> ignore (file f))
     !files;;
   
+  let chann = open_in "test.asml" in
   let empty_prog = Program ( [], [], Ans Unit ) in
-  let chann = open_in "asml_parser/test.asml" in
   let fundef_test = Parser.fundef Lexer.token (Lexing.from_channel chann) in
   let pg_test = fd_to_prog fundef_test empty_prog in
   let var_reg = Register.program_to_reg pg_test [] in

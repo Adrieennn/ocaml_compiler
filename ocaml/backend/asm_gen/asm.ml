@@ -9,6 +9,12 @@ let exp_to_asm exp reg =
       match y with
       | Int i -> "add r4, r4, #" ^ string_of_int i ^ "\n"
       | Var a -> "ldr r5, [r11, #-" ^ a ^ "]\n" ^ "add r4, r4, r5\n" )
+  | Sub (x, y) -> (
+      "ldr r4, [r11, #-" ^ x ^ "]\n"
+      ^
+      match y with
+      | Int i -> "sub r4, r4, #" ^ string_of_int i ^ "\n"
+      | Var a -> "ldr r5, [r11, #-" ^ a ^ "]\n" ^ "sub r4, r4, r5\n" )
   | _ -> "IGNORED FOR NOW"
 
 let rec t_to_asm_rec body reg =

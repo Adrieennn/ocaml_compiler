@@ -2,5 +2,5 @@ let _ =
   let x = 678 in
   let y = 12 in
   let z = add x y in
-  let q = add z 4 in
+  let q = sub z 4 in
   nop
