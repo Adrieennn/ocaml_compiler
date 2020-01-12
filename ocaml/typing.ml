@@ -228,7 +228,7 @@ let rec unify equations =
               unify tl
           | Some tv -> unify ((tv, t1) :: tl) )
       | t1, t2 ->
-          Printf.eprintf "Unification of %s and %s is impossible"
+          Printf.eprintf "Unification of %s and %s is impossible.\n"
             (Type.to_string t1) (Type.to_string t2);
           exit 0 )
 
