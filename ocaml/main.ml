@@ -11,9 +11,26 @@ let file f =
     close_in inchan;
     raise e
 
+let print_knorm f =
+  let inchan = open_in f in
+  try
+    let knorm_ast =
+      Lexing.from_channel inchan
+      |> Parser.exp Lexer.token
+      |> Knorm.of_syntax
+    in
+    print_string (Knorm.to_string knorm_ast);
+    print_newline ();
+    print_newline ();
+
+    close_in inchan
+  with e ->
+    close_in inchan;
+    raise e
+
 let () =
   let files = ref [] in
   Arg.parse []
     (fun s -> files := !files @ [ s ])
     (Printf.sprintf "usage: %s filenames" Sys.argv.(0));
-  List.iter (fun f -> ignore (file f)) !files
+  List.iter (fun f -> ignore (print_knorm f)) !files
