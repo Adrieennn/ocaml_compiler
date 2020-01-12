@@ -1,5 +1,5 @@
 let _ =
-  let x = 0 in
-  let y = 1 in
+  let x = 678 in
+  let y = 12 in
   let z = add x y in
   nop
