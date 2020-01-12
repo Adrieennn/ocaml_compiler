@@ -1,7 +1,7 @@
 open Asml
 
 let ref_counter x =
-  let counter = ref (x - 4) in
+  let counter = ref (x) in
   fun () ->
     counter := !counter + 4;
     !counter
@@ -25,7 +25,9 @@ let program_to_reg pg var_reg =
       | _ -> [] )
 
 let modify_variable variable var_reg =
-  String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s = variable) var_reg)); "]"]
+  string_of_int (snd (List.find (fun s -> fst s = variable) var_reg))
+  (* String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s
+   * = variable) var_reg)); "]"] *)
 
 let modify_exp exp var_reg =
   match exp with
