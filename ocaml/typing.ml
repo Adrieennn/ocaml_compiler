@@ -167,8 +167,7 @@ let rec occurs t1 t2 =
       else match !t_ref with None -> false | Some t -> occurs t1 t )
 
 let occurs_check t1 t2 =
-  if occurs t1 t2 || occurs t2 t1 then
-    failwith "Recursive type detected. Aborting."
+  if occurs t1 t2 then failwith "Recursive type detected. Aborting."
 
 let rec unify equations =
   match equations with
@@ -202,14 +201,15 @@ let rec unify equations =
           else failwith "Tuple lengths do not match."
       | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
       | (Type.Var v1 as t1), (Type.Var v2 as t2) -> (
-          occurs_check t1 t2;
           match (!v1, !v2) with
           | None, None -> unify tl
           | Some t, None ->
+              occurs_check t2 t1;
               (* XXX What if t is again Type.Var *)
               v2 := Some t;
               unify tl
           | None, Some t ->
+              occurs_check t1 t2;
               v1 := Some t;
               unify tl
           | Some t1, Some t2 -> unify ((t1, t2) :: tl) )
