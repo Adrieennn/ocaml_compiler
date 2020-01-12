@@ -16,7 +16,10 @@ end = struct
   let find_opt x env = List.assoc_opt x env
 
   let default () =
-    empty () |> add ("print_int", Type.Fun ([ Type.Int ], Type.Unit))
+    empty ()
+    |> add ("print_int", Type.Fun ([ Type.Int ], Type.Unit))
+    |> add ("print_newline", Type.Fun ([ Type.Unit ], Type.Unit))
+    |> add ("truncate", Type.Fun ([ Type.Float ], Type.Int))
 end
 
 module TypingEquation = struct
