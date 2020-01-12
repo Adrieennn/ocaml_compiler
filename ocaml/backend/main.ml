@@ -20,18 +20,7 @@ let () =
   List.iter
     (fun f -> ignore (file f))
     !files;;
-  (* let program =
-    Program
-      ( [],
-        [],
-        Let
-          ( ("x", Type.gentyp ()),
-            Int 0,
-            Let
-              ( ("y", Type.gentyp ()),
-                Int 1,
-                Let (("z", Type.gentyp ()), Add ("x", Var "y"), Ans Unit) ) ) )
-  in *)
+  
   let empty_prog = Program ( [], [], Ans Unit ) in
   let chann = open_in "asml_parser/test.asml" in
   let fundef_test = Parser.fundef Lexer.token (Lexing.from_channel chann) in
