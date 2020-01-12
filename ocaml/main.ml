@@ -8,14 +8,21 @@ let file f =
     close_in inchan
   with e -> (close_in inchan; raise e)
 
-let print_equation f =
+let print_untyped_and_typed_ast f =
   let inchan = open_in f in
   try
     let ast = Lexing.from_channel inchan
               |> Parser.exp Lexer.token in
-    let equations = Typing.gen_equations (Typing.TypingEnvironment.default () ) ast Type.Unit in
-    List.iter print_string (List.map Typing.TypingEquation.to_string equations);
+
+    print_string (Syntax.to_string ast);
     print_newline ();
+    print_newline ();
+    print_newline ();
+
+    let typed_ast = Typing.typed_ast ast in
+    print_string (Syntax.to_string typed_ast);
+    print_newline ();
+
     close_in inchan
   with e -> (close_in inchan; raise e)
 
@@ -26,5 +33,5 @@ let () =
     (fun s -> files := !files @ [s])
     (Printf.sprintf "usage: %s filenames" Sys.argv.(0));
   List.iter
-    (fun f -> ignore (print_equation f))
+    (fun f -> ignore (print_untyped_and_typed_ast f))
     !files
