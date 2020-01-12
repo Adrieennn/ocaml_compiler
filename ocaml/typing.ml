@@ -101,7 +101,7 @@ let rec gen_equations env exp expected_type =
       let fun_typ = Type.Fun (arg_typs, expected_type) in
       let fun_eqs = gen_equations env e1 fun_typ in
 
-      fun_eqs @ arg_eqs
+      arg_eqs @ fun_eqs
   | Syntax.LetRec (fd, e) ->
       let { Syntax.name = fun_name; args = fun_args; body = fun_body } = fd in
       let fun_arg_typs = List.map (fun (_id, typ) -> typ) fun_args in
