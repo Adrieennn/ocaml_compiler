@@ -46,6 +46,10 @@ let rec of_syntax exp_s =
         ( (e_id, Type.Int),
           of_syntax e,
           Let ((e_0_id, Type.Int), Int 0, Sub (e_0_id, e_id)) )
+  | Syntax.Eq (e1, e2) ->
+      (* Integers are equal if their difference is zero
+       * Because we interpret zero as boolean false, the result is not'ed *)
+      of_syntax (Syntax.Not (Syntax.Sub (e1, e2)))
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.Var id -> Var id
