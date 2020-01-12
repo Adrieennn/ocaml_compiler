@@ -1,4 +1,5 @@
 open Asml
+open Asm
 
 let print_ast l =
   print_string (Asml.to_string_f (Parser.fundef Lexer.token l)); print_newline ()
@@ -43,3 +44,6 @@ let () =
   var_reg)))
 ;
 print_newline ();
+
+print_string (prog_to_asm pg_test var_reg);
+
