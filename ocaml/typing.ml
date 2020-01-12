@@ -201,7 +201,8 @@ let rec unify equations =
             unify (match_tuple_types @ tl)
           else failwith "Tuple lengths do not match."
       | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
-      | Type.Var v1, Type.Var v2 -> (
+      | (Type.Var v1 as t1), (Type.Var v2 as t2) -> (
+          occurs_check t1 t2;
           match (!v1, !v2) with
           | None, None -> unify tl
           | Some t, None ->
@@ -212,18 +213,20 @@ let rec unify equations =
               v1 := Some t;
               unify tl
           | Some t1, Some t2 -> unify ((t1, t2) :: tl) )
-      | Type.Var v, t -> (
+      | (Type.Var v as t1), t2 -> (
+          occurs_check t1 t2;
           match !v with
           | None ->
-              v := Some t;
+              v := Some t2;
               unify tl
-          | Some tv -> unify ((tv, t) :: tl) )
-      | t, Type.Var v -> (
+          | Some tv -> unify ((tv, t2) :: tl) )
+      | t1, (Type.Var v as t2) -> (
+          occurs_check t1 t2;
           match !v with
           | None ->
-              v := Some t;
+              v := Some t1;
               unify tl
-          | Some tv -> unify ((tv, t) :: tl) )
+          | Some tv -> unify ((tv, t1) :: tl) )
       | t1, t2 ->
           Printf.eprintf "Unification of %s and %s is impossible"
             (Type.to_string t1) (Type.to_string t2);
