@@ -88,8 +88,8 @@ let rec gen_equations env exp expected_type =
   | Syntax.Var id -> (
       match TypingEnvironment.find_opt id env with
       | None ->
-          failwith "Undefined variable in environment"
-          (* TODO better error message *)
+          Printf.eprintf "Variable %s has not been bound.\n" (Id.to_string id);
+          exit 0
       | Some typ -> [ (typ, expected_type) ] )
   | Syntax.App (e1, le2) ->
       let arg_typs = List.map (fun _ -> Type.Var (ref None)) le2 in
