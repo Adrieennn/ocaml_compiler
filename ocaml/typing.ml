@@ -153,6 +153,23 @@ let rec gen_equations env exp expected_type =
       let eqs2 = gen_equations env e2 element_type in
       ((Type.Array element_type, expected_type) :: eqs1) @ eqs2
 
+(* Test whether type t1 is part of t2 *)
+let rec occurs t1 t2 =
+  match t2 with
+  | Type.Unit | Type.Bool | Type.Int | Type.Float -> false
+  | Type.Fun (args, ret) -> List.exists (fun t -> occurs t1 t) (ret :: args)
+  | Type.Tuple elements -> List.exists (fun t -> occurs t1 t) elements
+  | Type.Array t -> occurs t1 t
+  | Type.Var t_ref -> (
+      if (* NB (==) is physical equality, (=) structural equality *)
+         t1 == t2
+      then true
+      else match !t_ref with None -> false | Some t -> occurs t1 t )
+
+let occurs_check t1 t2 =
+  if occurs t1 t2 || occurs t2 t1 then
+    failwith "Recursive type detected. Aborting."
+
 let rec unify equations =
   match equations with
   | [] -> ()
