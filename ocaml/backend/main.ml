@@ -36,3 +36,5 @@ print_newline ();
 
 print_string (prog_to_asm modified_pg_test var_reg);
 
+let outchan = open_out "../../ARM/test.s" in
+output_string outchan (prog_to_asm modified_pg_test var_reg);

@@ -24,8 +24,7 @@ let rec t_to_asm_rec body reg =
   | Ans exp -> "mov r0, r4\n bl min_caml_print_int"
 
 let prog_to_asm prog reg =
-  {|
-  .global _start
+  {|  .global _start
 
 _start:
 mov r11, r13 @ move sp to fp
