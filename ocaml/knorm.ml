@@ -22,6 +22,7 @@ type t =
   | IfEq of (Id.t * Id.t) * t * t
   (* cf. BLE branch if less than or equal *)
   | IfLe of (Id.t * Id.t) * t * t
+  | App of Id.t * Id.t list
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -116,6 +117,16 @@ and of_syntax exp_s =
             ( (e2_id, Type.Int),
               of_syntax e2,
               IfEq ((e1_id, e2_id), Int 1, Int 0) ) )
+  | Syntax.LE (e1, e2) ->
+      let e1_id = Id.genid () in
+      let e2_id = Id.genid () in
+      Let
+        ( (e1_id, Type.Int),
+          of_syntax e1,
+          Let
+            ( (e2_id, Type.Int),
+              of_syntax e2,
+              IfLe ((e1_id, e2_id), Int 1, Int 0) ) )
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
@@ -153,6 +164,21 @@ and of_syntax exp_s =
                 ( (e_true, Type.Int),
                   Int 1,
                   IfEq ((e_id, e_true), of_syntax e2, of_syntax e3) ) ) )
+  | Syntax.App (f, args) ->
+      let l = ref [] in
+      let f_id = Id.genid () in
+      let final_body () =
+        Let ((f_id, Type.Var (ref None)), of_syntax f, App (f_id, List.rev !l))
+      in
+
+      let rec build_lets_and_collect_arg_names = function
+        | [] -> final_body ()
+        | hd :: tl ->
+            add_let hd (fun x ->
+                l := x :: !l;
+                build_lets_and_collect_arg_names tl)
+      in
+      build_lets_and_collect_arg_names args
   | e ->
       Printf.eprintf "%s not implemented\n" (Syntax.to_string e);
       exit 0
@@ -175,6 +201,9 @@ let rec to_string exp =
   | FMul (e1, e2) -> Printf.sprintf "(%s *. %s)" e1 e2
   | FDiv (e1, e2) -> Printf.sprintf "(%s /. %s)" e1 e2
   | Var id -> Id.to_string id
+  | App (e1, le2) ->
+      Printf.sprintf "(%s %s)" (Id.to_string e1)
+        (infix_to_string Id.to_string le2 " ")
   | Let ((id, _t), e1, e2) ->
       Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1)
         (to_string e2)
