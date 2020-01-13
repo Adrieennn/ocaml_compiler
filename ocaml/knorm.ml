@@ -24,6 +24,7 @@ type t =
   | IfLe of (Id.t * Id.t) * t * t
   | App of Id.t * Id.t list
   | Tuple of Id.t list
+  | LetTuple of (Id.t * Type.t) list * t * t
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -132,6 +133,8 @@ and of_syntax exp_s =
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
       LetRec ({ name; args; body = of_syntax body }, of_syntax e)
+  | Syntax.LetTuple (vars, def, body) ->
+      LetTuple (vars, of_syntax def, of_syntax body)
   | Syntax.Var id -> Var id
   | Syntax.If (e1, e2, e3) -> (
       match e1 with
@@ -226,6 +229,10 @@ let rec to_string exp =
          Id.to_string x)
         (infix_to_string (fun (x, _) -> Id.to_string x) fd.args " ")
         (to_string fd.body) (to_string e)
+  | LetTuple (l, e1, e2) ->
+      Printf.sprintf "(let (%s) = %s in %s)"
+        (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
+        (to_string e1) (to_string e2)
   | IfEq ((id1, id2), e1, e2) ->
       Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
         (Id.to_string id2) (to_string e1) (to_string e2)
