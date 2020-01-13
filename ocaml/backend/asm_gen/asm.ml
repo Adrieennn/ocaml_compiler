@@ -45,11 +45,19 @@ let rec t_to_asm_rec body reg =
   | Ans exp -> exp_to_asm exp reg
 
 (* "mov r0, r4\n bl min_caml_print_int" *)
+let rec lfu_to_asm_rec lfu reg =
+  match lfu with
+  | fu::r -> "IGNORED" 
+  | [] -> ""
+
 
 let prog_to_asm prog reg =
-  {|  .global _start
+  match prog with
+  | Program (lfl, lfu, body) ->
+      lfu_to_asm_rec lfu reg
+      ^ {|  .global _start
 
 _start:
 mov r11, r13 @ move sp to fp
 |}
-  ^ match prog with Program (lfl, lfu, body) -> t_to_asm_rec body reg ^ "\n"
+      ^ t_to_asm_rec body reg ^ "\n"
