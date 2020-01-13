@@ -31,11 +31,11 @@ let () =
   (* associating each variable in main body of program with an offset from the
    * frame pointer *)
   let var_reg = Register.program_to_reg pg_test [] in
+  List.iter (fun (s1, s2) -> Printf.printf "(%s, %d) " s1 s2) var_reg;
+  print_newline ();
   (* replace each variable by its fp offset in program *)
   let modified_pg_test = (Register.modify_program pg_test var_reg) in
   (* let pg_from_fd_test = prog_to_fd pg_test in *)
-  List.iter (fun (s1, s2) -> Printf.printf "(%s, %d) " s1 s2) var_reg;
-  print_newline ();
   print_string (Asml.to_string_f (prog_to_fd modified_pg_test))
 ;
 print_newline ();

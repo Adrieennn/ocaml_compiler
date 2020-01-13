@@ -7,25 +7,25 @@ let remove_label_undersc label = String.sub label 1 (String.length label - 1)
 let rec args_to_asm args regnum =
   match args with
   | h :: r ->
-      "ldr r" ^ string_of_int regnum ^ ", [r11, #-" ^ h ^ "]\n"
+      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n"
       ^ args_to_asm r (regnum + 1)
   | [] -> ""
 
 let exp_to_asm exp reg =
   match exp with
   | Add (x, y) ->
-      ( "ldr r4, [r11, #-" ^ x ^ "]\n"
+      ( "ldr r4, [r11, #" ^ x ^ "]\n"
       ^
       match y with
       | Int i -> "add r4, r4, #" ^ string_of_int i ^ "\n"
-      | Var a -> "ldr r5, [r11, #-" ^ a ^ "]\n" ^ "add r4, r4, r5\n" )
+      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "add r4, r4, r5\n" )
       ^ "push {r4}\n"
   | Sub (x, y) ->
-      ( "ldr r4, [r11, #-" ^ x ^ "]\n"
+      ( "ldr r4, [r11, #" ^ x ^ "]\n"
       ^
       match y with
       | Int i -> "sub r4, r4, #" ^ string_of_int i ^ "\n"
-      | Var a -> "ldr r5, [r11, #-" ^ a ^ "]\n" ^ "sub r4, r4, r5\n" )
+      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "sub r4, r4, r5\n" )
       ^ "push {r4}\n"
   | CallDir (label, args) ->
       args_to_asm args 0 ^ "bl " ^ remove_label_undersc label
@@ -38,7 +38,7 @@ let rec t_to_asm_rec body reg =
       ( match e with
       | Int i -> "mov r4, #" ^ string_of_int i ^ "\n push {r4}\n"
       | Var a -> {|
-        "ldr r4, [r11, #-" ^ a ^ "]\n push {r4}\n"
+        "ldr r4, [r11, #" ^ a ^ "]\n push {r4}\n"
       |}
       | _ -> exp_to_asm e reg )
       ^ t_to_asm_rec t reg
@@ -47,9 +47,13 @@ let rec t_to_asm_rec body reg =
 (* "mov r0, r4\n bl min_caml_print_int" *)
 let rec lfu_to_asm_rec lfu reg =
   match lfu with
-  | fu::r -> "IGNORED" 
+  | fu :: r ->
+      "  .globl "
+      ^ remove_label_undersc fu.name
+      ^ "\n"
+      ^ remove_label_undersc fu.name
+      ^ ":\n" ^ t_to_asm_rec fu.body reg ^ "\n" ^ lfu_to_asm_rec r reg
   | [] -> ""
-
 
 let prog_to_asm prog reg =
   match prog with

@@ -3,6 +3,12 @@ open Asml
 let ref_counter x =
   let counter = ref x in
   fun () ->
+    counter := !counter - 4;
+    !counter
+
+let ref_counter_pos x =
+  let counter = ref x in
+  fun () ->
     counter := !counter + 4;
     !counter
 
@@ -87,8 +93,24 @@ let rec modify_t fn_name t var_reg =
           modify_t fn_name t2 var_reg )
   | Ans e -> Ans (modify_exp fn_name e var_reg)
 
+let rec modify_args_reg fn_name args var_reg count =
+  match args with
+  | var :: rest ->
+      modify_args_reg fn_name rest
+        (var_reg @ [ (fn_name ^ "." ^ var, count ()) ])
+        count
+  | [] -> var_reg
+
 let rec modify_fn_t fu var_reg =
-  { name = fu.name; args = fu.args; body = modify_t fu.name fu.body var_reg }
+  let len = List.length fu.args in
+  let newcount = ref_counter ((len + 1) * 4) in
+  let args_reg = modify_args_reg fu.name fu.args [] newcount in
+  List.iter (fun (s1, s2) -> Printf.printf "(%s, %d)" s1 s2) args_reg;
+  {
+    name = fu.name;
+    args = fu.args;
+    body = modify_t fu.name fu.body (var_reg @ args_reg);
+  }
 
 let modify_program pg var_reg =
   match pg with
