@@ -25,6 +25,9 @@ type t =
   | App of Id.t * Id.t list
   | Tuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * t * t
+  | Array of Id.t * Id.t
+  | Get of Id.t * Id.t
+  | Put of Id.t * Id.t * Id.t
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -194,9 +197,14 @@ and of_syntax exp_s =
                 build_lets_and_collect_arg_names tl)
       in
       build_lets_and_collect_arg_names elements
-  | e ->
-      Printf.eprintf "%s not implemented\n" (Syntax.to_string e);
-      exit 0
+  | Syntax.Array (e1, e2) ->
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Array (e1_id, e2_id)))
+  | Syntax.Get (e1, e2) ->
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Get (e1_id, e2_id)))
+  | Syntax.Put (e1, e2, e3) ->
+      add_let e1 (fun e1_id ->
+          add_let e2 (fun e2_id ->
+              add_let e3 (fun e3_id -> Put (e1_id, e2_id, e3_id))))
 
 let rec infix_to_string to_s l op =
   match l with
@@ -239,3 +247,9 @@ let rec to_string exp =
   | IfLe ((id1, id2), e1, e2) ->
       Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
         (Id.to_string id2) (to_string e1) (to_string e2)
+  | Get (e1, e2) -> Printf.sprintf "%s.(%s)" (Id.to_string e1) (Id.to_string e2)
+  | Put (e1, e2, e3) ->
+      Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
+        (Id.to_string e3)
+  | Array (e1, e2) ->
+      Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
