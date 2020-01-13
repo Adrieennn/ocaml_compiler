@@ -25,7 +25,11 @@ type t =
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
-let rec of_syntax exp_s =
+let rec add_let exp body =
+  let e_id = Id.genid () in
+  Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
+
+and of_syntax exp_s =
   match exp_s with
   | Syntax.Unit -> Unit
   | Syntax.Bool true -> Int 1
@@ -33,12 +37,15 @@ let rec of_syntax exp_s =
   | Syntax.Int i -> Int i
   | Syntax.Float f -> Float f
   | Syntax.Add (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Int),
           of_syntax e1,
           Let ((e2_id, Type.Int), of_syntax e2, Add (e1_id, e2_id)) )
+          *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Add (e1_id, e2_id)))
   | Syntax.Sub (e1, e2) ->
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
