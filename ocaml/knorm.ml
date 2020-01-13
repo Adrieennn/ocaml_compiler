@@ -6,6 +6,17 @@ type t =
   | Let of (Id.t * Type.t) * t * t
   | LetRec of fundef * t
   | Var of Id.t
+  (* Not used since Syntax.t only defines Syntax.Eq and Syntax.LE
+   * | IfNe
+   * | Ifgt
+   * | IfGe
+   * | IfLt
+   * Also, MinCaml only has signed integers so unsigned comparisons are unnecessary
+   *)
+  (* cf. BEQ branch if equal *)
+  | IfEq of (Id.t * Id.t) * t * t
+  (* cf. BLE branch if less than or equal *)
+  | IfLe of (Id.t * Id.t) * t * t
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -56,6 +67,38 @@ let rec of_syntax exp_s =
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
       LetRec ({ name; args; body = of_syntax body }, of_syntax e)
   | Syntax.Var id -> Var id
+  | Syntax.If (e1, e2, e3) -> (
+      match e1 with
+      | Syntax.Eq (e1', e2') ->
+          let e1'_id = Id.genid () in
+          let e2'_id = Id.genid () in
+          Let
+            ( (e1'_id, Type.Int),
+              of_syntax e1',
+              Let
+                ( (e2'_id, Type.Int),
+                  of_syntax e2',
+                  IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3) ) )
+      | Syntax.LE (e1', e2') ->
+          let e1'_id = Id.genid () in
+          let e2'_id = Id.genid () in
+          Let
+            ( (e1'_id, Type.Int),
+              of_syntax e1',
+              Let
+                ( (e2'_id, Type.Int),
+                  of_syntax e2',
+                  IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3) ) )
+      | e ->
+          let e_id = Id.genid () in
+          let e_true = Id.genid () in
+          Let
+            ( (e_id, Type.Int),
+              of_syntax e,
+              Let
+                ( (e_true, Type.Int),
+                  Int 1,
+                  IfEq ((e_id, e_true), of_syntax e2, of_syntax e3) ) ) )
   | e ->
       Printf.eprintf "%s not implemented\n" (Syntax.to_string e);
       exit 0
@@ -82,3 +125,9 @@ let rec to_string exp =
          Id.to_string x)
         (infix_to_string (fun (x, _) -> Id.to_string x) fd.args " ")
         (to_string fd.body) (to_string e)
+  | IfEq ((id1, id2), e1, e2) ->
+      Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
+        (Id.to_string id2) (to_string e1) (to_string e2)
+  | IfLe ((id1, id2), e1, e2) ->
+      Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
+        (Id.to_string id2) (to_string e1) (to_string e2)
