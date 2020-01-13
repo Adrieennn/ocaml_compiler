@@ -1,8 +1,13 @@
 type t =
   | Unit
   | Int of int
+  | Float of float
   | Add of Id.t * Id.t
   | Sub of Id.t * Id.t
+  | FAdd of Id.t * Id.t
+  | FSub of Id.t * Id.t
+  | FMul of Id.t * Id.t
+  | FDiv of Id.t * Id.t
   | Let of (Id.t * Type.t) * t * t
   | LetRec of fundef * t
   | Var of Id.t
@@ -26,6 +31,7 @@ let rec of_syntax exp_s =
   | Syntax.Bool true -> Int 1
   | Syntax.Bool false -> Int 0
   | Syntax.Int i -> Int i
+  | Syntax.Float f -> Float f
   | Syntax.Add (e1, e2) ->
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
@@ -40,6 +46,41 @@ let rec of_syntax exp_s =
         ( (e1_id, Type.Int),
           of_syntax e1,
           Let ((e2_id, Type.Int), of_syntax e2, Sub (e1_id, e2_id)) )
+  | Syntax.FAdd (e1, e2) ->
+      let e1_id = Id.genid () in
+      let e2_id = Id.genid () in
+      Let
+        ( (e1_id, Type.Float),
+          of_syntax e1,
+          Let ((e2_id, Type.Float), of_syntax e2, FAdd (e1_id, e2_id)) )
+  | Syntax.FSub (e1, e2) ->
+      let e1_id = Id.genid () in
+      let e2_id = Id.genid () in
+      Let
+        ( (e1_id, Type.Float),
+          of_syntax e1,
+          Let ((e2_id, Type.Float), of_syntax e2, FSub (e1_id, e2_id)) )
+  | Syntax.FMul (e1, e2) ->
+      let e1_id = Id.genid () in
+      let e2_id = Id.genid () in
+      Let
+        ( (e1_id, Type.Float),
+          of_syntax e1,
+          Let ((e2_id, Type.Float), of_syntax e2, FMul (e1_id, e2_id)) )
+  | Syntax.FDiv (e1, e2) ->
+      let e1_id = Id.genid () in
+      let e2_id = Id.genid () in
+      Let
+        ( (e1_id, Type.Float),
+          of_syntax e1,
+          Let ((e2_id, Type.Float), of_syntax e2, FDiv (e1_id, e2_id)) )
+  | Syntax.FNeg e ->
+      let e_id = Id.genid () in
+      let e_0_id = Id.genid () in
+      Let
+        ( (e_id, Type.Float),
+          of_syntax e,
+          Let ((e_0_id, Type.Int), Float 0., FSub (e_0_id, e_id)) )
   | Syntax.Not e ->
       (* true: 1
        * false: 0
@@ -113,8 +154,13 @@ let rec to_string exp =
   match exp with
   | Unit -> "()"
   | Int i -> string_of_int i
+  | Float f -> string_of_float f
   | Add (e1, e2) -> Printf.sprintf "(%s + %s)" e1 e2
   | Sub (e1, e2) -> Printf.sprintf "(%s - %s)" e1 e2
+  | FAdd (e1, e2) -> Printf.sprintf "(%s +. %s)" e1 e2
+  | FSub (e1, e2) -> Printf.sprintf "(%s -. %s)" e1 e2
+  | FMul (e1, e2) -> Printf.sprintf "(%s *. %s)" e1 e2
+  | FDiv (e1, e2) -> Printf.sprintf "(%s /. %s)" e1 e2
   | Var id -> Id.to_string id
   | Let ((id, _t), e1, e2) ->
       Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1)
