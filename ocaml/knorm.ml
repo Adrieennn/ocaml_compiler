@@ -100,9 +100,15 @@ let rec of_syntax exp_s =
           of_syntax e,
           Let ((e_0_id, Type.Int), Int 0, Sub (e_0_id, e_id)) )
   | Syntax.Eq (e1, e2) ->
-      (* Integers are equal if their difference is zero
-       * Because we interpret zero as boolean false, the result is not'ed *)
-      of_syntax (Syntax.Not (Syntax.Sub (e1, e2)))
+      let e1_id = Id.genid () in
+      let e2_id = Id.genid () in
+      Let
+        ( (e1_id, Type.Int),
+          of_syntax e1,
+          Let
+            ( (e2_id, Type.Int),
+              of_syntax e2,
+              IfEq ((e1_id, e2_id), Int 1, Int 0) ) )
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
