@@ -23,6 +23,11 @@ type t =
   (* cf. BLE branch if less than or equal *)
   | IfLe of (Id.t * Id.t) * t * t
   | App of Id.t * Id.t list
+  | Tuple of Id.t list
+  | LetTuple of (Id.t * Type.t) list * t * t
+  | Array of Id.t * Id.t
+  | Get of Id.t * Id.t
+  | Put of Id.t * Id.t * Id.t
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -131,6 +136,8 @@ and of_syntax exp_s =
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
       LetRec ({ name; args; body = of_syntax body }, of_syntax e)
+  | Syntax.LetTuple (vars, def, body) ->
+      LetTuple (vars, of_syntax def, of_syntax body)
   | Syntax.Var id -> Var id
   | Syntax.If (e1, e2, e3) -> (
       match e1 with
@@ -179,9 +186,25 @@ and of_syntax exp_s =
                 build_lets_and_collect_arg_names tl)
       in
       build_lets_and_collect_arg_names args
-  | e ->
-      Printf.eprintf "%s not implemented\n" (Syntax.to_string e);
-      exit 0
+  | Syntax.Tuple elements ->
+      let l = ref [] in
+
+      let rec build_lets_and_collect_arg_names = function
+        | [] -> Tuple (List.rev !l)
+        | hd :: tl ->
+            add_let hd (fun x ->
+                l := x :: !l;
+                build_lets_and_collect_arg_names tl)
+      in
+      build_lets_and_collect_arg_names elements
+  | Syntax.Array (e1, e2) ->
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Array (e1_id, e2_id)))
+  | Syntax.Get (e1, e2) ->
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Get (e1_id, e2_id)))
+  | Syntax.Put (e1, e2, e3) ->
+      add_let e1 (fun e1_id ->
+          add_let e2 (fun e2_id ->
+              add_let e3 (fun e3_id -> Put (e1_id, e2_id, e3_id))))
 
 let rec infix_to_string to_s l op =
   match l with
@@ -201,6 +224,7 @@ let rec to_string exp =
   | FMul (e1, e2) -> Printf.sprintf "(%s *. %s)" e1 e2
   | FDiv (e1, e2) -> Printf.sprintf "(%s /. %s)" e1 e2
   | Var id -> Id.to_string id
+  | Tuple l -> Printf.sprintf "(%s)" (infix_to_string Id.to_string l ", ")
   | App (e1, le2) ->
       Printf.sprintf "(%s %s)" (Id.to_string e1)
         (infix_to_string Id.to_string le2 " ")
@@ -213,9 +237,19 @@ let rec to_string exp =
          Id.to_string x)
         (infix_to_string (fun (x, _) -> Id.to_string x) fd.args " ")
         (to_string fd.body) (to_string e)
+  | LetTuple (l, e1, e2) ->
+      Printf.sprintf "(let (%s) = %s in %s)"
+        (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
+        (to_string e1) (to_string e2)
   | IfEq ((id1, id2), e1, e2) ->
       Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
         (Id.to_string id2) (to_string e1) (to_string e2)
   | IfLe ((id1, id2), e1, e2) ->
       Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
         (Id.to_string id2) (to_string e1) (to_string e2)
+  | Get (e1, e2) -> Printf.sprintf "%s.(%s)" (Id.to_string e1) (Id.to_string e2)
+  | Put (e1, e2, e3) ->
+      Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
+        (Id.to_string e3)
+  | Array (e1, e2) ->
+      Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
