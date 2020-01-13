@@ -1,6 +1,7 @@
 let _ =
-  let x = 678 in
+  let x = 6 in
   let y = 12 in
   let z = add x y in
+  let t = call _min_caml_print_int z in
   let q = sub z 4 in
-  nop
+  call _min_caml_print_int q

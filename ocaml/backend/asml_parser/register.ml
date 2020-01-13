@@ -33,6 +33,12 @@ let modify_variable variable var_reg =
   | None ->
       failwith ("Variable " ^ variable ^ " does not exist in association list.")
 
+let rec modify_variable_list variable_list var_reg =
+  match variable_list with
+  | hd :: rest ->
+      modify_variable hd var_reg :: modify_variable_list rest var_reg
+  | [] -> variable_list
+
 (* String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s
  * = variable) var_reg)); "]"] *)
 
@@ -48,6 +54,7 @@ let modify_exp exp var_reg =
       | Var v ->
           Sub (modify_variable s1 var_reg, Var (modify_variable v var_reg))
       | _ -> Sub (modify_variable s1 var_reg, s2) )
+  | CallDir (label, args) -> CallDir (label, modify_variable_list args var_reg)
   | _ -> exp
 
 let rec modify_t t var_reg =
