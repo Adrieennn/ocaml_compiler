@@ -23,6 +23,7 @@ type t =
   (* cf. BLE branch if less than or equal *)
   | IfLe of (Id.t * Id.t) * t * t
   | App of Id.t * Id.t list
+  | Tuple of Id.t list
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
@@ -179,6 +180,17 @@ and of_syntax exp_s =
                 build_lets_and_collect_arg_names tl)
       in
       build_lets_and_collect_arg_names args
+  | Syntax.Tuple elements ->
+      let l = ref [] in
+
+      let rec build_lets_and_collect_arg_names = function
+        | [] -> Tuple (List.rev !l)
+        | hd :: tl ->
+            add_let hd (fun x ->
+                l := x :: !l;
+                build_lets_and_collect_arg_names tl)
+      in
+      build_lets_and_collect_arg_names elements
   | e ->
       Printf.eprintf "%s not implemented\n" (Syntax.to_string e);
       exit 0
@@ -201,6 +213,7 @@ let rec to_string exp =
   | FMul (e1, e2) -> Printf.sprintf "(%s *. %s)" e1 e2
   | FDiv (e1, e2) -> Printf.sprintf "(%s /. %s)" e1 e2
   | Var id -> Id.to_string id
+  | Tuple l -> Printf.sprintf "(%s)" (infix_to_string Id.to_string l ", ")
   | App (e1, le2) ->
       Printf.sprintf "(%s %s)" (Id.to_string e1)
         (infix_to_string Id.to_string le2 " ")
