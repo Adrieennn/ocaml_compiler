@@ -4,6 +4,7 @@ type t =
   | Add of Id.t * Id.t
   | Sub of Id.t * Id.t
   | Let of (Id.t * Type.t) * t * t
+  | LetRec of fundef * t
   | Var of Id.t
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
@@ -52,6 +53,8 @@ let rec of_syntax exp_s =
       of_syntax (Syntax.Not (Syntax.Sub (e1, e2)))
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
+  | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
+      LetRec ({ name; args; body = of_syntax body }, of_syntax e)
   | Syntax.Var id -> Var id
   | e ->
       Printf.eprintf "%s not implemented\n" (Syntax.to_string e);
@@ -73,3 +76,9 @@ let rec to_string exp =
   | Let ((id, _t), e1, e2) ->
       Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1)
         (to_string e2)
+  | LetRec (fd, e) ->
+      Printf.sprintf "(let rec %s %s = %s in %s)"
+        (let x, _ = fd.name in
+         Id.to_string x)
+        (infix_to_string (fun (x, _) -> Id.to_string x) fd.args " ")
+        (to_string fd.body) (to_string e)
