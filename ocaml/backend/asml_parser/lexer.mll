@@ -13,6 +13,8 @@ rule token = parse
 | "(*"
     { comment lexbuf; 
       token lexbuf }
+| "()"
+    { NIL }
 | '('
     { LPAREN }
 | ')'
