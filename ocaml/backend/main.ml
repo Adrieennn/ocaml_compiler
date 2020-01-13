@@ -21,7 +21,7 @@ let () =
     (fun f -> ignore (file f))
     !files;;
   
-  let chann = open_in "test.asml" in
+  let chann = open_in "../../asml/call.asml" in
   (* empty program with empty main body *)
   let empty_prog = Program ( [], [], Ans Unit ) in
   (* Parsing the test ASML file chann *)

@@ -87,6 +87,13 @@ let rec modify_t fn_name t var_reg =
           modify_t fn_name t2 var_reg )
   | Ans e -> Ans (modify_exp fn_name e var_reg)
 
+let rec modify_fn_t fu var_reg =
+  { name = fu.name; args = fu.args; body = modify_t fu.name fu.body var_reg }
+
 let modify_program pg var_reg =
   match pg with
-  | Program (lfu, lfl, t) -> Program (lfu, lfl, modify_t "main" t var_reg)
+  | Program (lfl, lfu, t) ->
+      Program
+        ( lfl,
+          List.map (fun s -> modify_fn_t s var_reg) lfu,
+          modify_t "main" t var_reg )
