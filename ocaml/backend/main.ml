@@ -22,10 +22,16 @@ let () =
     !files;;
   
   let chann = open_in "test.asml" in
+  (* empty program with empty main body *)
   let empty_prog = Program ( [], [], Ans Unit ) in
+  (* Parsing the test ASML file chann *)
   let fundef_test = Parser.fundef Lexer.token (Lexing.from_channel chann) in
+  (* converting a fundef to a program *)
   let pg_test = fd_to_prog fundef_test empty_prog in
+  (* associating each variable in main body of program with an offset from the
+   * frame pointer *)
   let var_reg = Register.program_to_reg pg_test [] in
+  (* replace each variable by its fp offset in program *)
   let modified_pg_test = (Register.modify_program pg_test var_reg) in
   (* let pg_from_fd_test = prog_to_fd pg_test in *)
   List.iter (fun (s1, s2) -> Printf.printf "(%s, %d) " s1 s2) var_reg;

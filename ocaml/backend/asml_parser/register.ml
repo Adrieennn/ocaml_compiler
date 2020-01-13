@@ -9,8 +9,11 @@ let ref_counter x =
 let rec t_to_reg t var_reg count =
   match t with
   | Ans e -> var_reg
-  | Let ((variable, _), exp, t2) ->
-      t_to_reg t2 (var_reg @ [ (variable, count ()) ]) count
+  | Let ((variable, _), exp, t2) -> (
+      let matched_value = List.assoc_opt variable var_reg in
+      match matched_value with
+      | None -> t_to_reg t2 (var_reg @ [ (variable, count ()) ]) count
+      | Some a -> t_to_reg t2 var_reg count )
 
 let program_to_reg pg var_reg =
   let count = ref_counter 0 in
@@ -25,7 +28,10 @@ let program_to_reg pg var_reg =
       | _ -> [] )
 
 let modify_variable variable var_reg =
-  string_of_int (snd (List.find (fun s -> fst s = variable) var_reg))
+  match List.assoc_opt variable var_reg with
+  | Some a -> string_of_int a
+  | None ->
+      failwith ("Variable " ^ variable ^ " does not exist in association list.")
 
 (* String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s
  * = variable) var_reg)); "]"] *)
