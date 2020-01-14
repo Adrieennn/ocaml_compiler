@@ -91,6 +91,7 @@ let rec gen_equations env exp expected_type =
   | Syntax.Var id -> (
       match TypingEnvironment.find_opt id env with
       | None ->
+          (* TODO "external environment" *)
           Printf.eprintf "Variable %s has not been bound.\n" (Id.to_string id);
           exit 0
       | Some typ -> [ (typ, expected_type) ] )
