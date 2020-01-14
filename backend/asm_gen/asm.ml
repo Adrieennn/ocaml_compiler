@@ -7,8 +7,7 @@ let remove_label_undersc label = String.sub label 1 (String.length label - 1)
 let rec args_to_asm_pred args regnum =
   match args with
   | h :: r ->
-      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n"
-      ^ "push {r0}\n"
+      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n" ^ "push {r0}\n"
       ^ args_to_asm_pred r (regnum + 1)
   | [] -> ""
 
@@ -19,10 +18,10 @@ let rec args_to_asm args =
       (* "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n" *)
       ^ "push {r0}\n"
       ^ args_to_asm r
-  | [] -> "push {r11}\n"
+  | [] -> "add r13, r13, #-4\n" ^ "push {r11}\n"
 
 let reset_sp args =
-  let len = (List.length args + 1) * 4 in
+  let len = (List.length args + 2) * 4 in
   "add r13, r13, #" ^ string_of_int len ^ "\n"
 
 let exp_to_asm exp reg =
@@ -46,8 +45,7 @@ let exp_to_asm exp reg =
         String.length label > 9
         && String.equal (String.sub label 0 9) "_min_caml"
       then
-        args_to_asm_pred args 0 ^ "bl "
-        ^ remove_label_undersc label ^ "\n"
+        args_to_asm_pred args 0 ^ "bl " ^ remove_label_undersc label ^ "\n"
         ^ "push {r0}\n"
       else
         args_to_asm args ^ "mov r11, r13 @ move sp to fp\n" ^ "bl "
@@ -75,8 +73,8 @@ let rec lfu_to_asm_rec lfu reg =
       ^ remove_label_undersc fu.name
       ^ "\n"
       ^ remove_label_undersc fu.name
-      ^ ":\n" ^ t_to_asm_rec fu.body reg ^ "\n"
-      ^ "mov r15, r14 @reset pc to lr\n" ^ lfu_to_asm_rec r reg
+      ^ ":\n" ^ "str r14, [r11, #4]\n" ^ t_to_asm_rec fu.body reg ^ "\n"
+      ^ "ldr r15, [r11, #4] @reset pc to lr\n" ^ lfu_to_asm_rec r reg
   | [] -> ""
 
 let prog_to_asm prog reg =
