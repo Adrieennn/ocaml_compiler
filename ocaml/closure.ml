@@ -44,7 +44,7 @@ let rec convert (exp : Knorm.t) known_fun =
       | None -> failwith "not there yet" )
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
-      let fun_label = Id.genid () in
+      let fun_label = fun_id ^ Id.genid () in
       top_level :=
         {
           name = (fun_label, fun_typ);
