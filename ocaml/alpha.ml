@@ -67,4 +67,11 @@ let rec convert exp mapping =
                 (((fun_id, new_fun_id) :: new_arg_mappings) @ mapping);
           },
           convert let_body ((fun_id, new_fun_id) :: mapping) )
+  | Knorm.App (f, args) -> 
+  	  let new_args =
+        List.map (fun id -> (replace_name mapping id)) args
+      in
+      let new_f = replace_name mapping f in
+      App(new_f, new_args)
+
   | _ -> failwith "under construction"
