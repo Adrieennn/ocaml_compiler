@@ -1,7 +1,11 @@
 let find mapping var = List.assoc_opt var mapping
 
+(* TODO handle name clashes *)
 let replace_name mapping name =
   match find mapping name with None -> name | Some new_name -> new_name
+
+let new_name mapping name =
+  match find mapping name with None -> name | Some _ -> name ^ Id.genid ()
 
 let rec convert exp mapping =
   match exp with
@@ -45,9 +49,7 @@ let rec convert exp mapping =
   | Knorm.Var x -> Knorm.Var (replace_name mapping x)
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
-      let new_args =
-        List.map (fun (id, t) -> (replace_name mapping id, t)) args
-      in
+      let new_args = List.map (fun (id, t) -> (new_name mapping id, t)) args in
       let old_arg_names = List.map (fun (id, _t) -> id) args in
       let new_arg_names = List.map (fun (id, _t) -> id) new_args in
       let new_arg_mappings =
@@ -56,22 +58,19 @@ let rec convert exp mapping =
           old_arg_names new_arg_names
       in
 
-      let new_fun_id = replace_name mapping fun_id in
+      let new_fun_id = new_name mapping fun_id in
       let new_fun_name = (new_fun_id, fun_typ) in
+
+      let new_mapping = ((fun_id, new_fun_id) :: new_arg_mappings) @ mapping in
       Knorm.LetRec
         ( {
             name = new_fun_name;
             args = new_args;
-            body =
-              convert fun_body
-                (((fun_id, new_fun_id) :: new_arg_mappings) @ mapping);
+            body = convert fun_body new_mapping;
           },
-          convert let_body ((fun_id, new_fun_id) :: mapping) )
-  | Knorm.App (f, args) -> 
-  	  let new_args =
-        List.map (fun id -> (replace_name mapping id)) args
-      in
+          convert let_body new_mapping )
+  | Knorm.App (f, args) ->
+      let new_args = List.map (fun id -> replace_name mapping id) args in
       let new_f = replace_name mapping f in
-      App(new_f, new_args)
-
+      App (new_f, new_args)
   | _ -> failwith "under construction"
