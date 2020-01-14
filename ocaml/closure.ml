@@ -22,52 +22,58 @@ type t =
   (*| AppCls of (Id.t * Type.t) * (Id.t * Type.t) list*)
   | AppDir of Id.l * Id.t list
 
+type fundef = {
+  name : Id.l * Type.t;
+  args : (Id.t * Type.t) list;
+  formal_fv : (Id.t * Type.t) list;
+  body : t;
+}
 
-type fundef =
-  { name : Id.l * Type.t;
-    args : (Id.t * Type.t) list;
-    formal_fv : (Id.t * Type.t) list;
-    body : t }
-type prog =
-    Prog of fundef list * t
-
+type prog = Prog of fundef list * t
 
 let top_level = ref []
 
 let find set var = List.assoc_opt var set
 
-
 let rec convert (exp : Knorm.t) known_fun =
   match exp with
-| Knorm.App (f, args) -> 
-    let fun_label = find known_fun f in 
-      ( match fun_label with
-        | Some label -> AppDir(label,args)
-        | None -> failwith "not there yet" 
-      )
-| Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body) ->
-    let fun_label = Id.genid () in
-      top_level := {name = fun_label, fun_typ; args = args; formal_fv = []; body = (convert fun_body ((fun_id, fun_label) :: known_fun))} :: !top_level;
+  | Knorm.App (f, args) -> (
+      let fun_label = find known_fun f in
+      match fun_label with
+      | Some label -> AppDir (label, args)
+      | None -> failwith "not there yet" )
+  | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
+    ->
+      let fun_label = Id.genid () in
+      top_level :=
+        {
+          name = (fun_label, fun_typ);
+          args;
+          formal_fv = [];
+          body = convert fun_body ((fun_id, fun_label) :: known_fun);
+        }
+        :: !top_level;
       convert let_body ((fun_id, fun_label) :: known_fun)
-| Knorm.IfEq ((v1,v2),e1,e2) -> IfEq ((v1,v2), (convert e1 known_fun), (convert e2 known_fun))
-| Knorm.IfEq ((v1,v2),e1,e2) -> IfEq ((v1,v2), (convert e1 known_fun), (convert e2 known_fun))
-| Knorm.LetTuple (var, def, body) -> LetTuple(var, (convert def known_fun), (convert body known_fun))
-| Knorm.Unit -> Unit
-| Knorm.Int i -> Int i
-| Knorm.Float f -> Float f
-| Knorm.Add (v1,v2) -> Add (v1,v2)
-| Knorm.Sub (v1,v2) -> Sub (v1,v2)
-| Knorm.FAdd (v1,v2) -> FAdd (v1,v2)
-| Knorm.FSub (v1,v2) -> FSub (v1,v2)
-| Knorm.FMul (v1,v2) -> FMul (v1,v2)
-| Knorm.FDiv (v1,v2) -> FDiv (v1,v2)
-| Knorm.Let ((id, typ), def, body) -> Let((id, typ), (convert def known_fun), (convert body known_fun))
-| _ -> failwith "not there yet"
+  | Knorm.IfEq ((v1, v2), e1, e2) ->
+      IfEq ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+  | Knorm.IfEq ((v1, v2), e1, e2) ->
+      IfEq ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+  | Knorm.LetTuple (var, def, body) ->
+      LetTuple (var, convert def known_fun, convert body known_fun)
+  | Knorm.Unit -> Unit
+  | Knorm.Int i -> Int i
+  | Knorm.Float f -> Float f
+  | Knorm.Add (v1, v2) -> Add (v1, v2)
+  | Knorm.Sub (v1, v2) -> Sub (v1, v2)
+  | Knorm.FAdd (v1, v2) -> FAdd (v1, v2)
+  | Knorm.FSub (v1, v2) -> FSub (v1, v2)
+  | Knorm.FMul (v1, v2) -> FMul (v1, v2)
+  | Knorm.FDiv (v1, v2) -> FDiv (v1, v2)
+  | Knorm.Let ((id, typ), def, body) ->
+      Let ((id, typ), convert def known_fun, convert body known_fun)
+  | _ -> failwith "not there yet"
 
 let con exp = convert exp []
-
-
-
 
 let rec infix_to_string to_s l op =
   match l with
@@ -110,7 +116,3 @@ let rec to_string exp =
         (Id.to_string e3)
   | Array (e1, e2) ->
       Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
-
-
-
-
