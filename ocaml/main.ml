@@ -11,7 +11,7 @@ let file f =
     close_in inchan;
     raise e
 
-let print_knorm f =  (*print_reducedLet*)
+let print_after_closure_conversion f =  (*print_reducedLet*)
   let inchan = open_in f in
   try
     let knorm_ast (*reducedLet_ast*)=
@@ -59,4 +59,4 @@ let () =
   Arg.parse []
     (fun s -> files := !files @ [ s ])
     (Printf.sprintf "usage: %s filenames" Sys.argv.(0));
-  List.iter (fun f -> ignore (print_alpha_conversion f)) !files
+  List.iter (fun f -> ignore (print_after_closure_conversion f)) !files
