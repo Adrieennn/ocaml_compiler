@@ -32,8 +32,11 @@ type t =
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
 let rec add_let exp body =
-  let e_id = Id.genid () in
-  Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
+  match exp with
+  | Syntax.Var x -> body x
+  | _ ->
+    let e_id = Id.genid () in
+    Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
 
 and of_syntax exp_s =
   match exp_s with
@@ -173,9 +176,8 @@ and of_syntax exp_s =
                   IfEq ((e_id, e_true), of_syntax e2, of_syntax e3) ) ) )
   | Syntax.App (f, args) ->
       let l = ref [] in
-      let f_id = Id.genid () in
       let final_body () =
-        Let ((f_id, Type.Var (ref None)), of_syntax f, App (f_id, List.rev !l))
+        add_let f (fun f_id -> App(f_id, List.rev !l))
       in
 
       let rec build_lets_and_collect_arg_names = function
