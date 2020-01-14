@@ -4,6 +4,14 @@ open Register
 (* MISCELLANEOUS FUNCTION SHOULD BE MOVED SOMEWHERE ELSE *)
 let remove_label_undersc label = String.sub label 1 (String.length label - 1)
 
+let rec args_to_asm_pred args regnum =
+  match args with
+  | h :: r ->
+      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n"
+      ^ "push {r0}\n"
+      ^ args_to_asm_pred r (regnum + 1)
+  | [] -> ""
+
 let rec args_to_asm args =
   match args with
   | h :: r ->
@@ -34,11 +42,17 @@ let exp_to_asm exp reg =
       | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "sub r0, r4, r5\n" )
       ^ "push {r0}\n"
   | CallDir (label, args) ->
-      args_to_asm args ^ "mov r11, r13 @ move sp to fp\n" ^ "bl "
-      ^ remove_label_undersc label ^ "\n" ^ "mov r13, r11 @ move fp to sp\n"
-      ^ "ldr r11, [r11]\n"
-      ^ reset_sp args
-      ^ "push {r0}\n"
+      if
+        String.length label > 9
+        && String.equal (String.sub label 0 9) "_min_caml"
+      then
+        args_to_asm_pred args 0 ^ "bl "
+        ^ remove_label_undersc label ^ "\n"
+        ^ "push {r0}\n"
+      else
+        args_to_asm args ^ "mov r11, r13 @ move sp to fp\n" ^ "bl "
+        ^ remove_label_undersc label ^ "\n" ^ "mov r13, r11 @ move fp to sp\n"
+        ^ "ldr r11, [r11]\n" ^ reset_sp args ^ "push {r0}\n"
   | _ -> "@ IGNORED FOR NOW"
 
 let rec t_to_asm_rec body reg =
@@ -61,9 +75,8 @@ let rec lfu_to_asm_rec lfu reg =
       ^ remove_label_undersc fu.name
       ^ "\n"
       ^ remove_label_undersc fu.name
-      ^ ":\n" ^ t_to_asm_rec fu.body reg ^ "\n" 
-      ^ "mov r15, r14 @reset pc to lr\n"
-      ^ lfu_to_asm_rec r reg
+      ^ ":\n" ^ t_to_asm_rec fu.body reg ^ "\n"
+      ^ "mov r15, r14 @reset pc to lr\n" ^ lfu_to_asm_rec r reg
   | [] -> ""
 
 let prog_to_asm prog reg =
