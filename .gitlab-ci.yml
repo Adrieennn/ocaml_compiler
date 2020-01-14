@@ -8,6 +8,7 @@ build_backend:
   stage: build
   script:
     - make
+    - ./mincamlc asml/call.asml
 
 test_arm:
   stage: test
