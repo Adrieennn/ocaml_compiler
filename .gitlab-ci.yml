@@ -2,10 +2,16 @@ image: odclive/alpine_build_arm:latest
 
 stages:
   - build
+  - test
 
 build_backend:
   stage: build
   script:
-    - ls
     - make
-    - qemu-arm -h
+
+test_arm:
+  stage: test
+  script:
+    - cd ARM
+    - make
+    - make test
