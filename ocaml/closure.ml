@@ -71,6 +71,7 @@ let rec convert (exp : Knorm.t) known_fun =
   | Knorm.FDiv (v1, v2) -> FDiv (v1, v2)
   | Knorm.Let ((id, typ), def, body) ->
       Let ((id, typ), convert def known_fun, convert body known_fun)
+  | Knorm.Var x -> Var x
   | _ -> failwith "not there yet"
 
 let con exp = convert exp []
