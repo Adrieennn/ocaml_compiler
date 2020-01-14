@@ -29,9 +29,33 @@ let print_knorm f =  (*print_reducedLet*)
     close_in inchan;
     raise e
 
+let print_alpha_conversion f =
+  let inchan = open_in f in
+  try
+    let knorm_ast =
+      Lexing.from_channel inchan
+      |> Parser.exp Lexer.token
+      |> Knorm.of_syntax
+    in
+    print_string (Knorm.to_string knorm_ast);
+    print_newline ();
+    print_newline ();
+
+    Alpha.convert knorm_ast []
+    |> Knorm.to_string
+    |> print_string
+    ;
+
+    print_newline ();
+
+    close_in inchan
+  with e ->
+    close_in inchan;
+    raise e
+
 let () =
   let files = ref [] in
   Arg.parse []
     (fun s -> files := !files @ [ s ])
     (Printf.sprintf "usage: %s filenames" Sys.argv.(0));
-  List.iter (fun f -> ignore (print_knorm f)) !files  (*print_reducedLet*)
+  List.iter (fun f -> ignore (print_alpha_conversion f)) !files
