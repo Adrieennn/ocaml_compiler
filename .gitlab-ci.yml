@@ -8,9 +8,14 @@ build_backend:
   script:
     - make
     - ./mincamlc asml/call.asml
+  artifacts:
+
 
 test_arm:
   stage: backend
+  before_script:
+    - make
+    - ./mincamlc asml/call.asml
   script:
     - cd ARM
     - make
