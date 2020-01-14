@@ -56,8 +56,8 @@ let rec convert (exp : Knorm.t) known_fun =
       convert let_body ((fun_id, fun_label) :: known_fun)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
       IfEq ((v1, v2), convert e1 known_fun, convert e2 known_fun)
-  | Knorm.IfEq ((v1, v2), e1, e2) ->
-      IfEq ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+  | Knorm.IfLe ((v1, v2), e1, e2) ->
+      IfLe ((v1, v2), convert e1 known_fun, convert e2 known_fun)
   | Knorm.LetTuple (var, def, body) ->
       LetTuple (var, convert def known_fun, convert body known_fun)
   | Knorm.Unit -> Unit
