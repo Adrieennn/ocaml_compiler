@@ -21,7 +21,7 @@ let () =
     (fun f -> ignore (file f))
     !files;;
   
-  let chann = open_in "../../asml/call.asml" in
+  let chann = open_in "asml/call.asml" in
   (* empty program with empty main body *)
   let empty_prog = Program ( [], [], Ans Unit ) in
   (* Parsing the test ASML file chann *)
@@ -42,6 +42,6 @@ print_newline ();
 
 print_string (prog_to_asm modified_pg_test var_reg);
 
-let armfile = open_out "../../ARM/test.s" in
+let armfile = open_out "ARM/test.s" in
 output_string armfile (prog_to_asm modified_pg_test var_reg);
 close_out armfile;
