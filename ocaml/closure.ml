@@ -52,6 +52,16 @@ let rec convert (exp : Knorm.t) known_fun =
 | Knorm.IfEq ((v1,v2),e1,e2) -> IfEq ((v1,v2), (convert e1 known_fun), (convert e2 known_fun))
 | Knorm.IfEq ((v1,v2),e1,e2) -> IfEq ((v1,v2), (convert e1 known_fun), (convert e2 known_fun))
 | Knorm.LetTuple (var, def, body) -> LetTuple(var, (convert def known_fun), (convert body known_fun))
+| Knorm.Unit -> Unit
+| Knorm.Int i -> Int i
+| Knorm.Float f -> Float f
+| Knorm.Add (v1,v2) -> Add (v1,v2)
+| Knorm.Sub (v1,v2) -> Sub (v1,v2)
+| Knorm.FAdd (v1,v2) -> FAdd (v1,v2)
+| Knorm.FSub (v1,v2) -> FSub (v1,v2)
+| Knorm.FMul (v1,v2) -> FMul (v1,v2)
+| Knorm.FDiv (v1,v2) -> FDiv (v1,v2)
+| Knorm.Let ((id, typ), def, body) -> Let((id, typ), (convert def known_fun), (convert body known_fun))
 | _ -> failwith "not there yet"
 
 let con exp = convert exp []
