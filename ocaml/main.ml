@@ -18,9 +18,10 @@ let print_knorm f =  (*print_reducedLet*)
       Lexing.from_channel inchan
       |> Parser.exp Lexer.token
       |> Knorm.of_syntax
-      (*|> NestedLetReduction.red*)
+      |> NestedLetReduction.reduction
+      |> Closure.con
     in
-    print_string (Knorm.to_string knorm_ast); (*(NestedLetReduction.to_string reducedLet_ast);*)
+    print_string (Closure.to_string knorm_ast); (*(NestedLetReduction.to_string reducedLet_ast);*)
     print_newline ();
     print_newline ();
 
