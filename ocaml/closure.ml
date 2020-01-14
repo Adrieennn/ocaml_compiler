@@ -74,7 +74,7 @@ let rec convert (exp : Knorm.t) known_fun =
   | Knorm.Var x -> Var x
   | _ -> failwith "not there yet"
 
-let con exp = convert exp []
+let con exp = convert exp [ ("print_int", "min_caml_print_int") ]
 
 let rec infix_to_string to_s l op =
   match l with
