@@ -7,5 +7,5 @@ build_backend:
   stage: build
   script:
     - ls
-    - qemu-arm ARM/helloworld.arm
     - make
+    - qemu-arm -h
