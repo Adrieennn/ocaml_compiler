@@ -12,3 +12,9 @@ tools/   asml intepreter (linux binary)
 
 We recommend that you add scripts/ and the dir that contains mincamlc to your
 PATH.
+
+Specifications of the project
+
+User-defined functions should not start with "_min_caml_" AND expect more
+than 4 arguments. But of course, you can define any other function with
+any number of arguments.
