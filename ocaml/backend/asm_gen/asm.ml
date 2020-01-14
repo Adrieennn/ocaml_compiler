@@ -14,7 +14,7 @@ let rec args_to_asm args =
   | [] -> "push {r11}\n"
 
 let reset_sp args =
-  let len = List.length args * 4 in
+  let len = (List.length args + 1) * 4 in
   "add r13, r13, #" ^ string_of_int len ^ "\n"
 
 let exp_to_asm exp reg =
@@ -23,19 +23,20 @@ let exp_to_asm exp reg =
       ( "ldr r4, [r11, #" ^ x ^ "]\n"
       ^
       match y with
-      | Int i -> "add r4, r4, #" ^ string_of_int i ^ "\n"
-      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "add r4, r4, r5\n" )
-      ^ "push {r4}\n"
+      | Int i -> "add r0, r4, #" ^ string_of_int i ^ "\n"
+      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "add r0, r4, r5\n" )
+      ^ "push {r0}\n"
   | Sub (x, y) ->
       ( "ldr r4, [r11, #" ^ x ^ "]\n"
       ^
       match y with
-      | Int i -> "sub r4, r4, #" ^ string_of_int i ^ "\n"
-      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "sub r4, r4, r5\n" )
-      ^ "push {r4}\n"
+      | Int i -> "sub r0, r4, #" ^ string_of_int i ^ "\n"
+      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "sub r0, r4, r5\n" )
+      ^ "push {r0}\n"
   | CallDir (label, args) ->
       args_to_asm args ^ "mov r11, r13 @ move sp to fp\n" ^ "bl "
       ^ remove_label_undersc label ^ "\n" ^ "mov r13, r11 @ move fp to sp\n"
+      ^ "ldr r11, [r11]\n"
       ^ reset_sp args
       ^ "push {r0}\n"
   | _ -> "@ IGNORED FOR NOW"
@@ -60,7 +61,9 @@ let rec lfu_to_asm_rec lfu reg =
       ^ remove_label_undersc fu.name
       ^ "\n"
       ^ remove_label_undersc fu.name
-      ^ ":\n" ^ t_to_asm_rec fu.body reg ^ "\n" ^ lfu_to_asm_rec r reg
+      ^ ":\n" ^ t_to_asm_rec fu.body reg ^ "\n" 
+      ^ "mov r15, r14 @reset pc to lr\n"
+      ^ lfu_to_asm_rec r reg
   | [] -> ""
 
 let prog_to_asm prog reg =
