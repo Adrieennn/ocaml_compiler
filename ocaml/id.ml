@@ -1,4 +1,5 @@
 type t = string
+type l = string
 
 let to_string x = x
 
