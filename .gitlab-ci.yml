@@ -1,0 +1,10 @@
+image: odclive/alpine_build_arm:latest
+
+stages:
+  - build
+
+build_backend:
+  stage: build
+  script:
+    - echo "Hello world"
+    - ls
