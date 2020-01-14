@@ -6,5 +6,5 @@ stages:
 build_backend:
   stage: build
   script:
-    - echo "Hello world"
+    - make
     - ls
