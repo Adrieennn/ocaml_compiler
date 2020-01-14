@@ -6,6 +6,6 @@ stages:
 build_backend:
   stage: build
   script:
+    - ls
     - qemu-arm ARM/helloworld.arm
     - make
-    - ls
