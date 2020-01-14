@@ -82,7 +82,7 @@ let rec infix_to_string to_s l op =
   | [ x ] -> to_s x
   | hd :: tl -> to_s hd ^ op ^ infix_to_string to_s tl op
 
-let rec to_string exp =
+let rec to_string' exp =
   match exp with
   | Unit -> "()"
   | Int i -> string_of_int i
@@ -99,21 +99,30 @@ let rec to_string exp =
       Printf.sprintf "(%s %s)" (Id.to_string e1)
         (infix_to_string Id.to_string le2 " ")
   | Let ((id, _t), e1, e2) ->
-      Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1)
-        (to_string e2)
+      Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string' e1)
+        (to_string' e2)
   | LetTuple (l, e1, e2) ->
       Printf.sprintf "(let (%s) = %s in %s)"
         (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
-        (to_string e1) (to_string e2)
+        (to_string' e1) (to_string' e2)
   | IfEq ((id1, id2), e1, e2) ->
       Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
-        (Id.to_string id2) (to_string e1) (to_string e2)
+        (Id.to_string id2) (to_string' e1) (to_string' e2)
   | IfLe ((id1, id2), e1, e2) ->
       Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
-        (Id.to_string id2) (to_string e1) (to_string e2)
+        (Id.to_string id2) (to_string' e1) (to_string' e2)
   | Get (e1, e2) -> Printf.sprintf "%s.(%s)" (Id.to_string e1) (Id.to_string e2)
   | Put (e1, e2, e3) ->
       Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
         (Id.to_string e3)
   | Array (e1, e2) ->
       Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
+
+let rec to_string exp =
+  let fun_labels =
+    List.map
+      (fun { name = fun_label, _; _ } -> Printf.sprintf "%s" fun_label)
+      !top_level
+  in
+  let fun_labels_string = String.concat "\n" fun_labels in
+  Printf.sprintf "Function labels:\n" ^ fun_labels_string ^ "\n" ^ to_string' exp
