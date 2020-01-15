@@ -33,6 +33,43 @@ type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
 type prog = Program of (Id.t * float) list * fu list * t
 
+let rec closure_to_t = function
+  | Closure.Let ((id, typ), def, body) ->
+      Let ((id, typ), closure_to_exp def, closure_to_t body)
+  | exp -> Ans (closure_to_exp exp)
+
+and closure_to_exp = function
+  | Closure.Unit -> Unit
+  | Closure.Int i -> Int i
+  | Closure.Add (id1, id2) -> Add (id1, Var id2)
+  | Closure.Sub (id1, id2) -> Sub (id1, Var id2)
+  | Closure.FAdd (id1, id2) -> FAdd (id1, id2)
+  | Closure.FSub (id1, id2) -> FSub (id1, id2)
+  | Closure.FMul (id1, id2) -> FMul (id1, id2)
+  | Closure.FDiv (id1, id2) -> FDiv (id1, id2)
+  | Closure.Var id -> Var id
+  | Closure.IfEq ((id1, id2), e1, e2) ->
+      IfEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
+  | Closure.IfLe ((id1, id2), e1, e2) ->
+      IfLEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
+  | Closure.Let (_, _, _) ->
+      failwith "Closure.Let cannot be translated to Asml.exp"
+  | Closure.AppDir (fun_id, arg_ids) -> CallDir (fun_id, arg_ids)
+  | e ->
+      Printf.eprintf
+        "Conversion from Closure's %s to Asml.exp not yet implemented\n"
+        (Closure.to_string' e);
+      exit 0
+
+let fundef_of_closure_fundef fd =
+  let { Closure.name = id, _typ; args; formal_fv = _; body } = fd in
+  let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
+  { name = id; args = arg_names; body = closure_to_t body }
+
+let of_closure_prog prog =
+  let (Closure.Prog (fundefs, main_body)) = prog in
+  Program ([], List.map fundef_of_closure_fundef fundefs, closure_to_t main_body)
+
 let rec infix_to_string (to_s : 'a -> string) (l : 'a list) (op : string) :
     string =
   match l with
