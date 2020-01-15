@@ -47,10 +47,6 @@ rule token = parse
     { IN }
 | '.'
     { DOT }
-| "neg"
-    { NEG }
-| "fneg"
-    { FNEG }
 | "mem"
     { MEM }
 | "fmul"
