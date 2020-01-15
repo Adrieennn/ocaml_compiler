@@ -11,16 +11,17 @@ let file f =
     close_in inchan;
     raise e
 
-let print_knorm f =  (*print_reducedLet*)
+let print_after_closure_conversion f =  (*print_reducedLet*)
   let inchan = open_in f in
   try
     let knorm_ast (*reducedLet_ast*)=
       Lexing.from_channel inchan
       |> Parser.exp Lexer.token
       |> Knorm.of_syntax
-      (*|> NestedLetReduction.red*)
+      |> NestedLetReduction.reduction
+      |> Closure.con
     in
-    print_string (Knorm.to_string knorm_ast); (*(NestedLetReduction.to_string reducedLet_ast);*)
+    print_string (Closure.to_string knorm_ast); (*(NestedLetReduction.to_string reducedLet_ast);*)
     print_newline ();
     print_newline ();
 
@@ -58,4 +59,4 @@ let () =
   Arg.parse []
     (fun s -> files := !files @ [ s ])
     (Printf.sprintf "usage: %s filenames" Sys.argv.(0));
-  List.iter (fun f -> ignore (print_alpha_conversion f)) !files
+  List.iter (fun f -> ignore (print_after_closure_conversion f)) !files
