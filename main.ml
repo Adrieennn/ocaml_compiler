@@ -57,7 +57,7 @@ let () =
   List.iter (fun f -> ignore (file f)) !files
 
 ;;
-let chann = open_in "asml/call.asml" in
+let chann = open_in "asml/if_then_else.asml" in
 (* empty program with empty main body *)
 let empty_prog = Asml.Program ([], [], Ans Unit) in
 (* Parsing the test ASML file chann *)

@@ -36,9 +36,7 @@ and t_to_reg fn_name t var_reg count =
       match matched_value with
       | None ->
           t_to_reg fn_name t2
-            ( var_reg
-            @ [ (fn_name ^ "." ^ variable, count Decr) ]
-            @ var_reg_exp )
+            (var_reg @ [ (fn_name ^ "." ^ variable, count Decr) ] @ var_reg_exp)
             count
       | Some a -> t_to_reg fn_name t2 var_reg count @ var_reg_exp )
 
@@ -82,7 +80,7 @@ let rec modify_variable_list fn_name variable_list var_reg =
 (* String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s
  * = variable) var_reg)); "]"] *)
 
-let modify_exp fn_name exp var_reg =
+let rec modify_exp fn_name exp var_reg =
   match exp with
   | Add (s1, s2) -> (
       match s2 with
@@ -100,9 +98,17 @@ let modify_exp fn_name exp var_reg =
       | _ -> Sub (modify_variable fn_name s1 var_reg, s2) )
   | CallDir (label, args) ->
       CallDir (label, modify_variable_list fn_name args var_reg)
+  | IfEq (s1, s2, t1, t2) -> (
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      match s2 with
+      | Int i -> IfEq (mod_s1, s2, mod_t1, mod_t2)
+      | Var v -> IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
+      )
   | _ -> exp
 
-let rec modify_t fn_name t var_reg =
+and modify_t fn_name t var_reg =
   match t with
   | Let ((variable, typ), exp, t2) ->
       Let
