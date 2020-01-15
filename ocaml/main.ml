@@ -1,62 +1,44 @@
-let print_ast l =
-  print_string (Syntax.to_string ((*Knorm.of_syntax*) Parser.exp Lexer.token l));
+let read_ast_from_file f =
+  let inchan = open_in f in
+  try Lexing.from_channel inchan |> Parser.exp Lexer.token
+  with e ->
+    close_in inchan;
+    raise e
+
+let print_transformations f =
+  let ast_syntax = read_ast_from_file f in
+  Printf.printf "AST read from file %s: \n" f;
+  Syntax.to_string ast_syntax |> print_string;
+  print_newline ();
+  print_newline ();
+
+  let ast_knorm = Knorm.of_syntax ast_syntax in
+  Printf.printf "AST after k-normalization:\n";
+  Knorm.to_string ast_knorm |> print_string;
+  print_newline ();
+  print_newline ();
+
+  let ast_alpha = Alpha.convert ast_knorm [] in
+  Printf.printf "AST after alpha-conversion:\n";
+  Knorm.to_string ast_alpha |> print_string;
+  print_newline ();
+  print_newline ();
+
+  let ast_nested_let = NestedLetReduction.reduction ast_alpha in
+  Printf.printf "AST after let-reduction:\n";
+  Knorm.to_string ast_nested_let |> print_string;
+  print_newline ();
+  print_newline ();
+
+  let ast_closure = Closure.con ast_nested_let in
+  Printf.printf "AST after closure conversion:\n";
+  Closure.to_string ast_closure |> print_string;
+  print_newline ();
   print_newline ()
-
-let file f =
-  let inchan = open_in f in
-  try
-    print_ast (Lexing.from_channel inchan);
-    close_in inchan
-  with e ->
-    close_in inchan;
-    raise e
-
-let print_after_closure_conversion f =  (*print_reducedLet*)
-  let inchan = open_in f in
-  try
-    let knorm_ast (*reducedLet_ast*)=
-      Lexing.from_channel inchan
-      |> Parser.exp Lexer.token
-      |> Knorm.of_syntax
-      |> NestedLetReduction.reduction
-      |> Closure.con
-    in
-    print_string (Closure.to_string knorm_ast); (*(NestedLetReduction.to_string reducedLet_ast);*)
-    print_newline ();
-    print_newline ();
-
-    close_in inchan
-  with e ->
-    close_in inchan;
-    raise e
-
-let print_alpha_conversion f =
-  let inchan = open_in f in
-  try
-    let knorm_ast =
-      Lexing.from_channel inchan
-      |> Parser.exp Lexer.token
-      |> Knorm.of_syntax
-    in
-    print_string (Knorm.to_string knorm_ast);
-    print_newline ();
-    print_newline ();
-
-    Alpha.convert knorm_ast []
-    |> Knorm.to_string
-    |> print_string
-    ;
-
-    print_newline ();
-
-    close_in inchan
-  with e ->
-    close_in inchan;
-    raise e
 
 let () =
   let files = ref [] in
   Arg.parse []
     (fun s -> files := !files @ [ s ])
     (Printf.sprintf "usage: %s filenames" Sys.argv.(0));
-  List.iter (fun f -> ignore (print_after_closure_conversion f)) !files
+  List.iter (fun f -> print_transformations f) !files
