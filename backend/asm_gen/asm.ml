@@ -30,14 +30,12 @@ let exp_to_asm exp reg =
       match y with
       | Int i -> "add r0, r4, #" ^ string_of_int i ^ "\n"
       | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "add r0, r4, r5\n" )
-      ^ "push {r0}\n"
   | Sub (x, y) ->
       ( "ldr r4, [r11, #" ^ x ^ "]\n"
       ^
       match y with
       | Int i -> "sub r0, r4, #" ^ string_of_int i ^ "\n"
       | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "sub r0, r4, r5\n" )
-      ^ "push {r0}\n"
   | CallDir (label, args) ->
       if
         String.length label > 9
@@ -45,12 +43,12 @@ let exp_to_asm exp reg =
       then
         args_to_asm_pred args 0 ^ "bl "
         ^ Id.remove_label_undersc label
-        ^ "\n" ^ "push {r0}\n"
+        ^ "\n"
       else
         args_to_asm args ^ "mov r11, r13 @ move sp to fp\n" ^ "bl "
         ^ Id.remove_label_undersc label
         ^ "\n" ^ "mov r13, r11 @ move fp to sp\n" ^ "ldr r11, [r11]\n"
-        ^ reset_sp args ^ "push {r0}\n"
+        ^ reset_sp args
   | _ -> "@ IGNORED FOR NOW"
 
 (* t_to_asm: transform let and exp to assembly *)
@@ -58,12 +56,12 @@ let rec t_to_asm body reg =
   match body with
   | Let ((id, _), e, t) ->
       ( match e with
-      | Int i -> "mov r4, #" ^ string_of_int i ^ "\n push {r4}\n"
+      | Int i -> "mov r0, #" ^ string_of_int i ^ "\n"
       | Var a -> {|
-        "ldr r4, [r11, #" ^ a ^ "]\n push {r4}\n"
+        "ldr r0, [r11, #" ^ a ^ "]\n"
       |}
       | _ -> exp_to_asm e reg )
-      ^ t_to_asm t reg
+      ^ "push {r0}\n" ^ t_to_asm t reg ^ "add r13, r13, #4\n"
   | Ans exp -> exp_to_asm exp reg
 
 (* lfu_to_asm: for each function definition, generate assembly code *)
