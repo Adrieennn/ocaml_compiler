@@ -1,5 +1,5 @@
 {
-open Parser
+open AsmlParser
 }
 
 let space = [' ' '\t' '\n' '\r']
