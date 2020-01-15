@@ -76,6 +76,13 @@ let rec convert (exp : Knorm.t) known_fun =
 
 let con exp = convert exp [ ("print_int", "min_caml_print_int") ]
 
+let rec prog_of_knorm exp =
+  (* If compiling multiple files, clean up previous fundefs *)
+  top_level := [];
+
+  let main_body = convert exp [ ("print_int", "min_caml_print_int") ] in
+  Prog (!top_level, main_body)
+
 let rec infix_to_string to_s l op =
   match l with
   | [] -> ""
@@ -118,11 +125,14 @@ let rec to_string' exp =
   | Array (e1, e2) ->
       Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
 
-let rec to_string exp =
+let prog_to_string prog =
+  let (Prog (fundefs, main_body)) = prog in
+
   let fun_labels =
     List.map
       (fun { name = fun_label, _; _ } -> Printf.sprintf "%s" fun_label)
-      !top_level
+      fundefs
   in
   let fun_labels_string = String.concat "\n" fun_labels in
-  Printf.sprintf "Function labels:\n" ^ fun_labels_string ^ "\n" ^ to_string' exp
+  Printf.sprintf "Function labels:\n"
+  ^ fun_labels_string ^ "\n" ^ to_string' main_body
