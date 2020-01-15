@@ -49,6 +49,12 @@ let exp_to_asm exp reg =
         ^ Id.remove_label_undersc label
         ^ "\n" ^ "mov r13, r11 @ move fp to sp\n" ^ "ldr r11, [r11]\n"
         ^ reset_sp args
+  | IfEq (s1, s2, t1, t2) ->
+    "ldr r4, [r11, #" ^ s1 ^ "]\n"
+    ^
+    (match s2 with
+    | Int i -> "mov r5, #" ^ string_of_int i ^ "\n"
+    | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n")
   | _ -> "@ IGNORED FOR NOW"
 
 (* t_to_asm: transform let and exp to assembly *)
