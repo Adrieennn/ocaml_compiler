@@ -1,10 +1,8 @@
-Organization of the archive
+Organization of the project
 
 ARM/     arm source example and compilation with libmincaml   
 asml/    asml examples
 doc/     all the documentation, start with index.hml
-java/    MinCaml parser in Java + examples of tree traversal algo, if you do 
-         the project in java  
 mincaml/ MinCaml examples
 ocaml/   MinCaml parser in OCaml, if you do the project in OCaml
 scripts/ put your test scripts and symbolic links there, and add this 
@@ -14,3 +12,9 @@ tools/   asml intepreter (linux binary)
 
 We recommend that you add scripts/ and the dir that contains mincamlc to your
 PATH.
+
+Specifications of the project
+
+User-defined functions should not start with "_min_caml_" AND expect more
+than 4 arguments. But of course, you can define any other function with
+any number of arguments.
