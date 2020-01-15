@@ -82,6 +82,7 @@ let rec modify_variable_list fn_name variable_list var_reg =
 
 let rec modify_exp fn_name exp var_reg =
   match exp with
+  | Var v -> Var (modify_variable fn_name v var_reg)
   | Add (s1, s2) -> (
       match s2 with
       | Var v ->
