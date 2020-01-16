@@ -11,7 +11,6 @@ let addtyp x = (x, Type.gentyp ())
 %token FEQUAL
 %token LE
 %token FLE
-%token GE
 %token IF
 %token THEN
 %token ELSE
@@ -107,9 +106,6 @@ exp: /* expressions */
 | IF IDENT LE ident_or_imm THEN asmt ELSE asmt
     %prec prec_if
     { IfLEq($2, $4, $6, $8) }
-| IF IDENT GE ident_or_imm THEN asmt ELSE asmt
-    %prec prec_if
-    { IfGEq($2, $4, $6, $8) }
 | IF IDENT FEQUAL ident_or_imm THEN asmt ELSE asmt
     %prec prec_if
     { IfFEq($2, $4, $6, $8) }
