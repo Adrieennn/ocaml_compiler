@@ -68,7 +68,7 @@ let rec convert exp mapping =
             args = new_args;
             body = convert fun_body new_mapping;
           },
-          convert let_body new_mapping )
+          convert let_body ((fun_id, new_fun_id) :: mapping) )
   | Knorm.App (f, args) ->
       let new_args = List.map (fun id -> replace_name mapping id) args in
       let new_f = replace_name mapping f in

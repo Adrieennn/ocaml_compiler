@@ -1,28 +1,44 @@
 open Asml
 
+type counttype = Decr | Peak
+
 let ref_counter x =
   let counter = ref x in
-  fun () ->
-    counter := !counter - 4;
-    !counter
+  fun a ->
+    match a with
+    | Decr ->
+        counter := !counter - 4;
+        !counter
+    | Peak -> !counter
 
+(*
 let ref_counter_pos x =
   let counter = ref x in
   fun () ->
     counter := !counter + 4;
     !counter
+    *)
 
-let rec t_to_reg fn_name t var_reg count =
+let rec exp_to_reg exp fn_name count =
+  match exp with
+  | IfEq (_, _, t1, t2) ->
+      let count1 = ref_counter (count Peak) in
+      let count2 = ref_counter (count Peak) in
+      t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
+  | _ -> []
+
+and t_to_reg fn_name t var_reg count =
   match t with
-  | Ans e -> var_reg
+  | Ans e -> var_reg @ exp_to_reg e fn_name count
   | Let ((variable, _), exp, t2) -> (
+      let var_reg_exp = exp_to_reg exp fn_name count in
       let matched_value = List.assoc_opt (fn_name ^ "." ^ variable) var_reg in
       match matched_value with
       | None ->
           t_to_reg fn_name t2
-            (var_reg @ [ (fn_name ^ "." ^ variable, count ()) ])
+            (var_reg @ [ (fn_name ^ "." ^ variable, count Decr) ] @ var_reg_exp)
             count
-      | Some a -> t_to_reg fn_name t2 var_reg count )
+      | Some a -> t_to_reg fn_name t2 var_reg count @ var_reg_exp )
 
 let rec lfu_to_reg_rec lfu =
   match lfu with
@@ -64,8 +80,9 @@ let rec modify_variable_list fn_name variable_list var_reg =
 (* String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s
  * = variable) var_reg)); "]"] *)
 
-let modify_exp fn_name exp var_reg =
+let rec modify_exp fn_name exp var_reg =
   match exp with
+  | Var v -> Var (modify_variable fn_name v var_reg)
   | Add (s1, s2) -> (
       match s2 with
       | Var v ->
@@ -82,9 +99,17 @@ let modify_exp fn_name exp var_reg =
       | _ -> Sub (modify_variable fn_name s1 var_reg, s2) )
   | CallDir (label, args) ->
       CallDir (label, modify_variable_list fn_name args var_reg)
+  | IfEq (s1, s2, t1, t2) -> (
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      match s2 with
+      | Int i -> IfEq (mod_s1, s2, mod_t1, mod_t2)
+      | Var v -> IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
+      )
   | _ -> exp
 
-let rec modify_t fn_name t var_reg =
+and modify_t fn_name t var_reg =
   match t with
   | Let ((variable, typ), exp, t2) ->
       Let
@@ -97,7 +122,7 @@ let rec modify_args_reg fn_name args var_reg count =
   match args with
   | var :: rest ->
       modify_args_reg fn_name rest
-        (var_reg @ [ (fn_name ^ "." ^ var, count ()) ])
+        (var_reg @ [ (fn_name ^ "." ^ var, count Decr) ])
         count
   | [] -> var_reg
 
