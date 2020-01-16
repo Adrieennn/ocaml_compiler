@@ -21,7 +21,6 @@ and exp =
   | FDiv of Id.t * Id.t
   | IfEq of Id.t * id_or_imm * t * t
   | IfFEq of Id.t * id_or_imm * t * t
-  | IfGEq of Id.t * id_or_imm * t * t
   | IfLEq of Id.t * id_or_imm * t * t
   | IfFLEq of Id.t * id_or_imm * t * t
   | CallCls of Id.t * Id.t list
@@ -59,7 +58,7 @@ and closure_to_exp = function
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
         (Closure.to_string' e);
-      exit 0
+      exit 1
 
 let fundef_of_closure_fundef fd =
   let { Closure.name = id, _typ; args; formal_fv = _; body } = fd in
@@ -100,9 +99,6 @@ let rec to_string exp =
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfFEq (e1, e2, e3, e4) ->
       sprintf "(if %s = %s then %s else %s)" (Id.to_string e1)
-        (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
-  | IfGEq (e1, e2, e3, e4) ->
-      sprintf "(if %s >= %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfLEq (e1, e2, e3, e4) ->
       sprintf "(if %s <= %s then %s else %s)" (Id.to_string e1)

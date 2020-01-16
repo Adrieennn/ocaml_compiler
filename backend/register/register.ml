@@ -144,7 +144,6 @@ let rec modify_fn_t fu var_reg =
   let len = List.length fu.args in
   let newcount = ref_counter ((len + 2) * 4) in
   let args_reg = modify_args_reg fu.name fu.args [] newcount in
-  List.iter (fun (s1, s2) -> Printf.printf "(%s, %d)" s1 s2) args_reg;
   {
     name = fu.name;
     args = fu.args;
