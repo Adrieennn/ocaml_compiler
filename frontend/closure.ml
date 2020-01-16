@@ -76,7 +76,6 @@ let rec convert (exp : Knorm.t) known_fun =
   | Knorm.Tuple _ -> failwith "Closure conversion of Knorm Tuple is not implemented"
   | Knorm.Get _ -> failwith "Closure conversion of Knorm Get is not implemented"
   | Knorm.Put _ -> failwith "Closure conversion of Knorm Put is not implemented"
-  | _ -> failwith "not there yet"
 
 let con exp = convert exp [ ("print_int", "min_caml_print_int") ]
 
