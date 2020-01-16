@@ -36,14 +36,21 @@ let print_transformations f =
   print_newline ();
   print_newline ();
 
+  (*
   let asml_prog = Asml.of_closure_prog closure_prog in
   let var_reg = Register.program_to_reg asml_prog [] in
   let modified_pg_test = Register.modify_program asml_prog var_reg in
   print_string (Asml.to_string_f (Asml.prog_to_fd modified_pg_test));
   print_newline ()
 
+
 let print_ast l =
   print_string (Asml.to_string_f (AsmlParser.fundef AsmlLexer.token l));
+  print_newline ()
+*)
+
+let print_ast l =
+  print_string (Closure.prog_to_string (Parser.exp Lexer.token l));
   print_newline ()
 
 let file f =

@@ -85,7 +85,7 @@ let rec convert exp mapping =
       let new_tups = List.map (fun tup -> (replace_name mapping tup)) tups in
       Knorm.Tuple(new_tups)
   | Knorm.LetTuple (vars, def, body) ->
-      let new_vars = List.map (fun (id, t) -> (new_name mapping id, t)) args in
+      let new_vars = List.map (fun (id, t) -> (new_name mapping id, t)) vars in
       let old_vars_names = List.map (fun (id, _t) -> id) vars in
       let new_vars_names = List.map (fun (id, _t) -> id) new_vars in
       let new_vars_mappings =
@@ -93,7 +93,7 @@ let rec convert exp mapping =
           (fun old_id new_id -> (old_id, new_id))
           old_vars_names new_vars_names
       in
-      Knorm.LetTuple (vars = new_vars, def = convert def new_vars_mappings, body = convert body new_vars_mappings)
+      Knorm.LetTuple (new_vars, convert def new_vars_mappings, convert body new_vars_mappings)
   | Knorm.Array (v1,v2) ->
       let c_v1 = replace_name mapping v1 in  (*Not sure *)
       let c_v2 = replace_name mapping v2 in
