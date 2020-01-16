@@ -1,4 +1,5 @@
 PROG=mincamlc
+ASML=-asml
 
 all:
 	ocamlbuild -lib unix main.byte
@@ -7,7 +8,10 @@ all:
 test: all test_typechecking
 
 test_typechecking: all
-	PROG=$(PROG) ./tests/typechecking/suit.sh
+	PROG=$(PROG) ./tests/typechecking/suite.sh
+
+test_asml_gen: all
+	PROG="$(PROG) $(ASML)" ./tests/asml_gen/suite.sh
 
 clean:
 	rm -rf _build

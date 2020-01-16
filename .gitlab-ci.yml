@@ -13,3 +13,8 @@ typechecking:
   stage: tests
   script:
     - make test_typechecking
+
+asml_gen:
+  stage: tests
+  script:
+    - make test_asml_gen
