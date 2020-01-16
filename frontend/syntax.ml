@@ -78,8 +78,8 @@ let rec to_string exp =
             failwith
               "Types were not substituted before calling Syntax.to_string"
         | t ->
-            Printf.eprintf "Expected function received %s" (Type.to_string t);
-            exit 0
+            Printf.eprintf "Expected function, received %s" (Type.to_string t);
+            exit 1
       in
       (* Lack of space between %s%s for arguments/return type is intentional.
        * This way the ast prints pretty both when the type variable has been

@@ -74,17 +74,36 @@ let rec convert exp mapping =
       let new_f = replace_name mapping f in
       Knorm.App (new_f, new_args)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
-      Knorm.IfEq
-        ( (replace_name mapping v1, replace_name mapping v2),
-          convert e1 mapping,
-          convert e2 mapping )
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      Knorm.IfEq ((c_v1, c_v2), convert e1 mapping, convert e2 mapping)
   | Knorm.IfLe ((v1, v2), e1, e2) ->
-      Knorm.IfLe
-        ( (replace_name mapping v1, replace_name mapping v2),
-          convert e1 mapping,
-          convert e2 mapping )
-  | Knorm.Tuple _ -> failwith "Alpha conversion of Knorm.Tuple is not implemented"
-  | Knorm.LetTuple _ -> failwith "Alpha conversion of Knorm.LetTuple is not implemented"
-  | Knorm.Array _ -> failwith "Alpha conversion of Knorm.Array is not implemented"
-  | Knorm.Get _ -> failwith "Alpha conversion of Knorm.Get is not implemented"
-  | Knorm.Put _ -> failwith "Alpha conversion of Knorm.Put is not implemented"
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      Knorm.IfLe ((c_v1, c_v2), convert e1 mapping, convert e2 mapping)
+  | Knorm.Tuple(tups) ->
+      let new_tups = List.map (fun tup -> (replace_name mapping tup)) tups in
+      Knorm.Tuple(new_tups)
+  | Knorm.LetTuple (vars, def, body) ->
+      let new_vars = List.map (fun (id, t) -> (new_name mapping id, t)) vars in
+      let old_vars_names = List.map (fun (id, _t) -> id) vars in
+      let new_vars_names = List.map (fun (id, _t) -> id) new_vars in
+      let new_vars_mappings =
+        List.map2
+          (fun old_id new_id -> (old_id, new_id))
+          old_vars_names new_vars_names
+      in
+      Knorm.LetTuple (new_vars, convert def mapping, convert body (new_vars_mappings @ mapping))
+  | Knorm.Array (v1,v2) ->
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      Knorm.Array (c_v1, c_v2)
+  | Knorm.Get (v1,v2) ->
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      Knorm.Get (c_v1, c_v2)
+  | Knorm.Put (v1,v2,v3) ->
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      let c_v3 = replace_name mapping v3 in
+      Knorm.Put (c_v1, c_v2, c_v3)
