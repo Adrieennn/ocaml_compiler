@@ -83,9 +83,9 @@ let chann_to_asm chann =
   print_string (Asml.to_string_f (Asml.prog_to_fd modified_pg_test));
   print_newline ();
   *)
-  print_string (Asm.prog_to_asm modified_pg_test var_reg);
+  print_string (Asm.prog_to_asm modified_pg_test);
   let armfile = open_out !output_file in
-  output_string armfile (Asm.prog_to_asm modified_pg_test var_reg);
+  output_string armfile (Asm.prog_to_asm modified_pg_test);
   close_out armfile
 
 let file f =

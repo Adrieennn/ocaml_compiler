@@ -30,7 +30,7 @@ let reset_sp args =
   "add r13, r13, #" ^ string_of_int len ^ "\n"
 
 (* exp_to_asm: match exp with corresponding assembly operations *)
-let rec exp_to_asm exp reg =
+let rec exp_to_asm exp =
   match exp with
   | Add (x, y) -> (
       "ldr r4, [r11, #" ^ x ^ "]\n"
@@ -63,13 +63,13 @@ let rec exp_to_asm exp reg =
       | Int i -> "mov r5, #" ^ string_of_int i ^ "\n"
       | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n" )
       ^ "cmp r4, r5\n" ^ "beq ltrue" ^ label_index ^ "\n" ^ "b lfalse"
-      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 reg
+      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
       ^ "b lnext" ^ label_index ^ "\n" ^ "lfalse" ^ label_index ^ ":\n"
-      ^ t_to_asm t2 reg ^ "lnext" ^ label_index ^ ":\n"
+      ^ t_to_asm t2 ^ "lnext" ^ label_index ^ ":\n"
   | _ -> "@ IGNORED FOR NOW"
 
 (* t_to_asm: transform let and exp to assembly *)
-and t_to_asm body reg =
+and t_to_asm body =
   match body with
   | Let ((id, _), e, t) ->
       ( match e with
@@ -77,12 +77,12 @@ and t_to_asm body reg =
       | Var a -> {|
         "ldr r0, [r11, #" ^ a ^ "]\n"
       |}
-      | _ -> exp_to_asm e reg )
-      ^ "push {r0}\n" ^ t_to_asm t reg ^ "add r13, r13, #4\n"
-  | Ans exp -> exp_to_asm exp reg
+      | _ -> exp_to_asm e )
+      ^ "push {r0}\n" ^ t_to_asm t ^ "add r13, r13, #4\n"
+  | Ans exp -> exp_to_asm exp
 
 (* lfu_to_asm: for each function definition, generate assembly code *)
-let rec lfu_to_asm lfu reg =
+let rec lfu_to_asm lfu =
   match lfu with
   | fu :: r ->
       "  .globl "
@@ -90,18 +90,18 @@ let rec lfu_to_asm lfu reg =
       ^ "\n"
       ^ Id.remove_label_undersc fu.name
       ^ ":\n" ^ "str r14, [r11, #4] @ store lr on the stack\n"
-      ^ t_to_asm fu.body reg ^ "\n"
-      ^ "ldr r15, [r11, #4] @ load lr (fp + 4) into pc\n" ^ lfu_to_asm r reg
+      ^ t_to_asm fu.body ^ "\n"
+      ^ "ldr r15, [r11, #4] @ load lr (fp + 4) into pc\n" ^ lfu_to_asm r
   | [] -> ""
 
 (* prog_to_asm: main function called, transform prog into assembly *)
-let prog_to_asm prog reg =
+let prog_to_asm prog =
   match prog with
   | Program (lfl, lfu, body) ->
-      lfu_to_asm lfu reg
+      lfu_to_asm lfu
       ^ {|  .global _start
 
 _start:
 mov r11, r13 @ move sp to fp
 |}
-      ^ t_to_asm body reg ^ "\n"
+      ^ t_to_asm body ^ "\n"
