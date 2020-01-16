@@ -108,7 +108,7 @@ let rec to_string exp =
       sprintf "(if %s <= %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfFLEq (e1, e2, e3, e4) ->
-      sprintf "(if %s <= %s then %s else %s)" (Id.to_string e1)
+      sprintf "(if %s <=. %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | Var id -> Id.to_string id
   | CallDir (e1, le2) ->
@@ -135,7 +135,7 @@ let rec to_string_f fd =
       sprintf "(let %s = %s) %s" (Id.to_string l) (string_of_float f)
         (to_string_f fd2)
   | Fu (fn, fd2) ->
-      sprintf "(let %s %s = %s in %s)"
+      sprintf "let %s %s = %s\n%s"
         (let x = fn.name in
          Id.to_string x)
         (infix_to_string (fun x -> Id.to_string x) fn.args " ")

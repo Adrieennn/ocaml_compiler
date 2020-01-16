@@ -21,6 +21,10 @@ let ref_counter_pos x =
 
 let rec exp_to_reg exp fn_name count =
   match exp with
+  | IfLEq (_, _, t1, t2) ->
+      let count1 = ref_counter (count Peak) in
+      let count2 = ref_counter (count Peak) in
+      t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
   | IfEq (_, _, t1, t2) ->
       let count1 = ref_counter (count Peak) in
       let count2 = ref_counter (count Peak) in
@@ -99,13 +103,23 @@ let rec modify_exp fn_name exp var_reg =
       | _ -> Sub (modify_variable fn_name s1 var_reg, s2) )
   | CallDir (label, args) ->
       CallDir (label, modify_variable_list fn_name args var_reg)
+  | IfLEq (s1, s2, t1, t2) -> (
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      match s2 with
+      | Int i -> IfLEq (mod_s1, s2, mod_t1, mod_t2)
+      | Var v ->
+          IfLEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
+      )
   | IfEq (s1, s2, t1, t2) -> (
       let mod_s1 = modify_variable fn_name s1 var_reg in
       let mod_t1 = modify_t fn_name t1 var_reg in
       let mod_t2 = modify_t fn_name t2 var_reg in
       match s2 with
       | Int i -> IfEq (mod_s1, s2, mod_t1, mod_t2)
-      | Var v -> IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
+      | Var v ->
+          IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
       )
   | _ -> exp
 
