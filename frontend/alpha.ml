@@ -83,4 +83,8 @@ let rec convert exp mapping =
         ( (replace_name mapping v1, replace_name mapping v2),
           convert e1 mapping,
           convert e2 mapping )
-  | _ -> failwith "under construction"
+  | Knorm.Tuple _ -> failwith "Alpha conversion of Knorm.Tuple is not implemented"
+  | Knorm.LetTuple _ -> failwith "Alpha conversion of Knorm.LetTuple is not implemented"
+  | Knorm.Array _ -> failwith "Alpha conversion of Knorm.Array is not implemented"
+  | Knorm.Get _ -> failwith "Alpha conversion of Knorm.Get is not implemented"
+  | Knorm.Put _ -> failwith "Alpha conversion of Knorm.Put is not implemented"
