@@ -72,5 +72,15 @@ let rec convert exp mapping =
   | Knorm.App (f, args) ->
       let new_args = List.map (fun id -> replace_name mapping id) args in
       let new_f = replace_name mapping f in
-      App (new_f, new_args)
+      Knorm.App (new_f, new_args)
+  | Knorm.IfEq ((v1, v2), e1, e2) ->
+      Knorm.IfEq
+        ( (replace_name mapping v1, replace_name mapping v2),
+          convert e1 mapping,
+          convert e2 mapping )
+  | Knorm.IfLe ((v1, v2), e1, e2) ->
+      Knorm.IfLe
+        ( (replace_name mapping v1, replace_name mapping v2),
+          convert e1 mapping,
+          convert e2 mapping )
   | _ -> failwith "under construction"
