@@ -72,5 +72,38 @@ let rec convert exp mapping =
   | Knorm.App (f, args) ->
       let new_args = List.map (fun id -> replace_name mapping id) args in
       let new_f = replace_name mapping f in
-      App (new_f, new_args)
-  | _ -> failwith "under construction"
+      Knorm.App (new_f, new_args)
+  | Knorm.IfEq ((v1, v2), e1, e2) ->
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      Knorm.IfEq ((c_v1, c_v2), convert e1 mapping, convert e2 mapping)
+  | Knorm.IfLe ((v1, v2), e1, e2) ->
+      let c_v1 = replace_name mapping v1 in
+      let c_v2 = replace_name mapping v2 in
+      Knorm.IfLe ((c_v1, c_v2), convert e1 mapping, convert e2 mapping)
+  | Knorm.Tuple(tups) ->
+      let new_tups = List.map (fun tup -> (replace_name mapping tup)) tups in
+      Knorm.Tuple(new_tups)
+  | Knorm.LetTuple (vars, def, body) ->
+      let new_vars = List.map (fun (id, t) -> (new_name mapping id, t)) args in
+      let old_vars_names = List.map (fun (id, _t) -> id) vars in
+      let new_vars_names = List.map (fun (id, _t) -> id) new_vars in
+      let new_vars_mappings =
+        List.map2
+          (fun old_id new_id -> (old_id, new_id))
+          old_vars_names new_vars_names
+      in
+      Knorm.LetTuple (vars = new_vars, def = convert def new_vars_mappings, body = convert body new_vars_mappings)
+  | Knorm.Array (v1,v2) ->
+      let c_v1 = replace_name mapping v1 in  (*Not sure *)
+      let c_v2 = replace_name mapping v2 in
+      Knorm.Array (c_v1, c_v2)
+  | Knorm.Get (v1,v2) ->
+      let c_v1 = replace_name mapping v1 in  (*Not sure *)
+      let c_v2 = replace_name mapping v2 in
+      Knorm.Get (c_v1, c_v2)
+  | Knorm.Put (v1,v2,v3) ->
+      let c_v1 = replace_name mapping v1 in  (*Not sure *)
+      let c_v2 = replace_name mapping v2 in
+      let c_v3 = replace_name mapping v3 in
+      Knorm.Put (c_v1, c_v2, c_v3)
