@@ -33,8 +33,6 @@ rule token = parse
     { LE }
 | "<=."
     { FLE }
-| ">="
-    { GE }
 | "if"
     { IF }
 | "then"

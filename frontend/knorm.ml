@@ -31,6 +31,17 @@ type t =
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
+
+(** We took inspiration from the paper and implemented the add_let function to
+simplify the implementation of the main normalisation function.
+
+add_let function takes an expression and the continuation of this expression as
+parameters.
+
+If the expression is not already a variable, add_let function return a let 
+expression of Knorm.t with a newly generated variable, the k-normalised 
+expression as definition and the continuation apply to the previous newly 
+generated variable as the let body.*)
 let rec add_let exp body =
   match exp with
   | Syntax.Var x -> body x
@@ -38,6 +49,9 @@ let rec add_let exp body =
     let e_id = Id.genid () in
     Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
 
+
+(**of_syntax is the main function responsible for k-normalisation, it takes an
+ expression of type Syntax.t and return a normalised expression of type Knorm.t*)
 and of_syntax exp_s =
   match exp_s with
   | Syntax.Unit -> Unit
@@ -46,101 +60,55 @@ and of_syntax exp_s =
   | Syntax.Int i -> Int i
   | Syntax.Float f -> Float f
   | Syntax.Add (e1, e2) ->
-      (*
+      (* In the case of a binary operation with, we have to create 2 new variable 
+      to store the intermediate result, return a let expression and use the 
+      operation as the let body. As in
+      
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Int),
           of_syntax e1,
           Let ((e2_id, Type.Int), of_syntax e2, Add (e1_id, e2_id)) )
-          *)
+          
+      However, it's much shorter to write using the add_let expression as in our
+      final implementation
+      *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Add (e1_id, e2_id)))
   | Syntax.Sub (e1, e2) ->
-      (*
-      let e1_id = Id.genid () in
-      let e2_id = Id.genid () in
-      Let
-        ( (e1_id, Type.Int),
-          of_syntax e1,
-          Let ((e2_id, Type.Int), of_syntax e2, Sub (e1_id, e2_id)) )
-        *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Sub (e1_id, e2_id)))
   | Syntax.FAdd (e1, e2) ->
-      (*
-      let e1_id = Id.genid () in
-      let e2_id = Id.genid () in
-      Let
-        ( (e1_id, Type.Float),
-          of_syntax e1,
-          Let ((e2_id, Type.Float), of_syntax e2, FAdd (e1_id, e2_id)) )
-        *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FAdd (e1_id, e2_id)))
   | Syntax.FSub (e1, e2) ->
-      (*
-      let e1_id = Id.genid () in
-      let e2_id = Id.genid () in
-      Let
-        ( (e1_id, Type.Float),
-          of_syntax e1,
-          Let ((e2_id, Type.Float), of_syntax e2, FSub (e1_id, e2_id)) )
-      *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FSub (e1_id, e2_id)))
   | Syntax.FMul (e1, e2) ->
-      (*
-      let e1_id = Id.genid () in
-      let e2_id = Id.genid () in
-      Let
-        ( (e1_id, Type.Float),
-          of_syntax e1,
-          Let ((e2_id, Type.Float), of_syntax e2, FMul (e1_id, e2_id)) )
-      *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FMul (e1_id, e2_id)))
   | Syntax.FDiv (e1, e2) ->
-      (*
-      let e1_id = Id.genid () in
-      let e2_id = Id.genid () in
-      Let
-        ( (e1_id, Type.Float),
-          of_syntax e1,
-          Let ((e2_id, Type.Float), of_syntax e2, FDiv (e1_id, e2_id)) )
-      *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FDiv (e1_id, e2_id)))
   | Syntax.FNeg e ->
-      (*
+      (* In the case of a unary operation as here, our strategy is to transform 
+      the expression into a binary operation. As in
+      
       let e_id = Id.genid () in
       let e_0_id = Id.genid () in
       Let
         ( (e_id, Type.Float),
           of_syntax e,
           Let ((e_0_id, Type.Int), Float 0., FSub (e_0_id, e_id)) )
-        *)
+
+      We used add_let function in the final implementation.
+      *)
         add_let (Syntax.Float 0.0) (fun e1_id -> add_let e (fun e2_id -> FSub (e1_id, e2_id))) 
   | Syntax.Not e ->
-      (* true: 1
-       * false: 0
-       * not true: 1 - 1 -> 0 = true
-       * not false: 1 - 0 -> 1 = false *)
-      (*
-      let e_id = Id.genid () in
-      let e_1_id = Id.genid () in
-      Let
-        ( (e_id, Type.Int),
-          of_syntax e,
-          Let ((e_1_id, Type.Int), Int 1, Sub (e_1_id, e_id)) )
-      *)
       add_let (Syntax.Int 1) (fun e1_id -> add_let e (fun e2_id -> Sub (e1_id, e2_id))) 
   | Syntax.Neg e ->
-      (*
-      let e_id = Id.genid () in
-      let e_0_id = Id.genid () in
-      Let
-        ( (e_id, Type.Int),
-          of_syntax e,
-          Let ((e_0_id, Type.Int), Int 0, Sub (e_0_id, e_id)) )
-      *)
       add_let (Syntax.Int 0) (fun e1_id -> add_let e (fun e2_id -> Sub (e1_id, e2_id))) 
   | Syntax.Eq (e1, e2) ->
-      (*
+      (* In the case of comparison, we treat it the same way as a binary operation 
+      except we use an IfEq expression to get the result of comparison in the end, 
+      thus transform all comparison to if expressions to make the code more assembly
+      like. As in
+
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
@@ -150,21 +118,13 @@ and of_syntax exp_s =
             ( (e2_id, Type.Int),
               of_syntax e2,
               IfEq ((e1_id, e2_id), Int 1, Int 0) ) )
+      
+      We used add_let function in the final implementation.
       *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> IfEq ((e1_id, e2_id), Int 1, Int 0))) 
   | Syntax.LE (e1, e2) ->
-      (*
-      let e1_id = Id.genid () in
-      let e2_id = Id.genid () in
-      Let
-        ( (e1_id, Type.Int),
-          of_syntax e1,
-          Let
-            ( (e2_id, Type.Int),
-              of_syntax e2,
-              IfLe ((e1_id, e2_id), Int 1, Int 0) ) )
-        *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> IfLe ((e1_id, e2_id), Int 1, Int 0))) 
+  (* In the case of a Let or LetRec expression we only have to normalise it's definition and its body *)
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
@@ -174,8 +134,12 @@ and of_syntax exp_s =
   | Syntax.Var id -> Var id
   | Syntax.If (e1, e2, e3) -> (
       match e1 with
+      (* Here our goal is to transform a Syntax.If to a Knorm.IfEq or Knorm.IfLE 
+      according to the boolean expression. *)
       | Syntax.Eq (e1', e2') ->
           (*
+          Implementation without using add_let
+          
           let e1'_id = Id.genid () in
           let e2'_id = Id.genid () in
           Let
@@ -188,20 +152,13 @@ and of_syntax exp_s =
           *)
           add_let e1' (fun e1'_id -> add_let e2' (fun e2'_id -> IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3))) 
       | Syntax.LE (e1', e2') ->
-          (*
-          let e1'_id = Id.genid () in
-          let e2'_id = Id.genid () in
-          Let
-            ( (e1'_id, Type.Int),
-              of_syntax e1',
-              Let
-                ( (e2'_id, Type.Int),
-                  of_syntax e2',
-                  IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3) ) )
-          *)
           add_let e1' (fun e1'_id -> add_let e2' (fun e2'_id -> IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3)))
       | e ->
           (*
+          In the case where the boolean expression does not match to Eq or LE, 
+          we simply compare the result to boolean true and transform the If 
+          expression to a IfEq expression.
+
           let e_id = Id.genid () in
           let e_true = Id.genid () in
           Let
@@ -211,11 +168,16 @@ and of_syntax exp_s =
                 ( (e_true, Type.Int),
                   Int 1,
                   IfEq ((e_id, e_true), of_syntax e2, of_syntax e3) ) ) 
+
+          We used add_let function in the final implementation.
           *)
           add_let e (fun e_id -> add_let (Syntax.Bool true) (fun e_true -> IfEq ((e_id, e_true), of_syntax e2, of_syntax e3))))
           
 
   | Syntax.App (f, args) ->
+    (*Here since the arguments is a list, we have no other way except using 
+      a pre-defined function like add_let. This is also why we implemented add_let.
+    *)
       let l = ref [] in
       let final_body () =
         add_let f (fun f_id -> App(f_id, List.rev !l))
@@ -230,6 +192,7 @@ and of_syntax exp_s =
       in
       build_lets_and_collect_arg_names args
   | Syntax.Tuple elements ->
+      (*Here we used a similar strategy as we treated the argument list in App*)
       let l = ref [] in
 
       let rec build_lets_and_collect_arg_names = function
