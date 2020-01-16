@@ -59,7 +59,7 @@ and closure_to_exp = function
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
         (Closure.to_string' e);
-      exit 0
+      exit 1
 
 let fundef_of_closure_fundef fd =
   let { Closure.name = id, _typ; args; formal_fv = _; body } = fd in
