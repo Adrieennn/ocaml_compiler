@@ -1,0 +1,21 @@
+image: odclive/alpine_build_arm:latest
+
+stages:
+  - build_backend
+  - test_arm
+
+test_build:
+  stage: build_backend
+  script:
+    - make
+    - ./mincamlc asml/call.asml
+
+testing:
+  stage: test_arm
+  before_script:
+    - make
+    - ./mincamlc asml/call.asml
+  script:
+    - cd ARM
+    - make
+    - make test
