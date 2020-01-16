@@ -137,14 +137,11 @@ let () =
         let output_file_name =
           match !output_file with
           | None ->
-              let file_name =
-                Filename.remove_extension (Filename.basename file_name) ^ ".s"
-              in
-              Filename.quote file_name
+              Filename.remove_extension (Filename.basename file_name) ^ ".s"
           | Some s ->
               (* Only valid if there is only one input file
                * which should be checked before *)
-              Filename.quote s
+              s
         in
         Printf.printf "output: %s\n" output_file_name;
         let output_file = open_out output_file_name in
