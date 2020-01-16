@@ -1,6 +1,6 @@
 
 all: 
-	ocamlbuild main.byte 
+	ocamlbuild -lib unix main.byte 
 	mv main.byte mincamlc
 
 clean:
