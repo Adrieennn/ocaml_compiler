@@ -1,4 +1,4 @@
 mincamlc
 _build
 *.s
-tmp.asml
+*.asml

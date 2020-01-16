@@ -8,14 +8,14 @@ echo -e "--> Invalid files\n"
 
 for f in tests/typechecking/invalid/*; do
     printf "$(basename "$f"):\t"
-    ./$PROG $f &> /dev/null && exit 1 || echo "OK"
+    ./$PROG -t $f &> /dev/null && exit 1 || echo "OK"
 done
 
 echo -e "\n--> Valid files\n"
 
 for f in tests/typechecking/valid/*; do
     printf "$(basename "$f"):\t"
-    ./$PROG $f &> /dev/null && echo "OK" || exit 1
+    ./$PROG -t $f &> /dev/null && echo "OK" || exit 1
 done
 
 exit 0
