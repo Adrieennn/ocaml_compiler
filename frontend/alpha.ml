@@ -93,17 +93,17 @@ let rec convert exp mapping =
           (fun old_id new_id -> (old_id, new_id))
           old_vars_names new_vars_names
       in
-      Knorm.LetTuple (new_vars, convert def new_vars_mappings, convert body new_vars_mappings)
+      Knorm.LetTuple (new_vars, convert def mapping, convert body (new_vars_mappings @ mapping))
   | Knorm.Array (v1,v2) ->
-      let c_v1 = replace_name mapping v1 in  (*Not sure *)
+      let c_v1 = replace_name mapping v1 in
       let c_v2 = replace_name mapping v2 in
       Knorm.Array (c_v1, c_v2)
   | Knorm.Get (v1,v2) ->
-      let c_v1 = replace_name mapping v1 in  (*Not sure *)
+      let c_v1 = replace_name mapping v1 in
       let c_v2 = replace_name mapping v2 in
       Knorm.Get (c_v1, c_v2)
   | Knorm.Put (v1,v2,v3) ->
-      let c_v1 = replace_name mapping v1 in  (*Not sure *)
+      let c_v1 = replace_name mapping v1 in
       let c_v2 = replace_name mapping v2 in
       let c_v3 = replace_name mapping v3 in
       Knorm.Put (c_v1, c_v2, c_v3)
