@@ -9,4 +9,4 @@ let genid =
   let counter = ref (-1) in
   fun () ->
     incr counter;
-    Printf.sprintf "%d" !counter
+    Printf.sprintf "t%d" !counter

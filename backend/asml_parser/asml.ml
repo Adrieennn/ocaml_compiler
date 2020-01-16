@@ -54,7 +54,7 @@ and closure_to_exp = function
       IfLEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
   | Closure.Let (_, _, _) ->
       failwith "Closure.Let cannot be translated to Asml.exp"
-  | Closure.AppDir (fun_id, arg_ids) -> CallDir (fun_id, arg_ids)
+  | Closure.AppDir (fun_id, arg_ids) -> CallDir ("_" ^ fun_id, arg_ids)
   | e ->
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
@@ -64,7 +64,7 @@ and closure_to_exp = function
 let fundef_of_closure_fundef fd =
   let { Closure.name = id, _typ; args; formal_fv = _; body } = fd in
   let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
-  { name = id; args = arg_names; body = closure_to_t body }
+  { name = "_" ^ id; args = arg_names; body = closure_to_t body }
 
 let of_closure_prog prog =
   let (Closure.Prog (fundefs, main_body)) = prog in

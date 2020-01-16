@@ -73,7 +73,10 @@ let print_transformations f =
   print_newline ()
 
 let print_ast l =
+  print_newline ();
+  print_newline ();
   print_string (Asml.to_string_f (AsmlParser.fundef AsmlLexer.token l));
+  print_newline ();
   print_newline ()
 
 let file f = print_transformations f
