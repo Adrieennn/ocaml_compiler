@@ -254,8 +254,7 @@ let rec substitue_type_exn typ =
       | None ->
           (* The paper suggests, arbitrarily, instantiating these variables to Type.Int *)
           failwith "Type variable is still undefined"
-      (* XXX What if t is itself Type.Var? *)
-      | Some t -> t )
+      | Some t -> substitue_type_exn t )
 
 let rec type_ast ast =
   let module S = Syntax in
