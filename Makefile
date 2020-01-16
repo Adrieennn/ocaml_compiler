@@ -6,7 +6,7 @@ all:
 
 test: all test_typecheck 
 
-test_typecheck: all
+test_typechecking: all
 	PROG=$(PROG) ./tests/typechecking/suit.sh
 
 clean:
