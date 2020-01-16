@@ -1,14 +1,14 @@
 #!/bin/sh
 
-echo $PROG
-
 echo "---- TESTING ASML GENERATION! ----"
 
 echo -e "--> Simple arithmetics\n"
 
 for f in tests/asml_gen/arithm/*; do
-    printf "$(basename "$f"):    "
-    ./$PROG $f > /tmp/tmp.asml
-    ./tools/asml /tmp/tmp.asml &> /dev/null && echo "OK" || echo "FAILURE"
+    printf "$(basename "$f"):\t"
+    ./$PROG -asml $f > tmp.asml
+    cat tmp.asml
+    ./tools/asml tmp.asml &> /dev/null && echo "OK" || exit 1
 done
 
+exit 0
