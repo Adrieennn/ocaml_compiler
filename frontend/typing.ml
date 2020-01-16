@@ -93,7 +93,7 @@ let rec gen_equations env exp expected_type =
       | None ->
           (* TODO "external environment" *)
           Printf.eprintf "Variable %s has not been bound.\n" (Id.to_string id);
-          exit 0
+          exit 1
       | Some typ -> [ (typ, expected_type) ] )
   | Syntax.App (e1, le2) ->
       let arg_typs = List.map (fun _ -> Type.Var (ref None)) le2 in
@@ -234,7 +234,7 @@ let rec unify equations =
       | t1, t2 ->
           Printf.eprintf "Unification of %s and %s is impossible.\n"
             (Type.to_string t1) (Type.to_string t2);
-          exit 0 )
+          exit 1 )
 
 let rec substitue_type_exn typ =
   let module T = Type in
