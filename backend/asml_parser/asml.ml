@@ -85,16 +85,16 @@ let rec to_string exp =
   match exp with
   | Unit -> "()"
   | Int i -> string_of_int i
-  | Neg e -> sprintf "(- %s)" (Id.to_string e)
+  | Neg e -> sprintf "(neg %s)" (Id.to_string e)
   | Add (e1, e2) ->
-      sprintf "(%s + %s)" (Id.to_string e1) (to_string_id_or_imm e2)
+      sprintf "(add %s %s)" (Id.to_string e1) (to_string_id_or_imm e2)
   | Sub (e1, e2) ->
-      sprintf "(%s - %s)" (Id.to_string e1) (to_string_id_or_imm e2)
-  | FNeg e -> sprintf "(-. %s)" (Id.to_string e)
-  | FAdd (e1, e2) -> sprintf "(%s +. %s)" (Id.to_string e1) (Id.to_string e2)
-  | FSub (e1, e2) -> sprintf "(%s -. %s)" (Id.to_string e1) (Id.to_string e2)
-  | FMul (e1, e2) -> sprintf "(%s *. %s)" (Id.to_string e1) (Id.to_string e2)
-  | FDiv (e1, e2) -> sprintf "(%s /. %s)" (Id.to_string e1) (Id.to_string e2)
+      sprintf "(sub %s %s)" (Id.to_string e1) (to_string_id_or_imm e2)
+  | FNeg e -> sprintf "(fneg %s)" (Id.to_string e)
+  | FAdd (e1, e2) -> sprintf "(fadd %s %s)" (Id.to_string e1) (Id.to_string e2)
+  | FSub (e1, e2) -> sprintf "(fsub %s %s)" (Id.to_string e1) (Id.to_string e2)
+  | FMul (e1, e2) -> sprintf "(fmul %s %s)" (Id.to_string e1) (Id.to_string e2)
+  | FDiv (e1, e2) -> sprintf "(fdiv %s %s)" (Id.to_string e1) (Id.to_string e2)
   | IfEq (e1, e2, e3, e4) ->
       sprintf "(if %s = %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
