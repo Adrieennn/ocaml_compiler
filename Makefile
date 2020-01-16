@@ -5,7 +5,7 @@ all:
 	ocamlbuild -lib unix main.byte
 	mv main.byte $(PROG)
 
-test: all test_typechecking
+test: all test_typechecking test_asml_gen
 
 test_typechecking: all
 	PROG=$(PROG) ./tests/typechecking/suite.sh
