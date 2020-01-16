@@ -1,3 +1,22 @@
+let output_file = ref "out.s"
+
+let disp_help = ref false
+
+let disp_version = ref false
+
+let typecheck_only = ref false
+
+let disp_asml = ref false
+
+let speclist =
+  [
+    ("-o", Arg.Set_string output_file, "Outputs to file <file>");
+    ("-h", Arg.Set disp_help, "Display help");
+    ("-v", Arg.Set disp_version, "Display compiler's version");
+    ("-t", Arg.Set typecheck_only, "Only do typechecking");
+    ("-asml", Arg.Set disp_asml, "Print asml");
+  ]
+
 let read_ast_from_file f =
   let inchan = open_in f in
   try Lexing.from_channel inchan |> Parser.exp Lexer.token
@@ -65,7 +84,7 @@ let chann_to_asm chann =
   print_newline ();
   *)
   print_string (Asm.prog_to_asm modified_pg_test var_reg);
-  let armfile = open_out "ARM/test.s" in
+  let armfile = open_out !output_file in
   output_string armfile (Asm.prog_to_asm modified_pg_test var_reg);
   close_out armfile
 
@@ -78,33 +97,12 @@ let file f =
     close_in inchan;
     raise e
 
-let output_to_file = ref ""
-
-let disp_help = ref false
-
-let disp_version = ref false
-
-let typecheck_only = ref false
-
-let disp_asml = ref false
-
-let speclist =
-  [
-    ("-o", Arg.Set_string output_to_file, "Outputs to file <file>");
-    ("-h", Arg.Set disp_help, "Display help");
-    ("-v", Arg.Set disp_version, "Display compiler's version");
-    ("-t", Arg.Set typecheck_only, "Only do typechecking");
-    ("-asml", Arg.Set disp_asml, "Print asml");
-  ]
-
 let () =
-  let usage_msg =
-    "MyLs2000 is a revolutionary file listing tool. Options available:"
-  in
+  let usage_msg = Printf.sprintf "usage: %s filenames" Sys.argv.(0) in
   let files = ref [] in
   Arg.parse speclist (fun s -> files := !files @ [ s ]) usage_msg;
   print_string (string_of_bool !disp_version);
   if List.length !files = 0 then (
-    Printf.printf "usage: %s filenames" Sys.argv.(0);
+    Printf.printf "%s" usage_msg;
     exit 1 )
   else List.iter (fun f -> ignore (file f)) !files
