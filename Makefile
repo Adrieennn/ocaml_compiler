@@ -14,7 +14,7 @@ test_asml_gen: all
 	PROG="$(PROG) $(ASML)" ./tests/asml_gen/suite.sh
 
 clean:
-	rm -rf _build
+	rm -rf _build *.s tmp.asml
 
 cleanest: clean
 	rm -f $(PROG)
