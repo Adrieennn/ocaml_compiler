@@ -62,12 +62,10 @@ let rec exp_to_asm exp reg =
       match s2 with
       | Int i -> "mov r5, #" ^ string_of_int i ^ "\n"
       | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n" )
-      ^ "cmp r4, r5\n beq ltrue" ^ label_index ^ "\n" ^
-      "b lfalse" ^ label_index ^ "\n" ^
-      "ltrue" ^ label_index ^":\n" ^
-      t_to_asm t1 reg ^ "b lnext" ^ label_index ^ "\n" ^
-      "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 reg ^ 
-      "lnext" ^ label_index ^ ":\n"
+      ^ "cmp r4, r5\n" ^ "beq ltrue" ^ label_index ^ "\n" ^ "b lfalse"
+      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 reg
+      ^ "b lnext" ^ label_index ^ "\n" ^ "lfalse" ^ label_index ^ ":\n"
+      ^ t_to_asm t2 reg ^ "lnext" ^ label_index ^ ":\n"
   | _ -> "@ IGNORED FOR NOW"
 
 (* t_to_asm: transform let and exp to assembly *)
