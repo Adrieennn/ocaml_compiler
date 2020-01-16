@@ -56,66 +56,91 @@ and of_syntax exp_s =
           *)
       add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Add (e1_id, e2_id)))
   | Syntax.Sub (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Int),
           of_syntax e1,
           Let ((e2_id, Type.Int), of_syntax e2, Sub (e1_id, e2_id)) )
+        *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> Sub (e1_id, e2_id)))
   | Syntax.FAdd (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Float),
           of_syntax e1,
           Let ((e2_id, Type.Float), of_syntax e2, FAdd (e1_id, e2_id)) )
+        *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FAdd (e1_id, e2_id)))
   | Syntax.FSub (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Float),
           of_syntax e1,
           Let ((e2_id, Type.Float), of_syntax e2, FSub (e1_id, e2_id)) )
+      *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FSub (e1_id, e2_id)))
   | Syntax.FMul (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Float),
           of_syntax e1,
           Let ((e2_id, Type.Float), of_syntax e2, FMul (e1_id, e2_id)) )
+      *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FMul (e1_id, e2_id)))
   | Syntax.FDiv (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
         ( (e1_id, Type.Float),
           of_syntax e1,
           Let ((e2_id, Type.Float), of_syntax e2, FDiv (e1_id, e2_id)) )
+      *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> FDiv (e1_id, e2_id)))
   | Syntax.FNeg e ->
+      (*
       let e_id = Id.genid () in
       let e_0_id = Id.genid () in
       Let
         ( (e_id, Type.Float),
           of_syntax e,
           Let ((e_0_id, Type.Int), Float 0., FSub (e_0_id, e_id)) )
+        *)
+        add_let (Syntax.Float 0.0) (fun e1_id -> add_let e (fun e2_id -> FSub (e1_id, e2_id))) 
   | Syntax.Not e ->
       (* true: 1
        * false: 0
        * not true: 1 - 1 -> 0 = true
        * not false: 1 - 0 -> 1 = false *)
+      (*
       let e_id = Id.genid () in
       let e_1_id = Id.genid () in
       Let
         ( (e_id, Type.Int),
           of_syntax e,
           Let ((e_1_id, Type.Int), Int 1, Sub (e_1_id, e_id)) )
+      *)
+      add_let (Syntax.Int 1) (fun e1_id -> add_let e (fun e2_id -> Sub (e1_id, e2_id))) 
   | Syntax.Neg e ->
+      (*
       let e_id = Id.genid () in
       let e_0_id = Id.genid () in
       Let
         ( (e_id, Type.Int),
           of_syntax e,
           Let ((e_0_id, Type.Int), Int 0, Sub (e_0_id, e_id)) )
+      *)
+      add_let (Syntax.Int 0) (fun e1_id -> add_let e (fun e2_id -> Sub (e1_id, e2_id))) 
   | Syntax.Eq (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
@@ -125,7 +150,10 @@ and of_syntax exp_s =
             ( (e2_id, Type.Int),
               of_syntax e2,
               IfEq ((e1_id, e2_id), Int 1, Int 0) ) )
+      *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> IfEq ((e1_id, e2_id), Int 1, Int 0))) 
   | Syntax.LE (e1, e2) ->
+      (*
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
       Let
@@ -135,6 +163,8 @@ and of_syntax exp_s =
             ( (e2_id, Type.Int),
               of_syntax e2,
               IfLe ((e1_id, e2_id), Int 1, Int 0) ) )
+        *)
+      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> IfLe ((e1_id, e2_id), Int 1, Int 0))) 
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
@@ -145,6 +175,7 @@ and of_syntax exp_s =
   | Syntax.If (e1, e2, e3) -> (
       match e1 with
       | Syntax.Eq (e1', e2') ->
+          (*
           let e1'_id = Id.genid () in
           let e2'_id = Id.genid () in
           Let
@@ -154,7 +185,10 @@ and of_syntax exp_s =
                 ( (e2'_id, Type.Int),
                   of_syntax e2',
                   IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3) ) )
+          *)
+          add_let e1' (fun e1'_id -> add_let e2' (fun e2'_id -> IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3))) 
       | Syntax.LE (e1', e2') ->
+          (*
           let e1'_id = Id.genid () in
           let e2'_id = Id.genid () in
           Let
@@ -164,7 +198,10 @@ and of_syntax exp_s =
                 ( (e2'_id, Type.Int),
                   of_syntax e2',
                   IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3) ) )
+          *)
+          add_let e1' (fun e1'_id -> add_let e2' (fun e2'_id -> IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3)))
       | e ->
+          (*
           let e_id = Id.genid () in
           let e_true = Id.genid () in
           Let
@@ -173,7 +210,11 @@ and of_syntax exp_s =
               Let
                 ( (e_true, Type.Int),
                   Int 1,
-                  IfEq ((e_id, e_true), of_syntax e2, of_syntax e3) ) ) )
+                  IfEq ((e_id, e_true), of_syntax e2, of_syntax e3) ) ) 
+          *)
+          add_let e (fun e_id -> add_let (Syntax.Bool true) (fun e_true -> IfEq ((e_id, e_true), of_syntax e2, of_syntax e3))))
+          
+
   | Syntax.App (f, args) ->
       let l = ref [] in
       let final_body () =
