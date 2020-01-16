@@ -1,12 +1,25 @@
 let find mapping var = List.assoc_opt var mapping
 
-(* TODO handle name clashes *)
+(** replace_name takes 2 parameters, the mapping of old variable names to new 
+variable names and a variable name. If the variable name is not found in the 
+mapping environment, it is considered external and the original variable name 
+is returned. Otherwise a new variable name is generated using new_name 
+function
+*)
 let replace_name mapping name =
   match find mapping name with None -> name | Some new_name -> new_name
 
+(** new_name takes the same parameters as replace_name, it generates a new 
+variable name using Id.genid when encountering a non-external variable.
+*)
 let new_name mapping name =
   match find mapping name with None -> name | Some _ -> name ^ Id.genid ()
 
+
+(** convert is the main conversion function. It takes 2 variable: the 
+expression needs to be converted and the mapping environment. The goal 
+is to make every variable name unique.
+*)
 let rec convert exp mapping =
   match exp with
   | (Knorm.Unit | Knorm.Int _ | Knorm.Float _) as c -> c
@@ -35,6 +48,8 @@ let rec convert exp mapping =
       let c_v2 = replace_name mapping v2 in
       Knorm.FDiv (c_v1, c_v2)
   | Knorm.Let ((id, typ), def, body) ->
+  		(*In the case of a Let expression, we use the updated mapping environment 
+          to evaluate the let body*)
       let new_id =
         match find mapping id with
         | None -> id
@@ -49,6 +64,8 @@ let rec convert exp mapping =
   | Knorm.Var x -> Knorm.Var (replace_name mapping x)
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
+    (*Here we have a similar situation with Let expression, we need to use the 
+    updated mapping environment to evaluate both the function body and the Let body*)
       let new_args = List.map (fun (id, t) -> (new_name mapping id, t)) args in
       let old_arg_names = List.map (fun (id, _t) -> id) args in
       let new_arg_names = List.map (fun (id, _t) -> id) new_args in
@@ -85,6 +102,7 @@ let rec convert exp mapping =
       let new_tups = List.map (fun tup -> (replace_name mapping tup)) tups in
       Knorm.Tuple(new_tups)
   | Knorm.LetTuple (vars, def, body) ->
+  	(*The mapping environment is updated before the evaluation of the Let body*)
       let new_vars = List.map (fun (id, t) -> (new_name mapping id, t)) vars in
       let old_vars_names = List.map (fun (id, _t) -> id) vars in
       let new_vars_names = List.map (fun (id, _t) -> id) new_vars in
