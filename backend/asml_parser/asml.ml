@@ -54,7 +54,7 @@ and closure_to_exp = function
       IfLEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
   | Closure.Let (_, _, _) ->
       failwith "Closure.Let cannot be translated to Asml.exp"
-  | Closure.AppDir (fun_id, arg_ids) -> CallDir (fun_id, arg_ids)
+  | Closure.AppDir (fun_id, arg_ids) -> CallDir ("_" ^ fun_id, arg_ids)
   | e ->
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
@@ -64,7 +64,7 @@ and closure_to_exp = function
 let fundef_of_closure_fundef fd =
   let { Closure.name = id, _typ; args; formal_fv = _; body } = fd in
   let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
-  { name = id; args = arg_names; body = closure_to_t body }
+  { name = "_" ^ id; args = arg_names; body = closure_to_t body }
 
 let of_closure_prog prog =
   let (Closure.Prog (fundefs, main_body)) = prog in
@@ -85,16 +85,16 @@ let rec to_string exp =
   match exp with
   | Unit -> "()"
   | Int i -> string_of_int i
-  | Neg e -> sprintf "(- %s)" (Id.to_string e)
+  | Neg e -> sprintf "(neg %s)" (Id.to_string e)
   | Add (e1, e2) ->
-      sprintf "(%s + %s)" (Id.to_string e1) (to_string_id_or_imm e2)
+      sprintf "(add %s %s)" (Id.to_string e1) (to_string_id_or_imm e2)
   | Sub (e1, e2) ->
-      sprintf "(%s - %s)" (Id.to_string e1) (to_string_id_or_imm e2)
-  | FNeg e -> sprintf "(-. %s)" (Id.to_string e)
-  | FAdd (e1, e2) -> sprintf "(%s +. %s)" (Id.to_string e1) (Id.to_string e2)
-  | FSub (e1, e2) -> sprintf "(%s -. %s)" (Id.to_string e1) (Id.to_string e2)
-  | FMul (e1, e2) -> sprintf "(%s *. %s)" (Id.to_string e1) (Id.to_string e2)
-  | FDiv (e1, e2) -> sprintf "(%s /. %s)" (Id.to_string e1) (Id.to_string e2)
+      sprintf "(sub %s %s)" (Id.to_string e1) (to_string_id_or_imm e2)
+  | FNeg e -> sprintf "(fneg %s)" (Id.to_string e)
+  | FAdd (e1, e2) -> sprintf "(fadd %s %s)" (Id.to_string e1) (Id.to_string e2)
+  | FSub (e1, e2) -> sprintf "(fsub %s %s)" (Id.to_string e1) (Id.to_string e2)
+  | FMul (e1, e2) -> sprintf "(fmul %s %s)" (Id.to_string e1) (Id.to_string e2)
+  | FDiv (e1, e2) -> sprintf "(fdiv %s %s)" (Id.to_string e1) (Id.to_string e2)
   | IfEq (e1, e2, e3, e4) ->
       sprintf "(if %s = %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
@@ -108,11 +108,11 @@ let rec to_string exp =
       sprintf "(if %s <= %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfFLEq (e1, e2, e3, e4) ->
-      sprintf "(if %s <= %s then %s else %s)" (Id.to_string e1)
+      sprintf "(if %s <=. %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | Var id -> Id.to_string id
   | CallDir (e1, le2) ->
-      sprintf "(%s %s)" (Id.to_string e1) (infix_to_string Id.to_string le2 " ")
+      sprintf "(call %s %s)" (Id.to_string e1) (infix_to_string Id.to_string le2 " ")
   | Ld (e1, e2) -> sprintf "%s.(%s)" (Id.to_string e1) (to_string_id_or_imm e2)
   | St (e1, e2, e3) ->
       sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (to_string_id_or_imm e2)
@@ -135,7 +135,7 @@ let rec to_string_f fd =
       sprintf "(let %s = %s) %s" (Id.to_string l) (string_of_float f)
         (to_string_f fd2)
   | Fu (fn, fd2) ->
-      sprintf "(let %s %s = %s in %s)"
+      sprintf "let %s %s = %s\n%s"
         (let x = fn.name in
          Id.to_string x)
         (infix_to_string (fun x -> Id.to_string x) fn.args " ")

@@ -72,7 +72,10 @@ let rec convert (exp : Knorm.t) known_fun =
   | Knorm.Let ((id, typ), def, body) ->
       Let ((id, typ), convert def known_fun, convert body known_fun)
   | Knorm.Var x -> Var x
-  | _ -> failwith "not there yet"
+  | Knorm.Array _ -> failwith "Closure conversion of Knorm Array is not implemented"
+  | Knorm.Tuple _ -> failwith "Closure conversion of Knorm Tuple is not implemented"
+  | Knorm.Get _ -> failwith "Closure conversion of Knorm Get is not implemented"
+  | Knorm.Put _ -> failwith "Closure conversion of Knorm Put is not implemented"
 
 let con exp = convert exp [ ("print_int", "min_caml_print_int") ]
 
