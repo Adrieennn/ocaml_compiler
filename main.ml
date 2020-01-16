@@ -32,7 +32,7 @@ let print_transformations f =
 
   let ast_closure = Closure.con ast_nested_let in
   Printf.printf "AST after closure conversion:\n";
-  Closure.to_string ast_closure |> print_string;
+  Closure.to_string' ast_closure |> print_string;
   print_newline ();
   print_newline ()
 
