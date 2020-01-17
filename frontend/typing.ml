@@ -165,10 +165,9 @@ let rec occurs t1 t2 =
   | Type.Tuple elements -> List.exists (fun t -> occurs t1 t) elements
   | Type.Array t -> occurs t1 t
   | Type.Var t_ref -> (
-      if (* NB (==) is physical equality, (=) structural equality *)
-         t1 == t2
-      then true
-      else match !t_ref with None -> false | Some t -> occurs t1 t )
+      (* NB (==) is physical equality, (=) structural equality *)
+      t1 == t2
+      || match !t_ref with None -> false | Some t -> occurs t1 t )
 
 let occurs_check t1 t2 =
   if occurs t1 t2 then failwith "Recursive type detected. Aborting."
@@ -205,22 +204,14 @@ let rec unify equations =
       | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
       | (Type.Var v1 as t1), t2 -> (
           match !v1 with
-          | Some t ->
-              if t == t2 then
-                unify tl
-              else
-                unify ((t, t2) :: tl)
+          | Some t -> if t == t2 then unify tl else unify ((t, t2) :: tl)
           | None ->
               occurs_check t1 t2;
               v1 := Some t2;
               unify tl )
       | t1, (Type.Var v2 as t2) -> (
           match !v2 with
-          | Some t ->
-              if t == t1 then
-                unify tl
-              else
-                unify ((t1, t) :: tl)
+          | Some t -> if t == t1 then unify tl else unify ((t1, t) :: tl)
           | None ->
               occurs_check t2 t1;
               v2 := Some t1;
