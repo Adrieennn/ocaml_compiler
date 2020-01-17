@@ -11,14 +11,10 @@ let ref_counter x =
         !counter
     | Peak -> !counter
 
-(*
-let ref_counter_pos x =
-  let counter = ref x in
-  fun () ->
-    counter := !counter + 4;
-    !counter
-    *)
 
+(* function that takes an expression and outputs an association list with
+ * variable names and their corresponding offsets.
+ * Needed for IF statements where new variables can be defined *)
 let rec exp_to_reg exp fn_name count =
   match exp with
   | IfLEq (_, _, t1, t2) ->
@@ -31,6 +27,9 @@ let rec exp_to_reg exp fn_name count =
       t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
   | _ -> []
 
+(* function that takes a function body, an association list and appends
+ * to the list the variable names in the body with their corresponding fp
+ * offsets *)
 and t_to_reg fn_name t var_reg count =
   match t with
   | Ans e -> var_reg @ exp_to_reg e fn_name count
@@ -44,6 +43,8 @@ and t_to_reg fn_name t var_reg count =
             count
       | Some a -> t_to_reg fn_name t2 var_reg count @ var_reg_exp )
 
+(* function that takes a list of function definitions and outputs an
+ * association list of variable names and their corresponding fp offsets *)
 let rec lfu_to_reg_rec lfu =
   match lfu with
   | hd :: rest ->
@@ -52,20 +53,22 @@ let rec lfu_to_reg_rec lfu =
       @ lfu_to_reg_rec rest
   | [] -> []
 
+
+(* function that takes a program and outputs an association list of variable
+ * names and their corresponding fp offsets *)
 let program_to_reg pg var_reg =
   let count = ref_counter 0 in
   match pg with
   | Program (lfl, lfu, t) -> (
       lfu_to_reg_rec lfu
       @
-      (* match lfl with
-    | _ -> "float not implemented yet"
-    match lfu with
-    | _ -> "fun list not implemented yet" *)
       match t with
       | Let ((variable, _), exp, t2) -> t_to_reg "main" t var_reg count
       | _ -> [] )
 
+(* function that takes a variable name and an association list between variable
+ * names and fp offsets; it modifies the variable name with its corresponding
+ * fp offset from the list *)
 let modify_variable fn_name variable var_reg =
   match List.assoc_opt (fn_name ^ "." ^ variable) var_reg with
   | Some a -> string_of_int a
@@ -74,6 +77,9 @@ let modify_variable fn_name variable var_reg =
         ( "Variable " ^ fn_name ^ "." ^ variable
         ^ " does not exist in association list." )
 
+(* function that takes a list of variables and an association list between variable
+ * names and fp offsets; it modifies all variables in the list with their
+ * corresponding fp offsets from the association list *)
 let rec modify_variable_list fn_name variable_list var_reg =
   match variable_list with
   | hd :: rest ->
@@ -81,9 +87,10 @@ let rec modify_variable_list fn_name variable_list var_reg =
       :: modify_variable_list fn_name rest var_reg
   | [] -> variable_list
 
-(* String.concat "" ["[fp, "; string_of_int (snd (List.find (fun s -> fst s
- * = variable) var_reg)); "]"] *)
 
+(* function that takes an expression and an association list between variable
+ * names and fp offsets; it modifies all occurrences of variables in the
+ * expression with their corresponding fp offsets from the list *)
 let rec modify_exp fn_name exp var_reg =
   match exp with
   | Var v -> Var (modify_variable fn_name v var_reg)
@@ -123,6 +130,10 @@ let rec modify_exp fn_name exp var_reg =
       )
   | _ -> exp
 
+
+(* function that takes a function body and an association list between variable
+ * names and fp offsets; it modifies all occurrences of variables in the
+ * function body with their corresponding fp offsets from the list *)
 and modify_t fn_name t var_reg =
   match t with
   | Let ((variable, typ), exp, t2) ->
@@ -132,6 +143,9 @@ and modify_t fn_name t var_reg =
           modify_t fn_name t2 var_reg )
   | Ans e -> Ans (modify_exp fn_name e var_reg)
 
+(* function that takes a list of arguments and an association list between variable
+ * names and fp offsets; it modifies all occurrences of variables in the
+ * list of arguments with their corresponding fp offsets from the list *)
 let rec modify_args_reg fn_name args var_reg count =
   match args with
   | var :: rest ->
@@ -140,6 +154,10 @@ let rec modify_args_reg fn_name args var_reg count =
         count
   | [] -> var_reg
 
+
+(* function that takes a function definition and an association list between variable
+ * names and fp offsets; it modifies all occurrences of variables in the
+ * function body and arguments with their corresponding fp offsets from the list *)
 let rec modify_fn_t fu var_reg =
   let len = List.length fu.args in
   let newcount = ref_counter ((len + 2) * 4) in
@@ -150,6 +168,9 @@ let rec modify_fn_t fu var_reg =
     body = modify_t fu.name fu.body (var_reg @ args_reg);
   }
 
+(* function that takes a program and an association list between variable
+ * names and fp offsets; it modifies all occurrences of variables in the
+ * program with their corresponding fp offsets from the list *)
 let modify_program pg var_reg =
   match pg with
   | Program (lfl, lfu, t) ->
