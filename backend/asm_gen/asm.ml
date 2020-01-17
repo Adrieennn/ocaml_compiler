@@ -44,18 +44,18 @@ let rec exp_to_asm exp =
   match exp with
   | Int i -> move_integer "r0" i
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"
-  | Add (x, y) -> (
+  | Add (x, y) ->
       "ldr r4, [r11, #" ^ x ^ "]\n"
-      ^
-      match y with
-      | Int i -> "add r0, r4, #" ^ string_of_int i ^ "\n"
-      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "add r0, r4, r5\n" )
-  | Sub (x, y) -> (
+      ^ ( match y with
+        | Int i -> move_integer "r5" i
+        | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" )
+      ^ "add r0, r4, r5\n"
+  | Sub (x, y) ->
       "ldr r4, [r11, #" ^ x ^ "]\n"
-      ^
-      match y with
-      | Int i -> "sub r0, r4, #" ^ string_of_int i ^ "\n"
-      | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" ^ "sub r0, r4, r5\n" )
+      ^ ( match y with
+        | Int i -> move_integer "r5" i
+        | Var a -> "ldr r5, [r11, #" ^ a ^ "]\n" )
+      ^ "sub r0, r4, r5\n"
   | CallDir (label, args) ->
       if
         String.length label > 9
