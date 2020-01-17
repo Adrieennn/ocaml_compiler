@@ -178,7 +178,6 @@ let rec unify equations =
   | [] -> ()
   | hd :: tl -> (
       match hd with
-      (* | (t1, t2) when t1 = t2 -> () (* Equation is actually equal *) *)
       | Type.Unit, Type.Unit
       | Type.Bool, Type.Bool
       | Type.Int, Type.Int
@@ -212,7 +211,6 @@ let rec unify equations =
               else
                 unify ((t, t2) :: tl)
           | None ->
-              (* occurs_check v1 t2; *)
               occurs_check t1 t2;
               v1 := Some t2;
               unify tl )
@@ -224,7 +222,6 @@ let rec unify equations =
               else
                 unify ((t1, t) :: tl)
           | None ->
-              (* occurs_check v2 t1; *)
               occurs_check t2 t1;
               v2 := Some t1;
               unify tl )
