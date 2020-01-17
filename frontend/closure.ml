@@ -144,7 +144,6 @@ let rec convert (exp : Knorm.t) known_fun var_env =
   | Knorm.LetTuple (var, def, body) ->
     LetTuple (var, convert def known_fun var_env, convert body known_fun (var :: var_env))
   | Knorm.Let ((id, typ), def, body) ->
-    (*Is it okay to add x to var_env like this?*)
     Let ((id, typ), convert def known_fun ((id, typ) :: var_env), convert body known_fun ((id, typ) :: var_env))
   (*For all other expressions, return*)
   | Knorm.Unit -> Unit
