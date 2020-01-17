@@ -45,13 +45,9 @@ let rec convert (exp : Knorm.t) known_fun =
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
       let fun_label = fun_id ^ Id.genid () in
+      let fun_body = convert fun_body ((fun_id, fun_label) :: known_fun) in
       top_level :=
-        {
-          name = (fun_label, fun_typ);
-          args;
-          formal_fv = [];
-          body = convert fun_body ((fun_id, fun_label) :: known_fun);
-        }
+        { name = (fun_label, fun_typ); args; formal_fv = []; body = fun_body }
         :: !top_level;
       convert let_body ((fun_id, fun_label) :: known_fun)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
