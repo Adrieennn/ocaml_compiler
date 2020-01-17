@@ -204,34 +204,30 @@ let rec unify equations =
             unify (match_tuple_types @ tl)
           else failwith "Tuple lengths do not match."
       | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
-      | (Type.Var v1 as t1), (Type.Var v2 as t2) -> (
-          match (!v1, !v2) with
-          | None, None ->
-              v1 := Some t2;
-              unify tl
-          | Some t, None ->
-              occurs_check t2 t1;
-              v2 := Some t;
-              unify tl
-          | None, Some t ->
+      | (Type.Var v1 as t1), t2 -> (
+          match !v1 with
+          | Some t ->
+              if t == t2 then
+                unify tl
+              else
+                unify ((t, t2) :: tl)
+          | None ->
+              (* occurs_check v1 t2; *)
               occurs_check t1 t2;
-              v1 := Some t;
-              unify tl
-          | Some t1, Some t2 -> unify ((t1, t2) :: tl) )
-      | (Type.Var v as t1), t2 -> (
-          occurs_check t1 t2;
-          match !v with
+              v1 := Some t2;
+              unify tl )
+      | t1, (Type.Var v2 as t2) -> (
+          match !v2 with
+          | Some t ->
+              if t == t1 then
+                unify tl
+              else
+                unify ((t1, t) :: tl)
           | None ->
-              v := Some t2;
-              unify tl
-          | Some tv -> unify ((tv, t2) :: tl) )
-      | t1, (Type.Var v as t2) -> (
-          occurs_check t2 t1;
-          match !v with
-          | None ->
-              v := Some t1;
-              unify tl
-          | Some tv -> unify ((tv, t1) :: tl) )
+              (* occurs_check v2 t1; *)
+              occurs_check t2 t1;
+              v2 := Some t1;
+              unify tl )
       | t1, t2 ->
           Printf.eprintf "Unification of %s and %s is impossible.\n"
             (Type.to_string t1) (Type.to_string t2);
