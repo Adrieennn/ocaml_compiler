@@ -206,10 +206,11 @@ let rec unify equations =
       | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
       | (Type.Var v1 as t1), (Type.Var v2 as t2) -> (
           match (!v1, !v2) with
-          | None, None -> unify tl
+          | None, None ->
+              v1 := Some t2;
+              unify tl
           | Some t, None ->
               occurs_check t2 t1;
-              (* XXX What if t is again Type.Var *)
               v2 := Some t;
               unify tl
           | None, Some t ->
@@ -254,8 +255,7 @@ let rec substitue_type_exn typ =
       | None ->
           (* The paper suggests, arbitrarily, instantiating these variables to Type.Int *)
           failwith "Type variable is still undefined"
-      (* XXX What if t is itself Type.Var? *)
-      | Some t -> t )
+      | Some t -> substitue_type_exn t )
 
 let rec type_ast ast =
   let module S = Syntax in
