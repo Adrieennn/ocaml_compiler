@@ -10,4 +10,12 @@ for f in tests/asml_gen/arithm/*; do
     ./tools/asml tmp.asml &> /dev/null && echo "OK" || exit 1
 done
 
+echo -e "--> Spilling\n"
+
+for f in tests/asml_gen/spilling/*; do
+    printf "$(basename "$f"):\t"
+    ./$PROG -asml $f > tmp.asml
+    ./tools/asml tmp.asml &> /dev/null && echo "OK" || exit 1
+done
+
 exit 0

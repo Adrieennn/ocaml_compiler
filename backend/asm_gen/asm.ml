@@ -29,7 +29,7 @@ let reset_sp args =
   let len = (List.length args + 2) * 4 in
   "add r13, r13, #" ^ string_of_int len ^ "\n"
 
-(* exp_to_asm: match exp with corresponding assembly operations *)
+(* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
   match exp with
   | Int i -> "mov r0, #" ^ string_of_int i ^ "\n"
