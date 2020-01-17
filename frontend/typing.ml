@@ -226,7 +226,7 @@ let rec unify equations =
               unify tl
           | Some tv -> unify ((tv, t2) :: tl) )
       | t1, (Type.Var v as t2) -> (
-          occurs_check t1 t2;
+          occurs_check t2 t1;
           match !v with
           | None ->
               v := Some t1;
