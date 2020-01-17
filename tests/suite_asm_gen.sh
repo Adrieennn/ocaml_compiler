@@ -4,7 +4,7 @@ echo "---- TESTING ASM GENERATION! ----"
 
 echo -e "--> Simple arithmetics\n"
 
-for f in tests/asm_gen/*.ml; do
+for f in tests/mincaml/arithm/*.ml; do
     base=$(basename "$f")
     printf "$base:\n"
     ./$PROG $f -o ARM/$base.s
