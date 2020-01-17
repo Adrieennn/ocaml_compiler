@@ -11,7 +11,6 @@ let ref_counter x =
         !counter
     | Peak -> !counter
 
-
 (* function that takes an expression and outputs an association list with
  * variable names and their corresponding offsets.
  * Needed for IF statements where new variables can be defined *)
@@ -53,17 +52,16 @@ let rec lfu_to_reg_rec lfu =
       @ lfu_to_reg_rec rest
   | [] -> []
 
-
 (* function that takes a program and outputs an association list of variable
  * names and their corresponding fp offsets *)
-let program_to_reg pg var_reg =
+let program_to_reg pg =
   let count = ref_counter 0 in
   match pg with
   | Program (lfl, lfu, t) -> (
       lfu_to_reg_rec lfu
       @
       match t with
-      | Let ((variable, _), exp, t2) -> t_to_reg "main" t var_reg count
+      | Let ((variable, _), exp, t2) -> t_to_reg "main" t [] count
       | _ -> [] )
 
 (* function that takes a variable name and an association list between variable
@@ -86,7 +84,6 @@ let rec modify_variable_list fn_name variable_list var_reg =
       modify_variable fn_name hd var_reg
       :: modify_variable_list fn_name rest var_reg
   | [] -> variable_list
-
 
 (* function that takes an expression and an association list between variable
  * names and fp offsets; it modifies all occurrences of variables in the
@@ -130,7 +127,6 @@ let rec modify_exp fn_name exp var_reg =
       )
   | _ -> exp
 
-
 (* function that takes a function body and an association list between variable
  * names and fp offsets; it modifies all occurrences of variables in the
  * function body with their corresponding fp offsets from the list *)
@@ -153,7 +149,6 @@ let rec modify_args_reg fn_name args var_reg count =
         (var_reg @ [ (fn_name ^ "." ^ var, count Decr) ])
         count
   | [] -> var_reg
-
 
 (* function that takes a function definition and an association list between variable
  * names and fp offsets; it modifies all occurrences of variables in the
