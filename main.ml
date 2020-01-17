@@ -109,6 +109,7 @@ let asml_prog_of_asml_file f =
 
 let asml_prog_of_ml_file f =
   let ast = read_ast_from_file f in
+  let ast = Typing.typed_ast ast in
   let ast_knorm = Knorm.of_syntax ast in
   let ast_alpha = Alpha.convert ast_knorm [] in
   let ast_reduced_nested_lets = NestedLetReduction.reduction ast_alpha in
