@@ -15,8 +15,8 @@ test_typechecking: all
 test_asml_gen: all
 	PROG=$(PROG) ./tests/suite_asml_gen.sh
 
-test_asm_gen: all
-	PROG=$(PROG) ./tests/suite_asm_gen.sh
+test_asm_output: all
+	PROG=$(PROG) ./tests/suite_asm_output.sh
 
 clean:
 	rm -rf _build $(PROG) *.s *.asml ARM/*.ml*

@@ -16,7 +16,7 @@ PATH.
 
 ## Usage:
 
-  ./mincamlc  filenames
+  `./mincamlc  filenames`
 
   -o          Outputs to file <file>
   -h          Display help
@@ -29,8 +29,9 @@ PATH.
 
 ## Specifications of the project
 
-The project currently supports arithmetic expressions, function definitions,
-calls to functions and if-then-else statements.
+The project currently supports arithmetic expressions, function definitions 
+assuming it is a pure function depending on its own arguments (but not
+closures), calls to functions and if-then-else statements.
 It also supports parsing ASML directly and thus generating assembly from it.
 
 ### Register Allocation
@@ -43,4 +44,4 @@ Parameters to functions are assigned a positive offset.
 
 ### Remark
 
-User-defined functions should not start with "_min_caml_".
+User-defined functions should not start with `_min_caml_`.
