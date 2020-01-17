@@ -89,7 +89,7 @@ let rec convert (exp : Knorm.t) known_fun var_env =
       let new_var_env = args :: ((fun_id, fun_typ) :: var_env) in
       let converted_fun_body = convert fun_body new_known_fun new_var_env in
       let fun_label = fun_id ^ Id.genid () in
-      top_level := convert fun_body new_known_fun new_var_env in
+      top_level :=  in
         {
           name = (fun_label, fun_typ);
           args;

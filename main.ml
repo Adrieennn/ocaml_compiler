@@ -78,7 +78,7 @@ let print_transformations f =
   print_string (Asml.to_string_f fd_test);
   print_newline ();
 
-  let var_reg = Register.program_to_reg asml_prog [] in
+  let var_reg = Register.program_to_reg asml_prog in
   let modified_prog = Register.modify_program asml_prog var_reg in
   let armfile = open_out !output_file in
   output_string armfile (Asm.prog_to_asm modified_prog);
@@ -119,7 +119,7 @@ let asml_prog_to_arm prog output_file_name =
   ( if !disp_asml then
     let asml_fundef = Asml.prog_to_fd prog in
     Printf.printf "%s\n" (Asml.to_string_f asml_fundef) );
-  let var_reg = Register.program_to_reg prog [] in
+  let var_reg = Register.program_to_reg prog in
   let modified_prog = Register.modify_program prog var_reg in
   let outchan = open_out output_file_name in
   output_string outchan (Asm.prog_to_asm modified_prog);
@@ -183,7 +183,7 @@ let () =
         ( if !disp_asml then
           let asml_fundef = Asml.prog_to_fd asml_prog in
           Printf.printf "%s\n" (Asml.to_string_f asml_fundef) );
-        let var_reg = Register.program_to_reg asml_prog [] in
+        let var_reg = Register.program_to_reg asml_prog in
         let modified_prog = Register.modify_program asml_prog var_reg in
         let output_file_name =
           match !output_file with
