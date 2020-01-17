@@ -9,6 +9,16 @@ let label_counter x =
 
 let if_count = label_counter 0
 
+let move_integer register i =
+  if i > 65535 then
+    let i' = abs i in
+    let i_low = i' land 65535 in
+    let i_top = i' lsr 16 in
+    "mov " ^ register ^ ", #" ^ string_of_int i_low ^ "\n" ^ "movt " ^ register
+    ^ ", #" ^ string_of_int i_top ^ "\n"
+    ^ if i < 0 then "rsb " ^ register ^ ", " ^ register ^ ", #0\n" else ""
+  else "mov " ^ register ^ ", #" ^ string_of_int i ^ "\n"
+
 (* args_to_asm_pred: NOT spilling args of predefined functions but store them in
  * registers *)
 let rec args_to_asm_pred args regnum =
@@ -32,7 +42,7 @@ let reset_sp args =
 (* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
   match exp with
-  | Int i -> "mov r0, #" ^ string_of_int i ^ "\n"
+  | Int i -> move_integer "r0" i
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"
   | Add (x, y) -> (
       "ldr r4, [r11, #" ^ x ^ "]\n"
@@ -62,7 +72,7 @@ let rec exp_to_asm exp =
       ( "ldr r4, [r11, #" ^ s1 ^ "]\n"
       ^
       match s2 with
-      | Int i -> "mov r5, #" ^ string_of_int i ^ "\n"
+      | Int i -> move_integer "r5" i
       | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n" )
       ^ "cmp r4, r5\n" ^ "beq ltrue" ^ label_index ^ "\n" ^ "b lfalse"
       ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
@@ -73,7 +83,7 @@ let rec exp_to_asm exp =
       ( "ldr r4, [r11, #" ^ s1 ^ "]\n"
       ^
       match s2 with
-      | Int i -> "mov r5, #" ^ string_of_int i ^ "\n"
+      | Int i -> move_integer "r5" i
       | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n" )
       ^ "cmp r4, r5\n" ^ "ble ltrue" ^ label_index ^ "\n" ^ "b lfalse"
       ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
@@ -86,7 +96,7 @@ and t_to_asm body =
   match body with
   | Let ((id, _), e, t) ->
       ( match e with
-      | Int i -> "mov r0, #" ^ string_of_int i ^ "\n"
+      | Int i -> move_integer "r0" i
       | Var a -> "ldr r0, [r11, #" ^ a ^ "]\n"
       | _ -> exp_to_asm e )
       ^ "push {r0}\n" ^ t_to_asm t ^ "add r13, r13, #4\n"
