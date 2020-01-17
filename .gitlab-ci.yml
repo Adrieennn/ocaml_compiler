@@ -18,3 +18,8 @@ asml_gen:
   stage: tests
   script:
     - make test_asml_gen
+
+asm_gen:
+  stage: tests
+  script:
+    - make test_asm_gen
