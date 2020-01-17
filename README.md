@@ -57,6 +57,20 @@ After ASML generation, each variable is assigned a negative offset from the
 frame pointer.
 Parameters to functions are assigned a positive offset.
 
+### Typing
+
+The compiler currently first generates all typing equations and resolves them
+afterwards with the unification function. An occurs check is used to detect
+cyclic types.
+
+Differences from the paper: If after the type inference there are still some
+unresolved type variables the current functions fail. The paper suggests to
+arbitrarily replace those type variables by Int. The current approach makes it
+easier to detect fault in our type inference implementation.
+
+Furthermore we do not yet implement the external variable environment i.e. we
+fail when we encounter unbound variables.
+
 ### Remark
 
 User-defined functions should not start with `_min_caml_`.
