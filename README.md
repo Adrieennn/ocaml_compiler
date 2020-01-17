@@ -27,6 +27,21 @@ PATH.
   -help       Display this list of options
   --help      Display this list of options
 
+## Testing
+
+The whole compiler can be tested using `make test` which is going to run
+all of our smaller test suites.
+
+To run specific test suites, run:
+
+`make test_typechecking`
+
+`make test_asml_gen`
+
+`make test_asm_gen`
+
+`make test_asm_output`
+
 ## Specifications of the project
 
 The project currently supports arithmetic expressions, function definitions 
