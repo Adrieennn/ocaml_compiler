@@ -34,48 +34,131 @@ type prog = Prog of fundef list * t
 (*list of top-level functions*)
 let top_level = ref []
 
-(* function searches for and return the value of var in set*)
+(* searches for and return the value of var in set*)
 let find set var = List.assoc_opt var set
 
+(*Returns a list of elements that are in a but not in b. In this case, the free variables*)
+let difference a b = List.filter (fun i -> not (List.mem i b)) a
+
+(*find the FVs in an expression. It is required for deciding whether to use apply direct or apply closure*)
+    (*Ensure uniqueness of list elements - with sort_uniq? is it important?*)
+let rec find_fv expr =
+  match expr with
+  | Unit -> []
+  | Int i -> []
+  | Float f -> []
+  | Add (v1, v2) -> [v1; v2]
+  | Sub (v1, v2) -> [v1; v2]
+  | FAdd (v1, v2) -> [v1; v2]
+  | FSub (v1, v2) -> [v1; v2]
+  | FMul (v1, v2) -> [v1; v2]
+  | FDiv (v1, v2) -> [v1; v2]
+  | Let ((id, typ), e1, e2) -> (find_fv e1) :: (find_fv e2) (*remove id from e2, how?*)
+  | Var x -> [x]
+  | IfEq ((v1, v2), e1, e2) ->  [v1; v2] :: ((find_fv e1) :: (find_fv e2))
+  | IfLe ((v1, v2), e1, e2) ->  [v1; v2] :: ((find_fv e1) :: (find_fv e2))
+  | LetTuple (vars, def, body) ->
+        (*okay to remove type from tuple?*)
+      ((find_fv def) :: (difference (find_fv body) (List.map (fun (id, _t) -> id) vars))) (*do i need to find difference with def too?*)
+  | Array (v1, v2) -> [v1; v2] (* v1 or []? verify*)
+  | Tuple (tups) -> List.map (fun (id, _t) -> id) tups
+  | Get (v1,v2) -> [v1; v2]
+  | Put (v1, v2, v3) -> [v1; v2; v3]
+  | MkCls ((idx, typ), {lbl; vars} e) -> (List.map (fun (id, _t) -> id) vars) :: (find_fv e) (*remove idx*)
+  | AppCls (f, args) -> f :: (List.map (fun (id, _t) -> id) args)
+  | AppDir (_, args) -> args
+
 (*Convert Knorm.t to Closure.t*)
-let rec convert (exp : Knorm.t) known_fun =
+(*Added another argument var_env (variable environment) to function convert. This is to enable us
+  to find the appropriate free variable (FV) when making closures*)
+let rec convert (exp : Knorm.t) known_fun var_env =
   match exp with
-  (*if function f is part of known_fun(set of functions known to contain no free variables (FV)), apply direct conversion. Otherwise, apply closure conversion*)
-  | Knorm.App (f, args) -> (
+  (*if function f is part of known_fun(set of functions known to contain no FV), apply direct conversion. Otherwise, apply closure conversion*)
+  | Knorm.App (f, args) -> ( (**verify id there's a bracket here*)
       let fun_label = find known_fun f in
       match fun_label with
       | Some label -> AppDir (label, args)
-      | None ->  AppCls(f, args) (*failwith "Apply closure not implemented" )*)
+      | None ->  AppCls(f, args)
+
   (*For this case, function is initially assumed to contain no FV and added to known_fun + top_level. Then, the function body is converted first
   and the let_body is converted after with the updated known_fun set*)
-  | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
+  | Knorm.LetRec ({ name = (fun_id, fun_typ); args; body = fun_body }, let_body)
     ->
+      (*add name to known_fun and name/args to var_env. Then convert fun_body*)
+      let new_known_fun = (fun_id :: known_fun) in
+      let new_var_env = args :: ((fun_id, fun_typ) :: var_env) in
+      let converted_fun_body = convert fun_body new_known_fun new_var_env
+
+
+      let previous_top_level = !top_level
       let fun_label = fun_id ^ Id.genid () in
       top_level :=
         {
           name = (fun_label, fun_typ);
           args;
           formal_fv = [];
-          body = convert fun_body ((fun_id, fun_label) :: known_fun);
+          body = convert fun_body new_known_fun new_var_env;
         }
         :: !top_level;
+
+      let convert_let_body (fvars: list) =
+        let clbody = convert let_body new_known_fun new_var_env in
+        let cls_rep_check = find (find_fv clbody) fun_id in  (*List.mem fun_id (find_fv clbody)*)
+        match cls_rep_check with
+        | Some f_id -> MkCls ((f_id, fun_typ), {fun_label; fvars} clbody)
+        | None -> failwith "To do- implement sth in failed cls_rep_check case"
+
+      let arg_ids = List.map (fun (id, _t) -> id) args in
+      let diff_result = difference (find_fv converted_fun_body) arg_ids in
+      match diff_result with
+      | [] -> convert_let_body []
+          (*if function has no free variables, convert let_body*)
+      | hd :: tl ->
+          (*otherwise, reconvert fun_body with initial known_function and restore top_level to its previous state*)
+          top_level = previous_top_level
+          let cfbody = convert fun_body known_fun (args :: var_env) in
+          let f_arg_ids =  List.map (fun (id, _t) -> id) ((fun_id, fun_typ) :: args) in
+          let fv_ids = difference (find_fv cfbody) f_arg_ids in
+          let fvs = List.map (fun fv_id -> (fv_id, (find new_var_env fv_id))) fv_ids in (*not sure what find will return? type or tuple?*)
+          top_level :=
+            {
+              name = (fun_label, fun_typ);
+              args;
+              formal_fv = fvs;
+              body = cfbody;
+            }
+            :: !top_level;
+          convert_let_body fvs
+      (*let fun_label = fun_id ^ Id.genid () in
+      top_level :=
+        {
+          name = (fun_label, fun_typ);
+          args;
+          formal_fv = [];
+          body = convert fun_body ((fun_id, fun_label) :: known_fun) var_env;
+        }
+        :: !top_level;
+      convert let_body ((fun_id, fun_label) :: known_fun) var_env
+      *)
+
       (*check if it has a fv, how?*) (*Maybe *)
       (*if no fv continue with line below*)
-      convert let_body ((fun_id, fun_label) :: known_fun)
+
       (*otherwise remove fun_label from  known_fun and top level, convert e1 again*)
       (*last opt, if function is returned as a value (just id.t without args), make and apply closure*)
       (*otherwise, if f is called as a function (type id.L with args) only, apply direct
       that is if function f is not an id.t in e2*)
   (*For all if statements, convert the body - e1 and e2*)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
-      IfEq ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+      IfEq ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
   | Knorm.IfLe ((v1, v2), e1, e2) ->
-      IfLe ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+      IfLe ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
   (*For LetTuple and Let variable declariation, convert definition and body*)
   | Knorm.LetTuple (var, def, body) ->
-      LetTuple (var, convert def known_fun, convert body known_fun)
+    LetTuple (var, convert def known_fun var_env, convert body known_fun (var :: var_env))
   | Knorm.Let ((id, typ), def, body) ->
-    Let ((id, typ), convert def known_fun, convert body known_fun)
+    (*Is it okay to add x to var_env like this?*)
+    Let ((id, typ), convert def known_fun ((id, typ) :: var_env), convert body known_fun ((id, typ) :: var_env))
   (*For all other expressions, return*)
   | Knorm.Unit -> Unit
   | Knorm.Int i -> Int i
