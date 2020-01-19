@@ -1,3 +1,7 @@
+(* Typing environment mapping variables names to their types
+ * The type t is opaque so that we can later move to a more efficient
+ * implementation without breaking the API
+ *)
 module TypingEnvironment : sig
   type t
 
@@ -17,12 +21,16 @@ end = struct
 
   let default () =
     empty ()
+    (* random selection of predefined functions so that we can type
+     * more programs *)
     |> add ("print_int", Type.Fun ([ Type.Int ], Type.Unit))
     |> add ("print_newline", Type.Fun ([ Type.Unit ], Type.Unit))
     |> add ("truncate", Type.Fun ([ Type.Float ], Type.Int))
 end
 
 module TypingEquation = struct
+  (* Not really used for now, but the idea is the same i.e. roughly
+   * having one module per type *)
   type t = Type.t * Type.t
 
   let to_string eqn =
@@ -37,14 +45,18 @@ let rec gen_equations env exp expected_type =
   | Syntax.Int _ -> [ (Type.Int, expected_type) ]
   | Syntax.Float _ -> [ (Type.Float, expected_type) ]
   | Syntax.Not e ->
+      (* Simple base cases: the expected type must match the base values *)
       let eqs = gen_equations env e Type.Bool in
       (Type.Bool, expected_type) :: eqs
   | Syntax.Neg e ->
       let eqs = gen_equations env e Type.Int in
       (Type.Int, expected_type) :: eqs
   | Syntax.Add (e1, e2) ->
+      (* Add expects both of its arguments to type to Type.Int *)
       let eqs1 = gen_equations env e1 Type.Int in
       let eqs2 = gen_equations env e2 Type.Int in
+      (* ... and returns an integer which must match the expected type
+       * the same logic applies to the remaining operations *)
       ((Type.Int, expected_type) :: eqs1) @ eqs2
   | Syntax.Sub (e1, e2) ->
       let eqs1 = gen_equations env e1 Type.Int in
@@ -83,8 +95,10 @@ let rec gen_equations env exp expected_type =
       let eqs3 = gen_equations env e3 expected_type in
       eqs1 @ eqs2 @ eqs3
   | Syntax.Let ((id, t), e1, e2) ->
+      (* The let definition must be equal to the variable's type *)
       let eqs1 = gen_equations env e1 t in
       let eqs2 =
+        (* The let body must evaluate to the expected type *)
         gen_equations (TypingEnvironment.add (id, t) env) e2 expected_type
       in
       eqs1 @ eqs2
@@ -98,10 +112,13 @@ let rec gen_equations env exp expected_type =
   | Syntax.App (e1, le2) ->
       let arg_typs = List.map (fun _ -> Type.Var (ref None)) le2 in
       let arg_eqs =
+        (* The expresions provided as arguments must match the parameter types
+         * of the applied function *)
         List.map2 (fun e typ -> gen_equations env e typ) le2 arg_typs
         |> List.concat
       in
 
+      (* The function's return type must match the expected_type since it is applied *)
       let fun_typ = Type.Fun (arg_typs, expected_type) in
       let fun_eqs = gen_equations env e1 fun_typ in
 
@@ -117,6 +134,7 @@ let rec gen_equations env exp expected_type =
         (* Add function name to environment of function body for recursive calls *)
         |> TypingEnvironment.add fun_name
       in
+      (* The function body's type is not yet known *)
       let fun_body_typ = Type.Var (ref None) in
       let fun_body_eqs = gen_equations fun_body_env fun_body fun_body_typ in
 
@@ -131,6 +149,7 @@ let rec gen_equations env exp expected_type =
   | Syntax.LetTuple (l, e1, e2) ->
       let element_types = List.map (fun (_id, typ) -> typ) l in
       let eqs1 = gen_equations env e1 (Type.Tuple element_types) in
+      (* make the defined variables available in the let body *)
       let new_env = List.fold_right TypingEnvironment.add (List.rev l) env in
       let eqs2 = gen_equations new_env e2 expected_type in
       eqs1 @ eqs2
@@ -165,10 +184,9 @@ let rec occurs t1 t2 =
   | Type.Tuple elements -> List.exists (fun t -> occurs t1 t) elements
   | Type.Array t -> occurs t1 t
   | Type.Var t_ref -> (
-      if (* NB (==) is physical equality, (=) structural equality *)
-         t1 == t2
-      then true
-      else match !t_ref with None -> false | Some t -> occurs t1 t )
+      (* NB (==) is physical equality, (=) structural equality *)
+      t1 == t2
+      || match !t_ref with None -> false | Some t -> occurs t1 t )
 
 let occurs_check t1 t2 =
   if occurs t1 t2 then failwith "Recursive type detected. Aborting."
@@ -178,11 +196,12 @@ let rec unify equations =
   | [] -> ()
   | hd :: tl -> (
       match hd with
-      (* | (t1, t2) when t1 = t2 -> () (* Equation is actually equal *) *)
       | Type.Unit, Type.Unit
       | Type.Bool, Type.Bool
       | Type.Int, Type.Int
       | Type.Float, Type.Float ->
+          (* continue if both sides of the equation are the same
+           * that is, the equations type correctly for now *)
           unify tl
       | Type.Fun (args1, ret1), Type.Fun (args2, ret2) ->
           let args1_len = List.length args1 in
@@ -192,6 +211,8 @@ let rec unify equations =
               List.map2 (fun typ1 typ2 -> (typ1, typ2)) args1 args2
             in
             let ret_equation = (ret1, ret2) in
+            (* Two function types are equal if their parameter types and
+             * return types match up *)
             unify ((ret_equation :: arg_equations) @ tl)
           else failwith "Functions have different numbers of arguments."
       | Type.Tuple elts1, Type.Tuple elts2 ->
@@ -204,39 +225,30 @@ let rec unify equations =
             unify (match_tuple_types @ tl)
           else failwith "Tuple lengths do not match."
       | Type.Array t1, Type.Array t2 -> unify ((t1, t2) :: tl)
-      | (Type.Var v1 as t1), (Type.Var v2 as t2) -> (
-          match (!v1, !v2) with
-          | None, None ->
-              v1 := Some t2;
-              unify tl
-          | Some t, None ->
-              occurs_check t2 t1;
-              v2 := Some t;
-              unify tl
-          | None, Some t ->
+      | (Type.Var v1 as t1), t2 -> (
+          match !v1 with
+          | Some t ->
+              if t == t2 then (* Prevent infinite loop *)
+                unify tl
+              else unify ((t, t2) :: tl)
+          | None ->
               occurs_check t1 t2;
-              v1 := Some t;
-              unify tl
-          | Some t1, Some t2 -> unify ((t1, t2) :: tl) )
-      | (Type.Var v as t1), t2 -> (
-          occurs_check t1 t2;
-          match !v with
+              v1 := Some t2;
+              unify tl )
+      | t1, (Type.Var v2 as t2) -> (
+          match !v2 with
+          | Some t -> if t == t1 then unify tl else unify ((t1, t) :: tl)
           | None ->
-              v := Some t2;
-              unify tl
-          | Some tv -> unify ((tv, t2) :: tl) )
-      | t1, (Type.Var v as t2) -> (
-          occurs_check t1 t2;
-          match !v with
-          | None ->
-              v := Some t1;
-              unify tl
-          | Some tv -> unify ((tv, t1) :: tl) )
+              occurs_check t2 t1;
+              v2 := Some t1;
+              unify tl )
       | t1, t2 ->
           Printf.eprintf "Unification of %s and %s is impossible.\n"
             (Type.to_string t1) (Type.to_string t2);
           exit 1 )
 
+(* Instantiate (replace) type variables by their content *)
+(* Currently fails if a type variable in the AST has not been resolved *)
 let rec substitue_type_exn typ =
   let module T = Type in
   match typ with
@@ -257,6 +269,7 @@ let rec substitue_type_exn typ =
           failwith "Type variable is still undefined"
       | Some t -> substitue_type_exn t )
 
+(* Substitute type variables by their content and return the resulting AST *)
 let rec type_ast ast =
   let module S = Syntax in
   match ast with
@@ -304,6 +317,10 @@ let rec type_ast ast =
   | S.Get (e1, e2) -> S.Get (type_ast e1, type_ast e2)
   | S.Put (e1, e2, e3) -> S.Put (type_ast e1, type_ast e2, type_ast e3)
 
+(* Main function of consumers of this module
+ * takes an AST and returns a typed AST
+ * NB: that it modifies the originally passed AST during the type
+ *     inference process *)
 let typed_ast ast =
   let type_equations =
     gen_equations (TypingEnvironment.default ()) ast Type.Unit

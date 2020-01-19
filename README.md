@@ -16,7 +16,7 @@ PATH.
 
 ## Usage:
 
-  ./mincamlc  filenames
+  `./mincamlc  filenames`
 
   -o          Outputs to file <file>
   -h          Display help
@@ -27,10 +27,26 @@ PATH.
   -help       Display this list of options
   --help      Display this list of options
 
+## Testing
+
+The whole compiler can be tested using `make test` which is going to run
+all of our smaller test suites.
+
+To run specific test suites, run:
+
+`make test_typechecking`
+
+`make test_asml_gen`
+
+`make test_asm_gen`
+
+`make test_asm_output`
+
 ## Specifications of the project
 
-The project currently supports arithmetic expressions, function definitions,
-calls to functions and if-then-else statements.
+The project currently supports arithmetic expressions, function definitions 
+assuming it is a pure function depending on its own arguments (but not
+closures), calls to functions and if-then-else statements.
 It also supports parsing ASML directly and thus generating assembly from it.
 
 ### Register Allocation
@@ -41,6 +57,20 @@ After ASML generation, each variable is assigned a negative offset from the
 frame pointer.
 Parameters to functions are assigned a positive offset.
 
+### Typing
+
+The compiler currently first generates all typing equations and resolves them
+afterwards with the unification function. An occurs check is used to detect
+cyclic types.
+
+Differences from the paper: If after the type inference there are still some
+unresolved type variables the current functions fail. The paper suggests to
+arbitrarily replace those type variables by Int. The current approach makes it
+easier to detect fault in our type inference implementation.
+
+Furthermore we do not yet implement the external variable environment i.e. we
+fail when we encounter unbound variables.
+
 ### Remark
 
-User-defined functions should not start with "_min_caml_".
+User-defined functions should not start with `_min_caml_`.
