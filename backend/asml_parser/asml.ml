@@ -23,7 +23,7 @@ and exp =
   | IfFEq of Id.t * id_or_imm * t * t
   | IfLEq of Id.t * id_or_imm * t * t
   | IfFLEq of Id.t * id_or_imm * t * t
-  | CallCls of Id.t * Id.t list
+  | CallCls of Id.l * Id.t list
   | CallDir of Id.t * Id.t list
 
 type fu = { name : Id.t; args : Id.t list; body : t }
@@ -32,9 +32,38 @@ type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
 type prog = Program of (Id.t * float) list * fu list * t
 
+let rec add_let exp body =
+  let id = Id.genid () in
+  Let ((id, Type.Var (ref None)), exp, body id)
+
 let rec closure_to_t = function
   | Closure.Let ((id, typ), def, body) ->
       Let ((id, typ), closure_to_exp def, closure_to_t body)
+  | Closure.MkCls ((cls_id, cls_typ), (fun_label, args), body) ->
+      (* reserve space
+       * first word is for the method of the closure
+       * afterwards space is for the captured variables *)
+      let word_size = 4 in
+      let num_vars = List.length args in
+
+      let rec arg_lets loc counter = function
+        | [] -> closure_to_t body
+        | hd :: tl ->
+            add_let
+              (St (loc, Int counter, hd))
+              (fun _ -> arg_lets loc (counter + 4) tl)
+      in
+      let arg_ids = List.map (fun (id, _typ) -> id) args in
+      Let
+        ( (cls_id, cls_typ),
+          (* Space for arguments plus (+ 1) the fun_label in the beginning *)
+          New ((num_vars + 1) * word_size),
+          add_let
+            (Var ("_" ^ fun_label))
+            (fun fun_label_var ->
+              add_let
+                (St (cls_id, Int 0, fun_label_var))
+                (fun _ -> arg_lets cls_id 4 arg_ids)) )
   | exp -> Ans (closure_to_exp exp)
 
 and closure_to_exp = function
@@ -54,6 +83,7 @@ and closure_to_exp = function
   | Closure.Let (_, _, _) ->
       failwith "Closure.Let cannot be translated to Asml.exp"
   | Closure.AppDir (fun_id, arg_ids) -> CallDir ("_" ^ fun_id, arg_ids)
+  | Closure.AppCls (fun_label, arg_ids) -> CallCls (fun_label, arg_ids)
   | e ->
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
@@ -61,9 +91,25 @@ and closure_to_exp = function
       exit 1
 
 let fundef_of_closure_fundef fd =
-  let { Closure.name = id, _typ; args; formal_fv = _; body } = fd in
-  let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
-  { name = "_" ^ id; args = arg_names; body = closure_to_t body }
+  let { Closure.name = id, _typ; args; formal_fv; body } = fd in
+  match formal_fv with
+  | [] ->
+      let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
+      { name = "_" ^ id; args = arg_names; body = closure_to_t body }
+  | _ ->
+      let closure_body =
+        let rec retrieve_environment counter = function
+          | [] -> closure_to_t body
+          | hd :: tl ->
+              Let
+                ( (hd, Type.Var (ref None)),
+                  Ld ("%self", Int counter),
+                  retrieve_environment (counter + 4) tl )
+        in
+        retrieve_environment 4 (List.map (fun (id, _typ) -> id) formal_fv)
+      in
+      let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
+      { name = "_" ^ id; args = arg_names; body = closure_body }
 
 let of_closure_prog prog =
   let (Closure.Prog (fundefs, main_body)) = prog in
@@ -85,6 +131,7 @@ let rec to_string exp =
   | Unit -> "()"
   | Int i -> string_of_int i
   | Neg e -> sprintf "(neg %s)" (Id.to_string e)
+  | New i -> sprintf "(new %d)" i
   | Add (e1, e2) ->
       sprintf "(add %s %s)" (Id.to_string e1) (to_string_id_or_imm e2)
   | Sub (e1, e2) ->
@@ -108,12 +155,15 @@ let rec to_string exp =
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | Var id -> Id.to_string id
   | CallDir (e1, le2) ->
-      sprintf "(call %s %s)" (Id.to_string e1) (infix_to_string Id.to_string le2 " ")
-  | Ld (e1, e2) -> sprintf "%s.(%s)" (Id.to_string e1) (to_string_id_or_imm e2)
+      sprintf "(call %s %s)" (Id.to_string e1)
+        (infix_to_string Id.to_string le2 " ")
+  | CallCls (e1, le2) ->
+      sprintf "(call_closure %s %s)" (Id.to_string e1)
+        (infix_to_string Id.to_string le2 " ")
+  | Ld (e1, e2) -> sprintf "(mem(%s + %s))" (Id.to_string e1) (to_string_id_or_imm e2)
   | St (e1, e2, e3) ->
-      sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (to_string_id_or_imm e2)
+      sprintf "(mem(%s + %s) <- %s)" (Id.to_string e1) (to_string_id_or_imm e2)
         (Id.to_string e3)
-  | _ -> "not implemented"
 
 (* to_string_t: match t to correct substring *)
 and to_string_t t =

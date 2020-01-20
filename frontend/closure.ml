@@ -114,13 +114,30 @@ let rec convert exp known_fun var_env =
             represent it as a closure. Otherwise, do not create closure for it. *)
       let convert_let_body fvars =
         (*fvars = list of FVs*)
-        let clbody = convert let_body new_known_fun new_var_env in
+
         (*convert let body*)
+        let clbody = convert let_body new_known_fun new_var_env in
+
         (*check if function appears as a value in let_body by checking if it is part of let_body's list of FVs*)
         let cls_rep_check = List.mem fun_id (find_fv clbody) in
         match cls_rep_check with
-        | true -> MkCls ((fun_id, fun_typ), (fun_label, fvars), clbody)
-        | false -> Unit
+        | true ->
+            let new_closure =
+              {
+                name = (fun_label, fun_typ);
+                args;
+                formal_fv = fvars;
+                body = converted_fun_body;
+              }
+            in
+            top_level := new_closure :: previous_top_level;
+
+
+            (* XXX: Need to run convert again so that the top_level includes
+             * nested let_recs. This is highly inefficient and needs to change *)
+            let clbody = convert let_body new_known_fun new_var_env in
+            MkCls ((fun_id, fun_typ), (fun_label, fvars), clbody)
+        | false -> clbody
         (*Format.eprintf "Function appears as a lable in let_body. No need for MkCls"*)
       in
 
@@ -131,7 +148,7 @@ let rec convert exp known_fun var_env =
       match diff_result with
       (*if function has no free variables, convert let_body*)
       | [] -> convert_let_body []
-      | hd :: tl ->
+      | _ ->
           (*otherwise, restore known_funct and top_level to their previous state; reconvert fun_body; get actual FVs list  and then add funtion to top_level*)
           top_level := previous_top_level;
           let cfbody = convert fun_body known_fun (args @ var_env) in
@@ -144,7 +161,10 @@ let rec convert exp known_fun var_env =
             List.filter_map
               (fun fv_id ->
                 match find new_var_env fv_id with
-                | None -> None
+                | None ->
+                    failwith
+                      "Free variable is actually undefind in current \
+                       environment."
                 | Some typ -> Some (fv_id, typ))
               fv_ids
           in
