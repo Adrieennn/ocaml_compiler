@@ -116,6 +116,7 @@ stringofint:
         subeq	r0, #1
         streq	r1, [r0]
         beq	.i2s_exit
+	ldmfd	sp!, {lr}
 .i2s_non_zero:
 	movgt	r5, #43    @ char '+'
         movlt	r5, #45    @ char '-'
@@ -156,3 +157,23 @@ min_caml_print_int:
 	ldmfd	sp!, {lr}
         bx	lr
         .size min_caml_print_int, .-min_caml_print_int
+
+/* create array function */
+        .globl min_caml_create_array
+min_caml_create_array:
+	stmfd	sp!, {lr}
+  mov r2, r0
+  mov r0, r12
+  @ r0 = return; r2 = size; r1 = init
+        .globl ltrue_array
+ltrue_array:
+  cmp r2, #0
+  ble lnext_array
+  str r1, [r12]
+  add r12, r12, #4
+  sub r2, r2, #1
+  bl  ltrue_array
+        .globl lnext_array
+lnext_array:
+	ldmfd	sp!, {lr}
+        bx	lr
