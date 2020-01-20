@@ -18,6 +18,7 @@ min_caml_mmap:
   mov r5, #0
   mov r7, #192
   swi #0
+  mov r12, r0 @r12 is the register used to store heap starting address
 	ldmfd	sp!, {lr}
         bx	lr
         .size	min_caml_mmap, .-min_caml_mmap
