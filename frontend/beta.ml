@@ -58,10 +58,11 @@ let rec convert exp mapping =
       Knorm.LetRec ({ name = fun_id, fun_typ; args; body = (convert fun_body mapping)}, convert let_body mapping)
     (*only remove t*)
   | Knorm.LetTuple (vars, def, body) ->
+  		Knorm.LetTuple(vars,convert def mapping,convert body mapping)
       (*match vars with
       | [] -> expr
       | _ -> expr2*)
-   failwith "beta conversion for LetTuple is not implemented yet"
+   (*failwith "beta conversion for LetTuple is not implemented yet"*)
 
   | Knorm.App (f, args) ->
       let new_args = List.map (fun id -> replace_name mapping id) args in
