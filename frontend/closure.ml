@@ -18,15 +18,14 @@ type t =
   | Array of Id.t * Id.t
   | Get of Id.t * Id.t
   | Put of Id.t * Id.t * Id.t
-  | MkCls of (Id.t * Type.t) * (Id.l * (Id.t * Type.t option) list) * t (*Added option but shouldn't*)
+  | MkCls of (Id.t * Type.t) * (Id.l * (Id.t * Type.t) list) * t
   | AppCls of Id.t * Id.t list
   | AppDir of Id.l * Id.t list
 
 type fundef = {
   name : Id.l * Type.t;
   args : (Id.t * Type.t) list;
-  (*Shouldn't but will add option. type t option*)
-  formal_fv : (Id.t * Type.t option) list;
+  formal_fv : (Id.t * Type.t) list;
   body : t;
 }
 
@@ -142,7 +141,12 @@ let rec convert exp known_fun var_env =
           let fv_ids = difference (find_fv cfbody) f_arg_ids in
           (*list of FVs*)
           let fvs =
-            List.map (fun fv_id -> (fv_id, find new_var_env fv_id)) fv_ids
+            List.filter_map
+              (fun fv_id ->
+                match find new_var_env fv_id with
+                | None -> None
+                | Some typ -> Some (fv_id, typ))
+              fv_ids
           in
           (*current mapping of FVs in var_env*)
           top_level :=
