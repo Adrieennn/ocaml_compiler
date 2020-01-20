@@ -24,7 +24,7 @@ let move_integer register i =
 let rec args_to_asm_pred args regnum =
   match args with
   | h :: r ->
-      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n" ^ "push {r0}\n"
+      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n"
       ^ args_to_asm_pred r (regnum + 1)
   | [] -> ""
 
