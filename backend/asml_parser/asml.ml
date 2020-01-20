@@ -109,9 +109,9 @@ let rec to_string exp =
   | Var id -> Id.to_string id
   | CallDir (e1, le2) ->
       sprintf "(call %s %s)" (Id.to_string e1) (infix_to_string Id.to_string le2 " ")
-  | Ld (e1, e2) -> sprintf "%s.(%s)" (Id.to_string e1) (to_string_id_or_imm e2)
+  | Ld (e1, e2) -> sprintf "(mem(%s + %s))" (Id.to_string e1) (to_string_id_or_imm e2)
   | St (e1, e2, e3) ->
-      sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (to_string_id_or_imm e2)
+      sprintf "(mem(%s + %s) <- %s)" (Id.to_string e1) (to_string_id_or_imm e2)
         (Id.to_string e3)
   | _ -> "not implemented"
 

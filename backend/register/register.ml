@@ -125,6 +125,25 @@ let rec modify_exp fn_name exp var_reg =
       | Var v ->
           IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
       )
+  | Ld (s1, s2) -> (
+      match s2 with
+      | Var v ->
+          Ld
+            ( modify_variable fn_name s1 var_reg,
+              Var (modify_variable fn_name v var_reg) )
+      | Int i -> Ld (modify_variable fn_name s1 var_reg, s2) )
+  | St (s1, s2, s3) -> (
+      match s2 with
+      | Var v ->
+          St
+            ( modify_variable fn_name s1 var_reg,
+              Var (modify_variable fn_name v var_reg),
+              modify_variable fn_name s3 var_reg )
+      | Int i ->
+          St
+            ( modify_variable fn_name s1 var_reg,
+              s2,
+              modify_variable fn_name s3 var_reg ) )
   | _ -> exp
 
 (* function that takes a function body and an association list between variable

@@ -89,6 +89,10 @@ let rec exp_to_asm exp =
       ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
       ^ "b lnext" ^ label_index ^ "\n" ^ "lfalse" ^ label_index ^ ":\n"
       ^ t_to_asm t2 ^ "lnext" ^ label_index ^ ":\n"
+  | Ld (s1, s2) -> exp_to_asm (Add (s1, s2)) ^ "ldr r0, [r0]\n"
+  | St (s1, s2, s3) ->
+      exp_to_asm (Add (s1, s2))
+      ^ "ldr r4, [r11, #" ^ s3 ^ "]\n" ^ "str r4, [r0]\n"
   | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
 
 (* t_to_asm: transform let and exp to assembly *)
@@ -124,5 +128,6 @@ let prog_to_asm prog =
 
 _start:
 mov r11, r13 @ move sp to fp
+bl min_caml_mmap
 |}
       ^ t_to_asm body ^ "\n"
