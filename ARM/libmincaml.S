@@ -19,6 +19,8 @@ min_caml_mmap:
   mov r7, #192
   swi #0
 	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_mmap, .-min_caml_mmap
 
 	.globl min_caml_print_newline
 min_caml_print_newline:
