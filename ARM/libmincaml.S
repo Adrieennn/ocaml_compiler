@@ -6,6 +6,20 @@ min_caml_exit:
 	mov	r7, #1  @ exit syscall
 	swi	#0      @ perform syscall
 
+  .globl min_caml_mmap
+/* mmap syscall */
+min_caml_mmap:
+	stmfd	sp!, {lr}
+  mov r0, #0
+  mov r1, #4096
+  mov r2, #0x2
+  mov r3, #0x22
+  mov r4, #-1
+  mov r5, #0
+  mov r7, #192
+  swi #0
+	ldmfd	sp!, {lr}
+
 	.globl min_caml_print_newline
 min_caml_print_newline:
 	stmfd	sp!, {lr}
