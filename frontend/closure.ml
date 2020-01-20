@@ -114,7 +114,7 @@ let rec convert exp known_fun var_env =
           let cls_rep_check = List.mem fun_id (find_fv clbody) in
           (match cls_rep_check with
            | true -> MkCls ((fun_id, fun_typ), (fun_label, fvars), clbody)
-           | false -> failwith "To do- implement sth in failed cls_rep_check case")
+           | false -> Unit)
             (*Format.eprintf "Function appears as a lable in let_body. No need for MkCls"*)
         in
 
