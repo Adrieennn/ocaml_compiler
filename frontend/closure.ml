@@ -81,7 +81,7 @@ let rec convert exp known_fun var_env =
         let f_is_known = List.mem f known_fun in
         match f_is_known with
         | true ->
-            let fun_label = Id.label_of_id in
+            let fun_label = Id.label_of_id f in
             AppDir (fun_label, args)
         | false -> AppCls(f, args)
 
