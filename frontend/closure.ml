@@ -176,7 +176,7 @@ let rec prog_of_knorm exp =
   (* If compiling multiple files, clean up previous fundefs *)
   top_level := [];
 
-  let main_body = convert exp [("print_int", "min_caml_print_int")] [] in
+  let main_body = convert exp ["print_int"] [] in
   Prog (!top_level, main_body)
 
 let rec infix_to_string to_s l op =
@@ -202,6 +202,12 @@ let rec to_string' exp =
   | AppDir (e1, le2) ->
       Printf.sprintf "(%s %s)" (Id.to_string e1)
         (infix_to_string Id.to_string le2 " ")
+  | AppCls (e1, le2) ->
+      Printf.sprintf "(%s %s)" (Id.to_string e1)
+        (infix_to_string Id.to_string le2 " ")
+  | MkCls ((id, _t), (label, vs), e2) ->
+    Printf.sprintf "(let %s = %s %s in %s)" (Id.to_string id) (Id.to_string label) (infix_to_string (fun (x, _) -> Id.to_string x) vs " ")
+      (to_string' e2)
   | Let ((id, _t), e1, e2) ->
       Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string' e1)
         (to_string' e2)
