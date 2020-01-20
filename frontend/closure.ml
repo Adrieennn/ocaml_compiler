@@ -81,7 +81,7 @@ let rec convert exp known_fun var_env =
         let f_is_known = List.mem f known_fun in
         match f_is_known with
         | true ->
-            let fun_label = f ^ Id.genid () in
+            let fun_label = Id.label_of_id in
             AppDir (fun_label, args)
         | false -> AppCls(f, args)
 
@@ -96,7 +96,7 @@ let rec convert exp known_fun var_env =
         let new_known_fun = (fun_id :: known_fun) in
         let new_var_env = args @ ((fun_id, fun_typ) :: var_env) in
         let converted_fun_body = convert fun_body new_known_fun new_var_env in
-        let fun_label = fun_id ^ Id.genid () in
+        let fun_label = Id.label_of_id fun_id in
         top_level :=
           {
             name = (fun_label, fun_typ);
