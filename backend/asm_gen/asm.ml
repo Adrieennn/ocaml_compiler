@@ -128,13 +128,21 @@ let rec lfu_to_asm lfu =
       ^ ":\n" ^ "str r14, [r11, #4] @ store lr on the stack\n"
       ^ t_to_asm fu.body ^ "\n"
       ^ "ldr r15, [r11, #4] @ load lr (fp + 4) into pc\n" ^ lfu_to_asm r
+  | [] -> "\n"
+
+let rec lfl_to_asm lfl =
+  match lfl with
+  | (id, fl) :: r ->
+      id ^ ":\n" ^ "\t\t.word: "
+      ^ Int32.to_string (Int32.bits_of_float fl)
+      ^ "\n" ^ lfl_to_asm r
   | [] -> ""
 
 (* prog_to_asm: main function called, transform prog into assembly *)
 let prog_to_asm prog =
   match prog with
   | Program (lfl, lfu, body) ->
-      lfu_to_asm lfu
+      lfl_to_asm lfl ^ lfu_to_asm lfu
       ^ {|  .global _start
 
 _start:
