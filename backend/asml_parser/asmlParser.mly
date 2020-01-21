@@ -75,7 +75,7 @@ exp: /* expressions */
 | IDENT
     { Var($1) }
 | LABEL
-    { Var($1) }
+    { Label($1) }
 | NEG IDENT
     { Neg($2) }
 | FNEG IDENT

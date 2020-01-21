@@ -43,6 +43,7 @@ let reset_sp args =
 let rec exp_to_asm exp =
   match exp with
   | Int i -> move_integer "r0" i
+  | Label l -> "ldr r0, =" ^ l ^ "\n"
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"
   | Add (x, y) ->
       "ldr r4, [r11, #" ^ x ^ "]\n"
@@ -102,6 +103,7 @@ let rec exp_to_asm exp =
         | Int i -> move_integer "r5" i )
       ^ "lsl r5, r5, #2\n" ^ "ldr r6, [r11, #" ^ s3 ^ "]\n"
       ^ "str r6, [r4, r5]\n"
+  | New i -> "mov r0, r12\n" ^ move_integer "r4" i ^ "add r12, r12, r4\n"
   | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
 
 (* t_to_asm: transform let and exp to assembly *)

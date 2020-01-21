@@ -6,6 +6,7 @@ type t = Ans of exp | Let of (Id.t * Type.t) * exp * t
 
 and exp =
   | Var of Id.t
+  | Label of Id.t
   | Int of int
   | Unit
   | Add of Id.t * id_or_imm
@@ -107,6 +108,7 @@ let rec to_string exp =
       sprintf "(if %s <=. %s then %s else %s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | Var id -> Id.to_string id
+  | Label id -> Id.to_string id
   | CallDir (e1, le2) ->
       sprintf "(call %s %s)" (Id.to_string e1) (infix_to_string Id.to_string le2 " ")
   | Ld (e1, e2) -> sprintf "(mem(%s + %s))" (Id.to_string e1) (to_string_id_or_imm e2)
