@@ -105,6 +105,9 @@ let rec modify_exp fn_name exp var_reg =
             ( modify_variable fn_name s1 var_reg,
               Var (modify_variable fn_name v var_reg) )
       | _ -> Sub (modify_variable fn_name s1 var_reg, s2) )
+  | FAdd (s1, s2) ->
+      FAdd
+        (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
   | CallDir (label, args) ->
       CallDir (label, modify_variable_list fn_name args var_reg)
   | IfLEq (s1, s2, t1, t2) -> (

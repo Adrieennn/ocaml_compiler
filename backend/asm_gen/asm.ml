@@ -104,6 +104,10 @@ let rec exp_to_asm exp =
       ^ "lsl r5, r5, #2\n" ^ "ldr r6, [r11, #" ^ s3 ^ "]\n"
       ^ "str r6, [r4, r5]\n"
   | New i -> "mov r0, r12\n" ^ move_integer "r4" i ^ "add r12, r12, r4\n"
+  | FAdd (s1, s2) -> 
+      "vldr s0, [r11, #" ^ s1 ^ "]\n" ^
+      "vldr s1, [r11, #" ^ s2 ^ "]\n" ^
+      "vadd.f32 s0, s0, s1\n"
   | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
 
 (* t_to_asm: transform let and exp to assembly *)
@@ -133,7 +137,7 @@ let rec lfu_to_asm lfu =
 let rec lfl_to_asm lfl =
   match lfl with
   | (id, fl) :: r ->
-      id ^ ":\n" ^ "\t\t.word: "
+      id ^ ":\n" ^ "\t\t.word "
       ^ Int32.to_string (Int32.bits_of_float fl)
       ^ "\n" ^ lfl_to_asm r
   | [] -> ""
