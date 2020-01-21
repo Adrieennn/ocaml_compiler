@@ -49,40 +49,37 @@ let rec find_fv expr bound_variables =
       [] vars
   in
   match expr with
-  | Knorm.Unit -> []
-  | Knorm.Int i -> []
-  | Knorm.Float f -> []
-  | Knorm.Add (v1, v2)
-  | Knorm.Sub (v1, v2)
-  | Knorm.FAdd (v1, v2)
-  | Knorm.FSub (v1, v2)
-  | Knorm.FMul (v1, v2)
-  | Knorm.FDiv (v1, v2) ->
+  | Unit -> []
+  | Int i -> []
+  | Float f -> []
+  | Add (v1, v2)
+  | Sub (v1, v2)
+  | FAdd (v1, v2)
+  | FSub (v1, v2)
+  | FMul (v1, v2)
+  | FDiv (v1, v2) ->
       find_fv_list [ v1; v2 ] bound_variables
-  | Knorm.Let ((id, typ), e1, e2) ->
+  | Let ((id, typ), e1, e2) ->
       let bound_variables' = id :: bound_variables in
       find_fv e1 bound_variables @ find_fv e2 bound_variables'
-  | Knorm.Var x -> if List.mem x bound_variables then [] else [ x ]
-  | Knorm.IfEq ((v1, v2), e1, e2) | Knorm.IfLe ((v1, v2), e1, e2) ->
+  | Var x -> if List.mem x bound_variables then [] else [ x ]
+  | IfEq ((v1, v2), e1, e2) | IfLe ((v1, v2), e1, e2) ->
       find_fv_list [ v1; v2 ] bound_variables
       @ find_fv e1 bound_variables @ find_fv e2 bound_variables
-  | Knorm.LetTuple (vars, def, body) ->
+  | LetTuple (vars, def, body) ->
       let bound_variables' =
         List.map (fun (id, _t) -> id) vars @ bound_variables
       in
       find_fv def bound_variables @ find_fv body bound_variables'
-  | Knorm.Tuple tups -> find_fv_list tups bound_variables
-  | Knorm.Array (v1, v2) -> find_fv_list [ v1; v2 ] bound_variables
-  | Knorm.Get (v1, v2) -> find_fv_list [ v1; v2 ] bound_variables
-  | Knorm.Put (v1, v2, v3) -> find_fv_list [ v1; v2; v3 ] bound_variables
-  | Knorm.App (f, args) -> find_fv_list (f :: args) bound_variables
-  | Knorm.LetRec (fd, let_body) ->
-      let { Knorm.name = fun_id, _typ; args; body = fun_body } = fd in
-      let bound_variables' =
-        fun_id :: List.map (fun (arg_id, typ) -> arg_id) args
-      in
-      find_fv fun_body bound_variables'
-      @ find_fv let_body (fun_id :: bound_variables)
+  | Tuple tups -> find_fv_list tups bound_variables
+  | Array (v1, v2) -> find_fv_list [ v1; v2 ] bound_variables
+  | Get (v1, v2) -> find_fv_list [ v1; v2 ] bound_variables
+  | Put (v1, v2, v3) -> find_fv_list [ v1; v2; v3 ] bound_variables
+  | AppDir (_f, args) -> find_fv_list args bound_variables
+  | AppCls (f, args) -> find_fv_list (f :: args) bound_variables
+  | MkCls ((fun_id, _fun_typ), (fun_label, fun_vars), cont) ->
+      let bound_variables' = fun_id :: bound_variables in
+      find_fv cont bound_variables'
 
 (*Convert Knorm.t to Closure.t*)
 (*Added another argument var_env (variable environment) to function convert. This is to enable us
@@ -193,7 +190,7 @@ let rec convert exp known_fun var_env =
       let arg_ids = List.map (fun (id, _t) -> id) args in
       (*compare Fvs found in fun_body with function arguments- the difference is the FV list*)
       let bound_variables = fun_id :: arg_ids in
-      let fv_ids = find_fv fun_body bound_variables in
+      let fv_ids = find_fv converted_fun_body bound_variables in
       match fv_ids with
       (*if function has no free variables, convert let_body*)
       | [] -> convert_let_body []
