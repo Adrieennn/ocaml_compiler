@@ -23,8 +23,8 @@ and exp =
   | IfFEq of Id.t * id_or_imm * t * t
   | IfLEq of Id.t * id_or_imm * t * t
   | IfFLEq of Id.t * id_or_imm * t * t
-  | CallCls of Id.l * Id.t list
-  | CallDir of Id.t * Id.t list
+  | CallCls of Id.t * Id.t list
+  | CallDir of Id.l * Id.t list
 
 type fu = { name : Id.t; args : Id.t list; body : t }
 
@@ -58,9 +58,7 @@ let rec closure_to_t = function
         ( (cls_id, cls_typ),
           (* Space for arguments plus (+ 1) the fun_label in the beginning *)
           New ((num_vars + 1) * word_size),
-          add_let
-            (Var ("_" ^ fun_label))
-            (fun fun_label_var ->
+          add_let (Var fun_label) (fun fun_label_var ->
               add_let
                 (St (cls_id, Int 0, fun_label_var))
                 (fun _ -> arg_lets cls_id 4 arg_ids)) )
@@ -82,8 +80,8 @@ and closure_to_exp = function
       IfLEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
   | Closure.Let (_, _, _) ->
       failwith "Closure.Let cannot be translated to Asml.exp"
-  | Closure.AppDir (fun_id, arg_ids) -> CallDir ("_" ^ fun_id, arg_ids)
-  | Closure.AppCls (fun_label, arg_ids) -> CallCls (fun_label, arg_ids)
+  | Closure.AppDir (fun_label, arg_ids) -> CallDir (fun_label, arg_ids)
+  | Closure.AppCls (id, arg_ids) -> CallCls (id, arg_ids)
   | e ->
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
@@ -91,11 +89,11 @@ and closure_to_exp = function
       exit 1
 
 let fundef_of_closure_fundef fd =
-  let { Closure.name = id, _typ; args; formal_fv; body } = fd in
+  let { Closure.name = label, _typ; args; formal_fv; body } = fd in
   match formal_fv with
   | [] ->
       let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
-      { name = "_" ^ id; args = arg_names; body = closure_to_t body }
+      { name = label; args = arg_names; body = closure_to_t body }
   | _ ->
       let closure_body =
         let rec retrieve_environment counter = function
@@ -109,7 +107,7 @@ let fundef_of_closure_fundef fd =
         retrieve_environment 4 (List.map (fun (id, _typ) -> id) formal_fv)
       in
       let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
-      { name = "_" ^ id; args = arg_names; body = closure_body }
+      { name = label; args = arg_names; body = closure_body }
 
 let of_closure_prog prog =
   let (Closure.Prog (fundefs, main_body)) = prog in
@@ -160,7 +158,8 @@ let rec to_string exp =
   | CallCls (e1, le2) ->
       sprintf "(call_closure %s %s)" (Id.to_string e1)
         (infix_to_string Id.to_string le2 " ")
-  | Ld (e1, e2) -> sprintf "(mem(%s + %s))" (Id.to_string e1) (to_string_id_or_imm e2)
+  | Ld (e1, e2) ->
+      sprintf "(mem(%s + %s))" (Id.to_string e1) (to_string_id_or_imm e2)
   | St (e1, e2, e3) ->
       sprintf "(mem(%s + %s) <- %s)" (Id.to_string e1) (to_string_id_or_imm e2)
         (Id.to_string e3)
