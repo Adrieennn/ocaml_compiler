@@ -100,9 +100,12 @@ let fundef_of_closure_fundef fd =
           | [] -> closure_to_t body
           | hd :: tl ->
               Let
-                ( (hd, Type.Var (ref None)),
-                  Ld ("%self", Int counter),
-                  retrieve_environment (counter + 4) tl )
+                ( (Id.id_of_label label, Type.Var (ref None)),
+                  Var "%self",
+                  Let
+                    ( (hd, Type.Var (ref None)),
+                      Ld ("%self", Int counter),
+                      retrieve_environment (counter + 4) tl ) )
         in
         retrieve_environment 4 (List.map (fun (id, _typ) -> id) formal_fv)
       in
