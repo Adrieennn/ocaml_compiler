@@ -12,6 +12,7 @@ let replace_with_constant mapping var =
       | Knorm.Tuple tups -> tups
       | _ -> def
     )
+
 (*Checks if a variable definition is an integer constant*)
 let is_int v =
     match v with
@@ -31,6 +32,7 @@ let is_tuple v =
 let rec folding exp mapping =
   match exp with
   | (Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.App _ | Knorm.Tuple _| Knorm.Array _ | Knorm.Get _ | Knorm.Put _) as c -> c
+  (*If both arguments are both int/float constants approriately, do the operation and return the constant value*)
   | Knorm.Add (v1, v2) ->
       let c_v1 = replace_with_constant mapping v1 in
       let c_v2 = replace_with_constant mapping v2 in
@@ -62,6 +64,7 @@ let rec folding exp mapping =
       if ((is_float c_v1) && (is_float c_v2)) then Knorm.Float (c_v1 /. c_v2)
       else Knorm.FDiv (c_v1, c_v2)
   | Knorm.Let ((id, typ), def, body) ->
+    (*Constant fold the variable definition, add the new var-def mapping to mapping and constant fold body with new mapping*)
       let new_def = folding def mapping in
       let new_mapping = (id, new_def) :: mapping in
       Knorm.Let ((id, typ), new_def, folding body new_mapping)
@@ -84,10 +87,12 @@ let rec folding exp mapping =
       let c_v2 = replace_with_constant mapping v2 in
       Knorm.IfLe ((c_v1, c_v2), folding e1 mapping, folding e2 mapping)
   | Knorm.LetTuple (vars, def, body) ->
-      (*if is_tuple new_def then
-        failwith "To Do"
-        let new_def = folding def mapping in
-        let new_mapping =
-        Knorm.LetTuple (vars, def = new_def, folding body new_mapping)
-        else *)
-      Knorm.LetTuple (vars, def, folding def body)
+    (*fold tuple definition. if the folded definition is a tuple, do further constant folding for the individual tuple
+    elements. Otherwise, only constant fold body.*)
+      let new_def = folding def mapping in
+      let new_body = folding body mapping in
+        if is_tuple new_def then
+          (*Deconstruct tuple elements into lets and associate each var with its corresponding def *)
+          List.fold_left2 (fun var v_def v_body -> Let(var, v_def, v_body)) new_body vars new_def
+        else
+          Knorm.LetTuple (vars, def, body = new_body)
