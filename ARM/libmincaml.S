@@ -23,6 +23,17 @@ min_caml_mmap:
         bx	lr
         .size	min_caml_mmap, .-min_caml_mmap
 
+/* create array function */
+        .globl min_caml_abs_float
+min_caml_abs_float:
+	stmfd	sp!, {lr}
+  vmov.f32 s0, r0
+  vabs.f32 s0, s0
+  vmov.f32 r0, s0
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_abs_float, .-min_caml_abs_float
+
   .globl min_caml_sqrt
 /* int_of_float utility function */
 min_caml_sqrt:
