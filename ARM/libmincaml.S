@@ -23,10 +23,22 @@ min_caml_mmap:
         bx	lr
         .size	min_caml_mmap, .-min_caml_mmap
 
+  .globl min_caml_sqrt
+/* int_of_float utility function */
+min_caml_sqrt:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vsqrt.f32 s0, s0
+  vmov r0, s0
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_sqrt, .-min_caml_sqrt
+
   .globl min_caml_int_of_float
 /* int_of_float utility function */
 min_caml_int_of_float:
 	stmfd	sp!, {lr}
+  vmov s0, r0
   vcvtr.s32.f32 s0, s0
   vmov r0, s0 
 	ldmfd	sp!, {lr}
