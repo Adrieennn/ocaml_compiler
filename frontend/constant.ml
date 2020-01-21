@@ -1,20 +1,17 @@
-(*let find var mapping = List.assoc_opt var mapping*)
+(*Constant.ml - replace int/float/tuple expressions with their constants, if defined*)
 
-(*Finds the associated definition of var in mapping. If *)
-let in_mapping mapping var =
+(*Finds the associated definition of var in mapping.
+If a variable definition is a constant (int/float/tuple), replace the variable with the constant*)
+let replace_with_constant mapping var =
   match (List.assoc_opt var mapping) with
   | None -> var (*failwith "To do - failed search" *)
-  | Some def -> def
-
-(*If a variable definition is a constant (int/float/tuple), replace the variable with the constant*)
-let replace_with_constant mapping var =
-  let definition  = find mapping var in
-  match definition with
-  | Knorm.Int i -> i
-  | Knorm.Float d -> d
-  | Knorm.Tuple tups -> tups
-  | _ -> var
-
+  | Some def ->(
+      match def with
+      | Knorm.Int i -> i
+      | Knorm.Float d -> d
+      | Knorm.Tuple tups -> tups
+      | _ -> def
+    )
 (*Checks if a variable definition is an integer constant*)
 let is_int v =
     match v with
