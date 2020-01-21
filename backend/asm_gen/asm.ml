@@ -106,16 +106,16 @@ let rec exp_to_asm exp =
   | New i -> "mov r0, r12\n" ^ move_integer "r4" i ^ "add r12, r12, r4\n"
   | FAdd (s1, s2) ->
       "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
-      ^ "vadd.f32 s0, s0, s1\n"
+      ^ "vadd.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
   | FSub (s1, s2) ->
       "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
-      ^ "vsub.f32 s0, s0, s1\n"
+      ^ "vsub.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
   | FMul (s1, s2) ->
       "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
-      ^ "vmul.f32 s0, s0, s1\n"
+      ^ "vmul.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
   | FDiv (s1, s2) ->
       "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
-      ^ "vdiv.f32 s0, s0, s1\n"
+      ^ "vdiv.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
   | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
 
 (* t_to_asm: transform let and exp to assembly *)
