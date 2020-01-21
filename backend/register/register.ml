@@ -107,6 +107,10 @@ let rec modify_exp fn_name exp var_reg =
       | _ -> Sub (modify_variable fn_name s1 var_reg, s2) )
   | CallDir (label, args) ->
       CallDir (label, modify_variable_list fn_name args var_reg)
+  | CallCls (id, args) ->
+      CallCls
+        ( modify_variable fn_name id var_reg,
+          modify_variable_list fn_name args var_reg )
   | IfLEq (s1, s2, t1, t2) -> (
       let mod_s1 = modify_variable fn_name s1 var_reg in
       let mod_t1 = modify_t fn_name t1 var_reg in
@@ -174,12 +178,13 @@ let rec modify_args_reg fn_name args var_reg count =
  * function body and arguments with their corresponding fp offsets from the list *)
 let rec modify_fn_t fu var_reg =
   let len = List.length fu.args in
-  let newcount = ref_counter ((len + 2) * 4) in
+  let newcount = ref_counter ((len + 3) * 4) in
   let args_reg = modify_args_reg fu.name fu.args [] newcount in
   {
     name = fu.name;
     args = fu.args;
-    body = modify_t fu.name fu.body (var_reg @ args_reg);
+    body =
+      modify_t fu.name fu.body (var_reg @ args_reg @ [ (fu.name ^ ".%self", 8) ]);
   }
 
 (* function that takes a program and an association list between variable
