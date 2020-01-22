@@ -34,6 +34,50 @@ min_caml_abs_float:
         bx	lr
         .size	min_caml_abs_float, .-min_caml_abs_float
 
+
+
+  .globl min_caml_sin
+/* sin utility function */
+min_caml_sin:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vmov.f32 s1, #0.125
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmov.f32 s2, #1.0
+  vmov.f32 s3, #1.0
+  vmov.f32 s4, #30.0
+  vmov.f32 s5, s0
+  vmov.f32 s6, s0
+  vmov.f32 s8, #-1.0
+  vmov.f32 s9, #1.0
+  vmov.f32 s10, #-1.0
+  sincheck:
+    vsub.f32 s7, s4, s6
+    vabs.f32 s7, s7
+    vcmp.f32 s7, s1
+  ble sinfalse
+  sintrue:
+    vmul.f32 s5, s5, s0
+    vmul.f32 s5, s5, s0
+    vadd.f32 s2, s2, s9
+    vadd.f32 s3, s3, s2
+    vadd.f32 s2, s2, s9
+    vadd.f32 s3, s3, s2
+    vdiv.f32 s5, s5, s3
+    vmul.f32 s8, s8, s10
+    vmul.f32 s5, s5, s8
+    vmov.f32 s4, s6
+    vadd.f32 s6, s6, s5
+    b sincheck
+  sinfalse:
+    vmov r0, s6
+    ldmfd	sp!, {lr}
+          bx	lr
+          .size	min_caml_sqrt, .-min_caml_sqrt
+
   .globl min_caml_sqrt
 /* int_of_float utility function */
 min_caml_sqrt:
