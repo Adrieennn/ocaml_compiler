@@ -2,3 +2,4 @@ mincamlc
 _build
 *.s
 *.asml
+*.output

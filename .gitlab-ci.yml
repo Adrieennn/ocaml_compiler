@@ -23,3 +23,8 @@ asm_gen:
   stage: tests
   script:
     - make test_asm_gen
+
+asm_output:
+  stage: tests
+  script:
+    - make test_asm_output
