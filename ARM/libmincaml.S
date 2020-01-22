@@ -45,6 +45,17 @@ min_caml_sqrt:
         bx	lr
         .size	min_caml_sqrt, .-min_caml_sqrt
 
+  .globl min_caml_float_of_int
+/* int_of_float utility function */
+min_caml_float_of_int:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vcvt.f32.s32 s0, s0
+  vmov r0, s0 
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_float_of_int, .-min_caml_float_of_int
+
   .globl min_caml_int_of_float
 /* int_of_float utility function */
 min_caml_int_of_float:
