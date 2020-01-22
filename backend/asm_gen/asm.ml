@@ -24,7 +24,7 @@ let move_integer register i =
 let rec args_to_asm_pred args regnum =
   match args with
   | h :: r ->
-      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n" ^ "push {r0}\n"
+      "ldr r" ^ string_of_int regnum ^ ", [r11, #" ^ h ^ "]\n"
       ^ args_to_asm_pred r (regnum + 1)
   | [] -> ""
 
@@ -32,17 +32,24 @@ let rec args_to_asm_pred args regnum =
 let rec args_to_asm args =
   match args with
   | h :: r -> "ldr r0, [r11, #" ^ h ^ "]\n" ^ "push {r0}\n" ^ args_to_asm r
+  | [] -> "add r13, r13, #-8 @ making space for lr and %self\n" ^ "push {r11}\n"
+
+let rec args_to_asm_closure args =
+  match args with
+  | h :: r ->
+      "ldr r0, [r11, #" ^ h ^ "]\n" ^ "push {r0}\n" ^ args_to_asm_closure r
   | [] -> "add r13, r13, #-4 @ making space for lr\n" ^ "push {r11}\n"
 
 (* reset_sp: move stack pointer back to before function call *)
 let reset_sp args =
-  let len = (List.length args + 2) * 4 in
+  let len = (List.length args + 3) * 4 in
   "add r13, r13, #" ^ string_of_int len ^ "\n"
 
 (* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
   match exp with
   | Int i -> move_integer "r0" i
+  | Label l -> "ldr r0, =" ^ Id.remove_label_undersc l ^ "\n"
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"
   | Add (x, y) ->
       "ldr r4, [r11, #" ^ x ^ "]\n"
@@ -67,6 +74,11 @@ let rec exp_to_asm exp =
         ^ Id.remove_label_undersc label
         ^ "\n" ^ "mov r13, r11 @ move fp to sp\n" ^ "ldr r11, [r11]\n"
         ^ reset_sp args
+  | CallCls (label, args) ->
+      args_to_asm_closure (args @ [ label ])
+      ^ "mov r11, r13 @ move sp to fp\n" ^ "ldr r0, [r11, #8]\n"
+      ^ "ldr r0, [r0]\n" ^ "blx r0\n" ^ "mov r13, r11 @ move fp to sp\n"
+      ^ "ldr r11, [r11]\n" ^ reset_sp args
   | IfEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
       ( "ldr r4, [r11, #" ^ s1 ^ "]\n"
@@ -89,6 +101,32 @@ let rec exp_to_asm exp =
       ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
       ^ "b lnext" ^ label_index ^ "\n" ^ "lfalse" ^ label_index ^ ":\n"
       ^ t_to_asm t2 ^ "lnext" ^ label_index ^ ":\n"
+  | Ld (s1, s2) ->
+      "ldr r4, [r11, #" ^ s1 ^ "]\n"
+      ^ ( match s2 with
+        | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n"
+        | Int i -> move_integer "r5" i )
+      ^ "ldr r0, [r4, r5]\n"
+  | St (s1, s2, s3) ->
+      "ldr r4, [r11, #" ^ s1 ^ "]\n"
+      ^ ( match s2 with
+        | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n"
+        | Int i -> move_integer "r5" i )
+      ^ "ldr r6, [r11, #" ^ s3 ^ "]\n"
+      ^ "str r6, [r4, r5]\n"
+  | New i -> "mov r0, r12\n" ^ move_integer "r4" i ^ "add r12, r12, r4\n"
+  | FAdd (s1, s2) ->
+      "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
+      ^ "vadd.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
+  | FSub (s1, s2) ->
+      "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
+      ^ "vsub.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
+  | FMul (s1, s2) ->
+      "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
+      ^ "vmul.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
+  | FDiv (s1, s2) ->
+      "vldr s0, [r11, #" ^ s1 ^ "]\n" ^ "vldr s1, [r11, #" ^ s2 ^ "]\n"
+      ^ "vdiv.f32 s0, s0, s1\n" ^ "vmov r0, s0\n"
   | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
 
 (* t_to_asm: transform let and exp to assembly *)
@@ -113,16 +151,25 @@ let rec lfu_to_asm lfu =
       ^ ":\n" ^ "str r14, [r11, #4] @ store lr on the stack\n"
       ^ t_to_asm fu.body ^ "\n"
       ^ "ldr r15, [r11, #4] @ load lr (fp + 4) into pc\n" ^ lfu_to_asm r
+  | [] -> "\n"
+
+let rec lfl_to_asm lfl =
+  match lfl with
+  | (id, fl) :: r ->
+      id ^ ":\n" ^ "\t\t.word "
+      ^ Int32.to_string (Int32.bits_of_float fl)
+      ^ "\n" ^ lfl_to_asm r
   | [] -> ""
 
 (* prog_to_asm: main function called, transform prog into assembly *)
 let prog_to_asm prog =
   match prog with
   | Program (lfl, lfu, body) ->
-      lfu_to_asm lfu
+      lfl_to_asm lfl ^ lfu_to_asm lfu
       ^ {|  .global _start
 
 _start:
 mov r11, r13 @ move sp to fp
+bl min_caml_mmap
 |}
       ^ t_to_asm body ^ "\n"

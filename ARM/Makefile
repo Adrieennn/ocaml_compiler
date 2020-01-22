@@ -13,7 +13,7 @@ echo:
 	echo ${PRG}
 
 %.o : %.s libmincaml.S
-	${AS} -o $@ $^
+	${AS} -mcpu=cortex-a8 -march=armv7-a -mfpu=neon -o $@ $^
 
 %.arm : %.o
 	${LD} -o $@ $^
