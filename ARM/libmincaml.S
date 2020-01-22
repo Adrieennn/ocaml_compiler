@@ -11,7 +11,7 @@ min_caml_exit:
 min_caml_mmap:
 	stmfd	sp!, {lr}
   mov r0, #0
-  mov r1, #4096
+  mov r1, #4194304
   mov r2, #0x2
   mov r3, #0x22
   mov r4, #-1

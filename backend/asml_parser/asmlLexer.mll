@@ -69,8 +69,6 @@ rule token = parse
     { NOP }
 | "call_closure"
     { CALLCLO }
-| "apply_closure"
-    { APPCLO }
 | '_'
     { UNDERSC }
 | '_' lower (digit|lower|upper|'_')*

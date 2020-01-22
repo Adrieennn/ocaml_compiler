@@ -32,18 +32,24 @@ let rec args_to_asm_pred args regnum =
 let rec args_to_asm args =
   match args with
   | h :: r -> "ldr r0, [r11, #" ^ h ^ "]\n" ^ "push {r0}\n" ^ args_to_asm r
+  | [] -> "add r13, r13, #-8 @ making space for lr and %self\n" ^ "push {r11}\n"
+
+let rec args_to_asm_closure args =
+  match args with
+  | h :: r ->
+      "ldr r0, [r11, #" ^ h ^ "]\n" ^ "push {r0}\n" ^ args_to_asm_closure r
   | [] -> "add r13, r13, #-4 @ making space for lr\n" ^ "push {r11}\n"
 
 (* reset_sp: move stack pointer back to before function call *)
 let reset_sp args =
-  let len = (List.length args + 2) * 4 in
+  let len = (List.length args + 3) * 4 in
   "add r13, r13, #" ^ string_of_int len ^ "\n"
 
 (* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
   match exp with
   | Int i -> move_integer "r0" i
-  | Label l -> "ldr r0, =" ^ l ^ "\n"
+  | Label l -> "ldr r0, =" ^ Id.remove_label_undersc l ^ "\n"
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"
   | Add (x, y) ->
       "ldr r4, [r11, #" ^ x ^ "]\n"
@@ -68,6 +74,11 @@ let rec exp_to_asm exp =
         ^ Id.remove_label_undersc label
         ^ "\n" ^ "mov r13, r11 @ move fp to sp\n" ^ "ldr r11, [r11]\n"
         ^ reset_sp args
+  | CallCls (label, args) ->
+      args_to_asm_closure (args @ [ label ])
+      ^ "mov r11, r13 @ move sp to fp\n" ^ "ldr r0, [r11, #8]\n"
+      ^ "ldr r0, [r0]\n" ^ "blx r0\n" ^ "mov r13, r11 @ move fp to sp\n"
+      ^ "ldr r11, [r11]\n" ^ reset_sp args
   | IfEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
       ( "ldr r4, [r11, #" ^ s1 ^ "]\n"
@@ -95,13 +106,13 @@ let rec exp_to_asm exp =
       ^ ( match s2 with
         | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n"
         | Int i -> move_integer "r5" i )
-      ^ "lsl r5, r5, #2\n" ^ "ldr r0, [r4, r5]\n"
+      ^ "ldr r0, [r4, r5]\n"
   | St (s1, s2, s3) ->
       "ldr r4, [r11, #" ^ s1 ^ "]\n"
       ^ ( match s2 with
         | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n"
         | Int i -> move_integer "r5" i )
-      ^ "lsl r5, r5, #2\n" ^ "ldr r6, [r11, #" ^ s3 ^ "]\n"
+      ^ "ldr r6, [r11, #" ^ s3 ^ "]\n"
       ^ "str r6, [r4, r5]\n"
   | New i -> "mov r0, r12\n" ^ move_integer "r4" i ^ "add r12, r12, r4\n"
   | FAdd (s1, s2) ->

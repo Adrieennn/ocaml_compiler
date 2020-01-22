@@ -35,7 +35,6 @@ let addtyp x = (x, Type.gentyp ())
 %token CALLCLO
 %token NEW
 %token NOP
-%token APPCLO
 %token <Id.t> LABEL
 %token UNDERSC
 %token NIL
