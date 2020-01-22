@@ -40,6 +40,15 @@ let find set var = List.assoc_opt var set
 (*Returns a list of elements that are in a but not in b. In this case, the free variables*)
 let difference a b = List.filter (fun i -> not (List.mem i b)) a
 
+(* copied verbatim from OCaml stdlib. Some team members do not have up-to-date ocamlc versions... *)
+let my_filter_map f =
+  let rec aux accu = function
+    | [] -> List.rev accu
+    | x :: l -> (
+        match f x with None -> aux accu l | Some v -> aux (v :: accu) l )
+  in
+  aux []
+
 (*find the FVs in an expression. It is required for deciding whether to use apply direct or apply closure*)
 let rec find_fv expr bound_variables =
   let find_fv_list vars env =
@@ -204,7 +213,7 @@ let rec convert exp known_fun var_env =
 
           (*list of FVs*)
           let fvs =
-            List.filter_map
+            my_filter_map
               (fun fv_id ->
                 match find new_var_env fv_id with
                 | None ->
