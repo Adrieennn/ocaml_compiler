@@ -77,9 +77,10 @@ let rec find_fv expr bound_variables =
   | Put (v1, v2, v3) -> find_fv_list [ v1; v2; v3 ] bound_variables
   | AppDir (_f, args) -> find_fv_list args bound_variables
   | AppCls (f, args) -> find_fv_list (f :: args) bound_variables
-  | MkCls ((fun_id, _fun_typ), (fun_label, fun_vars), cont) ->
+  | MkCls ((fun_id, _fun_typ), (fun_label, fvars), cont) ->
       let bound_variables' = fun_id :: bound_variables in
-      find_fv cont bound_variables'
+      let fvar_ids = List.map (fun (id, _typ) -> id) fvars in
+      find_fv_list fvar_ids bound_variables @ find_fv cont bound_variables'
 
 (*Convert Knorm.t to Closure.t*)
 (*Added another argument var_env (variable environment) to function convert. This is to enable us
