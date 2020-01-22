@@ -6,6 +6,67 @@ min_caml_exit:
 	mov	r7, #1  @ exit syscall
 	swi	#0      @ perform syscall
 
+  .globl min_caml_mmap
+/* mmap syscall */
+min_caml_mmap:
+	stmfd	sp!, {lr}
+  mov r0, #0
+  mov r1, #4194304
+  mov r2, #0x2
+  mov r3, #0x22
+  mov r4, #-1
+  mov r5, #0
+  mov r7, #192
+  swi #0
+  mov r12, r0 @r12 is the register used to store heap starting address
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_mmap, .-min_caml_mmap
+
+/* create array function */
+        .globl min_caml_abs_float
+min_caml_abs_float:
+	stmfd	sp!, {lr}
+  vmov.f32 s0, r0
+  vabs.f32 s0, s0
+  vmov.f32 r0, s0
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_abs_float, .-min_caml_abs_float
+
+  .globl min_caml_sqrt
+/* int_of_float utility function */
+min_caml_sqrt:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vsqrt.f32 s0, s0
+  vmov r0, s0
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_sqrt, .-min_caml_sqrt
+
+  .globl min_caml_float_of_int
+/* int_of_float utility function */
+min_caml_float_of_int:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vcvt.f32.s32 s0, s0
+  vmov r0, s0 
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_float_of_int, .-min_caml_float_of_int
+
+  .globl min_caml_int_of_float
+/* int_of_float utility function */
+min_caml_int_of_float:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vcvtr.s32.f32 s0, s0
+  vmov r0, s0 
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_int_of_float, .-min_caml_int_of_float
+
 	.globl min_caml_print_newline
 min_caml_print_newline:
 	stmfd	sp!, {lr}
@@ -99,6 +160,7 @@ stringofint:
         subeq	r0, #1
         streq	r1, [r0]
         beq	.i2s_exit
+	ldmfd	sp!, {lr}
 .i2s_non_zero:
 	movgt	r5, #43    @ char '+'
         movlt	r5, #45    @ char '-'
@@ -139,3 +201,23 @@ min_caml_print_int:
 	ldmfd	sp!, {lr}
         bx	lr
         .size min_caml_print_int, .-min_caml_print_int
+
+/* create array function */
+        .globl min_caml_create_array
+min_caml_create_array:
+	stmfd	sp!, {lr}
+  mov r2, r0
+  mov r0, r12
+  @ r0 = return; r2 = size; r1 = init
+        .globl ltrue_array
+ltrue_array:
+  cmp r2, #0
+  ble lnext_array
+  str r1, [r12]
+  add r12, r12, #4
+  sub r2, r2, #1
+  bl  ltrue_array
+        .globl lnext_array
+lnext_array:
+	ldmfd	sp!, {lr}
+        bx	lr

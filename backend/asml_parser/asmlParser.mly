@@ -35,7 +35,6 @@ let addtyp x = (x, Type.gentyp ())
 %token CALLCLO
 %token NEW
 %token NOP
-%token APPCLO
 %token <Id.t> LABEL
 %token UNDERSC
 %token NIL
@@ -75,7 +74,7 @@ exp: /* expressions */
 | IDENT
     { Var($1) }
 | LABEL
-    { Var($1) }
+    { Label($1) }
 | NEG IDENT
     { Neg($2) }
 | FNEG IDENT
