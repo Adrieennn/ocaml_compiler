@@ -6,6 +6,109 @@ min_caml_exit:
 	mov	r7, #1  @ exit syscall
 	swi	#0      @ perform syscall
 
+  .globl min_caml_mmap
+/* mmap syscall */
+min_caml_mmap:
+	stmfd	sp!, {lr}
+  mov r0, #0
+  mov r1, #4194304
+  mov r2, #0x2
+  mov r3, #0x22
+  mov r4, #-1
+  mov r5, #0
+  mov r7, #192
+  swi #0
+  mov r12, r0 @r12 is the register used to store heap starting address
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_mmap, .-min_caml_mmap
+
+/* create array function */
+        .globl min_caml_abs_float
+min_caml_abs_float:
+	stmfd	sp!, {lr}
+  vmov.f32 s0, r0
+  vabs.f32 s0, s0
+  vmov.f32 r0, s0
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_abs_float, .-min_caml_abs_float
+
+
+
+  .globl min_caml_sin
+/* sin utility function */
+min_caml_sin:
+	stmfd	sp!, {lr}
+  vmov s0, r0             @ s0 = x
+  vmov.f32 s1, #0.125     @ s1 = tolerance
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmov.f32 s2, #1.0       @ s2 = count
+  vmov.f32 s3, #1.0       @ s3 = factorial
+  vmov.f32 s4, #30.0      @ s4 = old
+  vmov.f32 s5, s0         @ s5 = current
+  vmov.f32 s6, s0         @ s6 = new
+  vmov.f32 s8, #-1.0      @ s8 = sign
+  vmov.f32 s9, #1.0       @ s9 = 1
+  sincheck:
+    vsub.f32 s7, s4, s6   @ s7 = old - new
+    vabs.f32 s7, s7       @ s7 = abs(old - new)
+    vcmp.f32 s7, s1       @ compare with tolerance
+    vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.
+    blt sinfalse            @ if abs(old - new) < tolerance then done
+  sintrue:
+    vmul.f32 s5, s5, s0   @ current = current * x
+    vmul.f32 s5, s5, s0   @ current = current * x
+    vadd.f32 s2, s2, s9   @ count = count + 1
+    vdiv.f32 s5, s5, s2   @ current = current / count
+    vadd.f32 s2, s2, s9   @ count = count + 1
+    vdiv.f32 s5, s5, s2   @ current = current / count
+    vmul.f32 s5, s5, s8   @ current = current * -1
+    vmov.f32 s4, s6       @ old = new
+    vadd.f32 s6, s6, s5   @ new = new + current
+    b sincheck
+  sinfalse:
+    vmov r0, s6
+    ldmfd	sp!, {lr}
+          bx	lr
+          .size	min_caml_sin, .-min_caml_sin
+
+  .globl min_caml_sqrt
+/* int_of_float utility function */
+min_caml_sqrt:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vsqrt.f32 s0, s0
+  vmov r0, s0
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_sqrt, .-min_caml_sqrt
+
+  .globl min_caml_float_of_int
+/* int_of_float utility function */
+min_caml_float_of_int:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vcvt.f32.s32 s0, s0
+  vmov r0, s0 
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_float_of_int, .-min_caml_float_of_int
+
+  .globl min_caml_int_of_float
+/* int_of_float utility function */
+min_caml_int_of_float:
+	stmfd	sp!, {lr}
+  vmov s0, r0
+  vcvtr.s32.f32 s0, s0
+  vmov r0, s0 
+	ldmfd	sp!, {lr}
+        bx	lr
+        .size	min_caml_int_of_float, .-min_caml_int_of_float
+
 	.globl min_caml_print_newline
 min_caml_print_newline:
 	stmfd	sp!, {lr}
@@ -99,6 +202,7 @@ stringofint:
         subeq	r0, #1
         streq	r1, [r0]
         beq	.i2s_exit
+	ldmfd	sp!, {lr}
 .i2s_non_zero:
 	movgt	r5, #43    @ char '+'
         movlt	r5, #45    @ char '-'
@@ -139,3 +243,23 @@ min_caml_print_int:
 	ldmfd	sp!, {lr}
         bx	lr
         .size min_caml_print_int, .-min_caml_print_int
+
+/* create array function */
+        .globl min_caml_create_array
+min_caml_create_array:
+	stmfd	sp!, {lr}
+  mov r2, r0
+  mov r0, r12
+  @ r0 = return; r2 = size; r1 = init
+        .globl ltrue_array
+ltrue_array:
+  cmp r2, #0
+  ble lnext_array
+  str r1, [r12]
+  add r12, r12, #4
+  sub r2, r2, #1
+  bl  ltrue_array
+        .globl lnext_array
+lnext_array:
+	ldmfd	sp!, {lr}
+        bx	lr

@@ -40,7 +40,15 @@ and t_to_reg fn_name t var_reg count =
           t_to_reg fn_name t2
             (var_reg @ [ (fn_name ^ "." ^ variable, count Decr) ] @ var_reg_exp)
             count
-      | Some a -> t_to_reg fn_name t2 var_reg count @ var_reg_exp )
+      | Some a ->
+          let new_var_reg =
+            List.map
+              (fun (s1, s2) ->
+                if s1 = fn_name ^ "." ^ variable then (s1, count Decr)
+                else (s1, s2))
+              var_reg
+          in
+          t_to_reg fn_name t2 new_var_reg count @ var_reg_exp )
 
 (* function that takes a list of function definitions and outputs an
  * association list of variable names and their corresponding fp offsets *)
@@ -90,7 +98,8 @@ let rec modify_variable_list fn_name variable_list var_reg =
  * expression with their corresponding fp offsets from the list *)
 let rec modify_exp fn_name exp var_reg =
   match exp with
-  | Var v -> Var (modify_variable fn_name v var_reg)
+  | Var v ->
+      if v.[0] = '_' then Label v else Var (modify_variable fn_name v var_reg)
   | Add (s1, s2) -> (
       match s2 with
       | Var v ->
@@ -105,8 +114,24 @@ let rec modify_exp fn_name exp var_reg =
             ( modify_variable fn_name s1 var_reg,
               Var (modify_variable fn_name v var_reg) )
       | _ -> Sub (modify_variable fn_name s1 var_reg, s2) )
+  | FAdd (s1, s2) ->
+      FAdd
+        (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
+  | FSub (s1, s2) ->
+      FSub
+        (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
+  | FMul (s1, s2) ->
+      FMul
+        (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
+  | FDiv (s1, s2) ->
+      FDiv
+        (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
   | CallDir (label, args) ->
       CallDir (label, modify_variable_list fn_name args var_reg)
+  | CallCls (id, args) ->
+      CallCls
+        ( modify_variable fn_name id var_reg,
+          modify_variable_list fn_name args var_reg )
   | IfLEq (s1, s2, t1, t2) -> (
       let mod_s1 = modify_variable fn_name s1 var_reg in
       let mod_t1 = modify_t fn_name t1 var_reg in
@@ -125,6 +150,25 @@ let rec modify_exp fn_name exp var_reg =
       | Var v ->
           IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
       )
+  | Ld (s1, s2) -> (
+      match s2 with
+      | Var v ->
+          Ld
+            ( modify_variable fn_name s1 var_reg,
+              Var (modify_variable fn_name v var_reg) )
+      | Int i -> Ld (modify_variable fn_name s1 var_reg, s2) )
+  | St (s1, s2, s3) -> (
+      match s2 with
+      | Var v ->
+          St
+            ( modify_variable fn_name s1 var_reg,
+              Var (modify_variable fn_name v var_reg),
+              modify_variable fn_name s3 var_reg )
+      | Int i ->
+          St
+            ( modify_variable fn_name s1 var_reg,
+              s2,
+              modify_variable fn_name s3 var_reg ) )
   | _ -> exp
 
 (* function that takes a function body and an association list between variable
@@ -155,12 +199,13 @@ let rec modify_args_reg fn_name args var_reg count =
  * function body and arguments with their corresponding fp offsets from the list *)
 let rec modify_fn_t fu var_reg =
   let len = List.length fu.args in
-  let newcount = ref_counter ((len + 2) * 4) in
+  let newcount = ref_counter ((len + 3) * 4) in
   let args_reg = modify_args_reg fu.name fu.args [] newcount in
   {
     name = fu.name;
     args = fu.args;
-    body = modify_t fu.name fu.body (var_reg @ args_reg);
+    body =
+      modify_t fu.name fu.body (var_reg @ args_reg @ [ (fu.name ^ ".%self", 8) ]);
   }
 
 (* function that takes a program and an association list between variable
