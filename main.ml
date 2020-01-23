@@ -115,10 +115,10 @@ let asml_prog_of_ml_file f =
   let ast_beta = Beta.convert ast_alpha [] in
   let ast_reduced_nested_lets = NestedLetReduction.reduction ast_beta in
   let ast_inline_expansion = Inline.expansion ast_reduced_nested_lets [] in
-  let ast_constant_folding = Constant.folding ast_inline_expansion in
+  let ast_constant_folding = Constant.folding ast_inline_expansion [] in
   let ast_closure_conversion = Closure.prog_of_knorm ast_constant_folding in
-  print_string (Knorm.to_string ast_constant_folding)
-  print_newline ()
+  print_string (Knorm.to_string ast_constant_folding);
+  print_newline ();
   Asml.of_closure_prog ast_closure_conversion
 
 let asml_prog_to_arm prog output_file_name =
