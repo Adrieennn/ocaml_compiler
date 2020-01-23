@@ -150,6 +150,11 @@ min_caml_int_of_float:
         bx	lr
         .size	min_caml_int_of_float, .-min_caml_int_of_float
 
+  .globl min_caml_truncate
+/* truncate utility function */
+min_caml_truncate:
+  b min_caml_int_of_float
+
 	.globl min_caml_print_newline
 min_caml_print_newline:
 	stmfd	sp!, {lr}
