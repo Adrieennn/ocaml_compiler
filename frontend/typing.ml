@@ -25,6 +25,12 @@ end = struct
      * more programs *)
     |> add ("print_int", Type.Fun ([ Type.Int ], Type.Unit))
     |> add ("print_newline", Type.Fun ([ Type.Unit ], Type.Unit))
+    |> add ("sin", Type.Fun ([ Type.Float ], Type.Float))
+    |> add ("cos", Type.Fun ([ Type.Float ], Type.Float))
+    |> add ("sqrt", Type.Fun ([ Type.Float ], Type.Float))
+    |> add ("abs_float", Type.Fun ([ Type.Float ], Type.Float))
+    |> add ("int_of_float", Type.Fun ([ Type.Float ], Type.Int))
+    |> add ("float_of_int", Type.Fun ([ Type.Int ], Type.Float))
     |> add ("truncate", Type.Fun ([ Type.Float ], Type.Int))
 end
 
