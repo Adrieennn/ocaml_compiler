@@ -144,16 +144,16 @@ let rec to_string exp =
   | FMul (e1, e2) -> sprintf "(fmul %s %s)" (Id.to_string e1) (Id.to_string e2)
   | FDiv (e1, e2) -> sprintf "(fdiv %s %s)" (Id.to_string e1) (Id.to_string e2)
   | IfEq (e1, e2, e3, e4) ->
-      sprintf "(if %s = %s then %s else %s)" (Id.to_string e1)
+      sprintf "(if %s = %s then\n%s\n  else\n%s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfFEq (e1, e2, e3, e4) ->
-      sprintf "(if %s = %s then %s else %s)" (Id.to_string e1)
+      sprintf "(if %s = %s then\n%s\n  else\n%s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfLEq (e1, e2, e3, e4) ->
-      sprintf "(if %s <= %s then %s else %s)" (Id.to_string e1)
+      sprintf "(if %s <= %s then\n%s\n  else\n%s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfFLEq (e1, e2, e3, e4) ->
-      sprintf "(if %s <=. %s then %s else %s)" (Id.to_string e1)
+      sprintf "(if %s <=. %s then\n%s\n  else\n%s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | Var id -> Id.to_string id
   | Label id -> Id.to_string id
@@ -172,20 +172,20 @@ let rec to_string exp =
 (* to_string_t: match t to correct substring *)
 and to_string_t t =
   match t with
-  | Ans e -> to_string e
+  | Ans e -> "  " ^ to_string e
   | Let ((id, t), e1, e2) ->
-      sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string e1)
+      sprintf "  (let %s = %s in\n%s)" (Id.to_string id) (to_string e1)
         (to_string_t e2)
 
 (* to_string_f: fundef to string *)
 let rec to_string_f fd =
   match fd with
-  | Main t -> sprintf "let _ = %s" (to_string_t t)
+  | Main t -> sprintf "let _ =\n%s" (to_string_t t)
   | Fl (l, f, fd2) ->
-      sprintf "(let %s = %s) %s" (Id.to_string l) (string_of_float f)
+      sprintf "(let %s = %s)\n%s" (Id.to_string l) (string_of_float f)
         (to_string_f fd2)
   | Fu (fn, fd2) ->
-      sprintf "let %s %s = %s\n%s"
+      sprintf "let %s %s =\n%s\n\n%s"
         (let x = fn.name in
          Id.to_string x)
         (infix_to_string (fun x -> Id.to_string x) fn.args " ")
