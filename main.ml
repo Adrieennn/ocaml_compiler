@@ -39,55 +39,6 @@ let read_ast_from_file f =
     close_in inchan;
     raise e
 
-(*
-let print_transformations f =
-  let ast_syntax = read_ast_from_file f in
-  Printf.printf "AST read from file %s: \n" f;
-  Syntax.to_string ast_syntax |> print_string;
-  print_newline ();
-  print_newline ();
-
-  let type_ast = Typing.typed_ast ast_syntax in
-
-  let ast_knorm = Knorm.of_syntax type_ast in
-  Printf.printf "AST after k-normalization:\n";
-  Knorm.to_string ast_knorm |> print_string;
-  print_newline ();
-  print_newline ();
-
-  let ast_alpha = Alpha.convert ast_knorm [] in
-  Printf.printf "AST after alpha-conversion:\n";
-  Knorm.to_string ast_alpha |> print_string;
-  print_newline ();
-  print_newline ();
-
-  let ast_nested_let = NestedLetReduction.reduction ast_alpha in
-  Printf.printf "AST after let-reduction:\n";
-  Knorm.to_string ast_nested_let |> print_string;
-  print_newline ();
-  print_newline ();
-
-  let ast_closure = Closure.prog_of_knorm ast_nested_let in
-  Printf.printf "AST after closure conversion:\n";
-  Closure.prog_to_string ast_closure |> print_string;
-  print_newline ();
-  print_newline ();
-
-  let asml_prog = Asml.of_closure_prog ast_closure in
-  let fd_test = Asml.prog_to_fd asml_prog in
-  print_string (Asml.to_string_f fd_test);
-  print_newline ();
-
-  let var_reg = Register.program_to_reg asml_prog in
-  let modified_prog = Register.modify_program asml_prog var_reg in
-  let armfile = open_out !output_file in
-  output_string armfile (Asm.prog_to_asm modified_prog);
-  close_out armfile;
-
-  List.iter (fun (s1, s2) -> Printf.printf "(%s, %d) " s1 s2) var_reg;
-  print_newline ()
-*)
-
 let print_ast l =
   print_newline ();
   print_newline ();
