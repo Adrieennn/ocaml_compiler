@@ -40,15 +40,7 @@ and t_to_reg fn_name t var_reg count =
           t_to_reg fn_name t2
             (var_reg @ [ (fn_name ^ "." ^ variable, count Decr) ] @ var_reg_exp)
             count
-      | Some a ->
-          let new_var_reg =
-            List.map
-              (fun (s1, s2) ->
-                if s1 = fn_name ^ "." ^ variable then (s1, count Decr)
-                else (s1, s2))
-              var_reg
-          in
-          t_to_reg fn_name t2 new_var_reg count @ var_reg_exp )
+      | Some a -> t_to_reg fn_name t2 var_reg count @ var_reg_exp )
 
 (* function that takes a list of function definitions and outputs an
  * association list of variable names and their corresponding fp offsets *)

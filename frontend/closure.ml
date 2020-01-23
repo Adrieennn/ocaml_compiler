@@ -174,14 +174,25 @@ let rec convert exp known_fun var_env =
         if List.length fvars > 0 || cls_rep_check then (
           top_level := previous_top_level;
 
+          let alpha_mappings =
+            List.map (fun (id, typ) -> (id, Id.genid ())) fvars
+          in
+          let alpha_vars =
+            List.map2
+              (fun (_, new_id) (_, typ) -> (new_id, typ))
+              alpha_mappings fvars
+          in
           let cfbody =
-            convert fun_body known_fun ((fun_id, fun_typ) :: var_env)
+            convert
+              (Alpha.convert fun_body alpha_mappings)
+              known_fun
+              ((fun_id, fun_typ) :: (alpha_vars @ var_env))
           in
           let new_closure =
             {
               name = (fun_label, fun_typ);
               args;
-              formal_fv = fvars;
+              formal_fv = alpha_vars;
               body = cfbody;
             }
           in
