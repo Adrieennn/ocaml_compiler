@@ -15,6 +15,6 @@ let rec reduction expr =   (**)
      | Knorm.IfEq ((x, y), e2, e3) -> Knorm.IfEq ((x, y), reduction e2, reduction e3)
      | Knorm.IfLe ((x, y), e2, e3) -> Knorm.IfLe ((x, y), reduction e2, reduction e3)
      (*Reduce the body of LetTuple*)
-     | Knorm.LetTuple (vars, def, body) -> Knorm.LetTuple (vars, def, reduction body)
+     | Knorm.LetTuple (vars, def, body) -> Knorm.LetTuple (vars, reduction def, reduction body)
      (*all other expressions that can't contain nested-lets should be returned*)
-     |__ -> expr
+     | _ -> expr
