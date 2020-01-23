@@ -83,6 +83,9 @@ and closure_to_exp = function
       failwith "Closure.Let cannot be translated to Asml.exp"
   | Closure.AppDir (fun_label, arg_ids) -> CallDir (fun_label, arg_ids)
   | Closure.AppCls (id, arg_ids) -> CallCls (id, arg_ids)
+  | Closure.Array(size, init) -> CallDir("_min_caml_create_array", [size; init])
+  | Closure.Get(arr, index) -> Ld(arr, Var index)
+  | Closure.Put(arr, index, value) -> St(arr, Var index, value)
   | e ->
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
