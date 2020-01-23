@@ -9,9 +9,13 @@ let to_string x = x
 let predefined_function_labels = function
   | "print_int" -> Some "_min_caml_print_int"
   | "print_newline" -> Some "_min_caml_print_newline"
+  | "sin" -> Some "_min_caml_sin"
+  | "cos" -> Some "_min_caml_cos"
+  | "sqrt" -> Some "_min_caml_sqrt"
+  | "abs_float" -> Some "_min_caml_abs_float"
   | "int_of_float" -> Some "_min_caml_int_of_float"
   | "float_of_int" -> Some "_min_caml_float_of_int"
-  (* TODO the other predefined functions *)
+  | "truncate" -> Some "_min_caml_truncate"
   | _ -> None
 
 let label_of_id x =

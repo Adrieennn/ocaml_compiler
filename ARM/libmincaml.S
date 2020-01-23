@@ -35,6 +35,46 @@ min_caml_abs_float:
         .size	min_caml_abs_float, .-min_caml_abs_float
 
 
+  .globl min_caml_cos
+/* cos utility function */
+min_caml_cos:
+	stmfd	sp!, {lr}
+  vmov s0, r0             @ s0 = x
+  vmov.f32 s1, #0.125     @ s1 = tolerance
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmul.f32 s1, s1
+  vmov.f32 s3, #1.0       @ s3 = factorial
+  vsub.f32 s2, s3, s3     @ s2 = count = 0
+  vmov.f32 s4, #30.0      @ s4 = old
+  vmov.f32 s5, #1.0       @ s5 = current
+  vmov.f32 s6, #1.0       @ s6 = new
+  vmov.f32 s8, #-1.0      @ s8 = sign
+  vmov.f32 s9, #1.0       @ s9 = 1
+  coscheck:
+    vsub.f32 s7, s4, s6   @ s7 = old - new
+    vabs.f32 s7, s7       @ s7 = abs(old - new)
+    vcmp.f32 s7, s1       @ compare with tolerance
+    vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.
+    blt cosfalse            @ if abs(old - new) < tolerance then done
+  costrue:
+    vmul.f32 s5, s5, s0   @ current = current * x
+    vmul.f32 s5, s5, s0   @ current = current * x
+    vadd.f32 s2, s2, s9   @ count = count + 1
+    vdiv.f32 s5, s5, s2   @ current = current / count
+    vadd.f32 s2, s2, s9   @ count = count + 1
+    vdiv.f32 s5, s5, s2   @ current = current / count
+    vmul.f32 s5, s5, s8   @ current = current * -1
+    vmov.f32 s4, s6       @ old = new
+    vadd.f32 s6, s6, s5   @ new = new + current
+    b coscheck
+  cosfalse:
+    vmov r0, s6
+    ldmfd	sp!, {lr}
+          bx	lr
+          .size	min_caml_cos, .-min_caml_cos
 
   .globl min_caml_sin
 /* sin utility function */
@@ -42,6 +82,7 @@ min_caml_sin:
 	stmfd	sp!, {lr}
   vmov s0, r0             @ s0 = x
   vmov.f32 s1, #0.125     @ s1 = tolerance
+  vmul.f32 s1, s1
   vmul.f32 s1, s1
   vmul.f32 s1, s1
   vmul.f32 s1, s1
@@ -77,7 +118,7 @@ min_caml_sin:
           .size	min_caml_sin, .-min_caml_sin
 
   .globl min_caml_sqrt
-/* int_of_float utility function */
+/* sqrt utility function */
 min_caml_sqrt:
 	stmfd	sp!, {lr}
   vmov s0, r0
@@ -88,7 +129,7 @@ min_caml_sqrt:
         .size	min_caml_sqrt, .-min_caml_sqrt
 
   .globl min_caml_float_of_int
-/* int_of_float utility function */
+/* float_of_int utility function */
 min_caml_float_of_int:
 	stmfd	sp!, {lr}
   vmov s0, r0
@@ -103,11 +144,16 @@ min_caml_float_of_int:
 min_caml_int_of_float:
 	stmfd	sp!, {lr}
   vmov s0, r0
-  vcvtr.s32.f32 s0, s0
+  vcvt.s32.f32 s0, s0
   vmov r0, s0 
 	ldmfd	sp!, {lr}
         bx	lr
         .size	min_caml_int_of_float, .-min_caml_int_of_float
+
+  .globl min_caml_truncate
+/* truncate utility function */
+min_caml_truncate:
+  b min_caml_int_of_float
 
 	.globl min_caml_print_newline
 min_caml_print_newline:
