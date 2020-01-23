@@ -34,7 +34,6 @@ min_caml_abs_float:
         bx	lr
         .size	min_caml_abs_float, .-min_caml_abs_float
 
-
   .globl min_caml_cos
 /* cos utility function */
 min_caml_cos:
@@ -221,6 +220,27 @@ min_caml_print_char:
 	add	sp, #4   @ get back room for char
         bx	lr
         .size	min_caml_print_char, .-min_caml_print_char
+  
+.val_10:
+  .word 1203982336
+
+  .globl min_caml_print_float
+/* print float  function */
+min_caml_print_float:
+  stmfd sp!, {lr}
+  vmov.f32 s2, r0
+  bl min_caml_int_of_float
+  bl min_caml_print_int
+  mov r0, #46
+  bl min_caml_print_char
+  ldr r0, .val_10
+  vmov.f32 s0, r0 
+  vmul.f32 s2, s2, s0
+  vmov r0, s2
+  bl min_caml_int_of_float
+  bl min_caml_print_int
+  ldmfd sp!, {lr}
+  bx lr
 
 	.data
 .string_for_int:
