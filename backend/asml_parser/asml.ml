@@ -83,9 +83,10 @@ and closure_to_exp = function
       failwith "Closure.Let cannot be translated to Asml.exp"
   | Closure.AppDir (fun_label, arg_ids) -> CallDir (fun_label, arg_ids)
   | Closure.AppCls (id, arg_ids) -> CallCls (id, arg_ids)
-  | Closure.Array(size, init) -> CallDir("_min_caml_create_array", [size; init])
-  | Closure.Get(arr, index) -> Ld(arr, Var index)
-  | Closure.Put(arr, index, value) -> St(arr, Var index, value)
+  | Closure.Array (size, init) ->
+      CallDir ("_min_caml_create_array", [ size; init ])
+  | Closure.Get (arr, index) -> Ld (arr, Var index)
+  | Closure.Put (arr, index, value) -> St (arr, Var index, value)
   | e ->
       Printf.eprintf
         "Conversion from Closure's %s to Asml.exp not yet implemented\n"
@@ -103,14 +104,16 @@ let fundef_of_closure_fundef fd =
         let rec retrieve_environment counter = function
           | [] -> closure_to_t body
           | hd :: tl ->
-                  Let
-                    ( (hd, Type.Var (ref None)),
-                      Ld ("%self", Int counter),
-                      retrieve_environment (counter + 4) tl )
+              Let
+                ( (hd, Type.Var (ref None)),
+                  Ld ("%self", Int counter),
+                  retrieve_environment (counter + 4) tl )
         in
         Let
           ( (Id.id_of_label label, Type.Var (ref None)),
-            Var "%self", retrieve_environment 4 (List.map (fun (id, _typ) -> id) formal_fv))
+            Var "%self",
+            retrieve_environment 4 (List.map (fun (id, _typ) -> id) formal_fv)
+          )
       in
       let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
       { name = label; args = arg_names; body = closure_body }
