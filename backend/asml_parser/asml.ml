@@ -33,6 +33,8 @@ type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
 type prog = Program of (Id.t * float) list * fu list * t
 
+let float_map = ref []
+
 let rec add_let exp body =
   let id = Id.genid () in
   Let ((id, Type.Var (ref None)), exp, body id)
@@ -68,6 +70,10 @@ let rec closure_to_t = function
 and closure_to_exp = function
   | Closure.Unit -> Unit
   | Closure.Int i -> Int i
+  | Closure.Float f ->
+      let label = Id.label_of_id (Id.genid ()) in
+      float_map := (label, f) :: !float_map;
+      Var label
   | Closure.Add (id1, id2) -> Add (id1, Var id2)
   | Closure.Sub (id1, id2) -> Sub (id1, Var id2)
   | Closure.FAdd (id1, id2) -> FAdd (id1, id2)
@@ -119,8 +125,9 @@ let fundef_of_closure_fundef fd =
       { name = label; args = arg_names; body = closure_body }
 
 let of_closure_prog prog =
+  float_map := [];
   let (Closure.Prog (fundefs, main_body)) = prog in
-  Program ([], List.map fundef_of_closure_fundef fundefs, closure_to_t main_body)
+  Program (!float_map, List.map fundef_of_closure_fundef fundefs, closure_to_t main_body)
 
 let rec infix_to_string (to_s : 'a -> string) (l : 'a list) (op : string) :
     string =
@@ -135,7 +142,7 @@ let rec to_string_id_or_imm (i : id_or_imm) =
 (* to_string: returns a string out of an expresssion exp *)
 let rec to_string exp =
   match exp with
-  | Unit -> "()"
+  | Unit -> "nop"
   | Int i -> string_of_int i
   | Neg e -> sprintf "(neg %s)" (Id.to_string e)
   | New i -> sprintf "(new %d)" i
@@ -187,7 +194,7 @@ let rec to_string_f fd =
   match fd with
   | Main t -> sprintf "let _ =\n%s" (to_string_t t)
   | Fl (l, f, fd2) ->
-      sprintf "(let %s = %s)\n%s" (Id.to_string l) (string_of_float f)
+      sprintf "let %s = %s\n%s" (Id.to_string l) (string_of_float f)
         (to_string_f fd2)
   | Fu (fn, fd2) ->
       sprintf "let %s %s =\n%s\n\n%s"

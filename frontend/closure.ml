@@ -287,7 +287,19 @@ let rec prog_of_knorm exp =
   top_level := [];
 
   let main_body =
-    convert exp [ "print_int" ] [ ("print_int", Type.Var (ref None)) ]
+    convert exp
+      [
+        "print_int";
+        "print_newline";
+        "sin";
+        "cos";
+        "sqrt";
+        "abs_float";
+        "int_of_float";
+        "float_of_int";
+        "truncate";
+      ]
+      []
   in
   Prog (!top_level, main_body)
 
