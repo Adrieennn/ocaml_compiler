@@ -11,21 +11,21 @@ let find_int mapping var =
   let definition = find_definition mapping var in
   match definition with
   | Knorm.Int i -> i
-  | _ -> failwith "To do find_int"
+  | _ -> failwith "Variable is not an integer constant"
 
 (*Find int value of variable*)
 let find_float mapping var =
   let definition = find_definition mapping var in
   match definition with
   | Knorm.Float d -> d
-  | _-> failwith "To do find_float"
+  | _-> failwith "Variable is not a float constant"
 
 (*Find int value of variable*)
 let find_tuple mapping var =
   let definition = find_definition mapping var in
   match definition with
   | Knorm.Tuple tups -> tups
-  | _-> failwith "To do find_tuple"
+  | _-> failwith "Variable is not a tuple constant"
 
 
 (*Checks if a variable definition is an integer constant*)
