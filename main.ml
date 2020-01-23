@@ -23,8 +23,8 @@ let speclist =
     ( "-h",
       Arg.Unit
         (fun () ->
-          Printf.printf "Please run --help instead.\n";
-          exit 0),
+           Printf.printf "Please run --help instead.\n";
+           exit 0),
       "Display help" );
     ("-v", Arg.Unit disp_version, "Display compiler's version");
     ("-t", Arg.Set typecheck_only, "Only do typechecking");
@@ -121,8 +121,8 @@ let asml_prog_of_ml_file f =
 
 let asml_prog_to_arm prog output_file_name =
   ( if !disp_asml then
-    let asml_fundef = Asml.prog_to_fd prog in
-    Printf.printf "%s\n" (Asml.to_string_f asml_fundef) );
+      let asml_fundef = Asml.prog_to_fd prog in
+      Printf.printf "%s\n" (Asml.to_string_f asml_fundef) );
   let var_reg = Register.program_to_reg prog in
   let modified_prog = Register.modify_program prog var_reg in
   let outchan = open_out output_file_name in
@@ -139,8 +139,8 @@ let () =
     | None, _ -> ()
     | Some _, 1 -> ()
     | Some _, _ ->
-        Printf.eprintf "Cannot use -o with more than one input file.\n";
-        ignore (exit 1)
+      Printf.eprintf "Cannot use -o with more than one input file.\n";
+      ignore (exit 1)
   in
   (* file_name * Syntax.t *)
   if !typecheck_only then (
@@ -150,8 +150,8 @@ let () =
 
     List.iter
       (fun ast ->
-        Typing.typed_ast ast |> Syntax.to_string |> print_string;
-        print_newline ())
+         Typing.typed_ast ast |> Syntax.to_string |> print_string;
+         print_newline ())
       (List.map read_ast_from_file !files);
     exit 0 )
   else
@@ -162,16 +162,16 @@ let () =
     in
     List.iter
       (fun (file_name, prog) ->
-        let output_file_name =
-          match !output_file with
-          | None ->
-              Filename.remove_extension (Filename.basename file_name) ^ ".s"
-          | Some s ->
-              (* Only valid if there is only one input file
-               * which should be checked before *)
-              s
-        in
-        asml_prog_to_arm prog output_file_name)
+         let output_file_name =
+           match !output_file with
+           | None ->
+             Filename.remove_extension (Filename.basename file_name) ^ ".s"
+           | Some s ->
+             (* Only valid if there is only one input file
+              * which should be checked before *)
+             s
+         in
+         asml_prog_to_arm prog output_file_name)
       asml_progs
 
 (*
