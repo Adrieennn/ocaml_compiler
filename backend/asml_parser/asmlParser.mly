@@ -105,10 +105,10 @@ exp: /* expressions */
 | IF IDENT LE ident_or_imm THEN asmt ELSE asmt
     %prec prec_if
     { IfLEq($2, $4, $6, $8) }
-| IF IDENT FEQUAL ident_or_imm THEN asmt ELSE asmt
+| IF IDENT FEQUAL IDENT THEN asmt ELSE asmt
     %prec prec_if
     { IfFEq($2, $4, $6, $8) }
-| IF IDENT FLE ident_or_imm THEN asmt ELSE asmt
+| IF IDENT FLE IDENT THEN asmt ELSE asmt
     %prec prec_if
     { IfFLEq($2, $4, $6, $8) }
 | CALL LABEL formal_args
