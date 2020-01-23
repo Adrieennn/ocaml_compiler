@@ -40,6 +40,15 @@ let rec add_let exp body =
   Let ((id, Type.Var (ref None)), exp, body id)
 
 let rec closure_to_t = function
+  | Closure.Let ((id, typ), Closure.Float f, body) ->
+      let label = Id.label_of_id (Id.genid ()) in
+      float_map := (label, f) :: !float_map;
+
+      let new_id = Id.genid () in
+      Let
+        ( (new_id, Type.Int),
+          Var label,
+          Let ((id, Type.Float), Ld (new_id, Int 0), closure_to_t body) )
   | Closure.Let ((id, typ), def, body) ->
       Let ((id, typ), closure_to_exp def, closure_to_t body)
   | Closure.MkCls ((cls_id, cls_typ), (fun_label, args), body) ->
@@ -71,9 +80,8 @@ and closure_to_exp = function
   | Closure.Unit -> Unit
   | Closure.Int i -> Int i
   | Closure.Float f ->
-      let label = Id.label_of_id (Id.genid ()) in
-      float_map := (label, f) :: !float_map;
-      Var label
+      let label, _ = List.find (fun (label, f') -> f = f') !float_map in
+      Ld (label, Int 0)
   | Closure.Add (id1, id2) -> Add (id1, Var id2)
   | Closure.Sub (id1, id2) -> Sub (id1, Var id2)
   | Closure.FAdd (id1, id2) -> FAdd (id1, id2)
@@ -90,7 +98,7 @@ and closure_to_exp = function
   | Closure.AppDir (fun_label, arg_ids) -> CallDir (fun_label, arg_ids)
   | Closure.AppCls (id, arg_ids) -> CallCls (id, arg_ids)
   | Closure.Array (size, init) ->
-      CallDir ("_min_caml_create_array", [ size; init ])
+      CallDir (Id.label_of_id "create_float_array", [ size; init ])
   | Closure.Get (arr, index) -> Ld (arr, Var index)
   | Closure.Put (arr, index, value) -> St (arr, Var index, value)
   | e ->
@@ -127,7 +135,10 @@ let fundef_of_closure_fundef fd =
 let of_closure_prog prog =
   float_map := [];
   let (Closure.Prog (fundefs, main_body)) = prog in
-  Program (!float_map, List.map fundef_of_closure_fundef fundefs, closure_to_t main_body)
+  Program
+    ( !float_map,
+      List.map fundef_of_closure_fundef fundefs,
+      closure_to_t main_body )
 
 let rec infix_to_string (to_s : 'a -> string) (l : 'a list) (op : string) :
     string =
