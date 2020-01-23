@@ -335,11 +335,15 @@ let rec to_string' exp =
 let prog_to_string prog =
   let (Prog (fundefs, main_body)) = prog in
 
-  let fun_labels =
+  let fundefs_string =
     List.map
-      (fun { name = fun_label, _; _ } -> Printf.sprintf "%s" fun_label)
+      (fun { name = fun_label, _fun_typ; args; formal_fv; body } ->
+        Printf.sprintf "Label: %s Arguments: %s Free variables: %s\n%s\n"
+          fun_label
+          (List.map (fun (arg_id, _arg_typ) -> arg_id) args |> String.concat " ")
+          ( List.map (fun (fv_id, _fv_typ) -> fv_id) formal_fv
+          |> String.concat " " )
+          (to_string' body))
       fundefs
   in
-  let fun_labels_string = String.concat "\n" fun_labels in
-  Printf.sprintf "Function labels:\n"
-  ^ fun_labels_string ^ "\n" ^ to_string' main_body
+  String.concat "\n" fundefs_string ^ "\nMain:\n" ^ to_string' main_body
