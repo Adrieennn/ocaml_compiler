@@ -54,7 +54,7 @@ let rec find_fv expr bound_variables =
   let find_fv_list vars env =
     List.fold_left
       (fun acc var ->
-        if not (List.mem var bound_variables) then var :: acc else acc)
+         if not (List.mem var bound_variables) then var :: acc else acc)
       [] vars
   in
   match expr with
@@ -67,19 +67,19 @@ let rec find_fv expr bound_variables =
   | FSub (v1, v2)
   | FMul (v1, v2)
   | FDiv (v1, v2) ->
-      find_fv_list [ v1; v2 ] bound_variables
+    find_fv_list [ v1; v2 ] bound_variables
   | Let ((id, typ), e1, e2) ->
-      let bound_variables' = id :: bound_variables in
-      find_fv e1 bound_variables @ find_fv e2 bound_variables'
+    let bound_variables' = id :: bound_variables in
+    find_fv e1 bound_variables @ find_fv e2 bound_variables'
   | Var x -> if List.mem x bound_variables then [] else [ x ]
   | IfEq ((v1, v2), e1, e2) | IfLe ((v1, v2), e1, e2) ->
-      find_fv_list [ v1; v2 ] bound_variables
-      @ find_fv e1 bound_variables @ find_fv e2 bound_variables
+    find_fv_list [ v1; v2 ] bound_variables
+    @ find_fv e1 bound_variables @ find_fv e2 bound_variables
   | LetTuple (vars, def, body) ->
-      let bound_variables' =
-        List.map (fun (id, _t) -> id) vars @ bound_variables
-      in
-      find_fv def bound_variables @ find_fv body bound_variables'
+    let bound_variables' =
+      List.map (fun (id, _t) -> id) vars @ bound_variables
+    in
+    find_fv def bound_variables @ find_fv body bound_variables'
   | Tuple tups -> find_fv_list tups bound_variables
   | Array (v1, v2) -> find_fv_list [ v1; v2 ] bound_variables
   | Get (v1, v2) -> find_fv_list [ v1; v2 ] bound_variables
@@ -87,9 +87,9 @@ let rec find_fv expr bound_variables =
   | AppDir (_f, args) -> find_fv_list args bound_variables
   | AppCls (f, args) -> find_fv_list (f :: args) bound_variables
   | MkCls ((fun_id, _fun_typ), (fun_label, fvars), cont) ->
-      let bound_variables' = fun_id :: bound_variables in
-      let fvar_ids = List.map (fun (id, _typ) -> id) fvars in
-      find_fv_list fvar_ids bound_variables @ find_fv cont bound_variables'
+    let bound_variables' = fun_id :: bound_variables in
+    let fvar_ids = List.map (fun (id, _typ) -> id) fvars in
+    find_fv_list fvar_ids bound_variables @ find_fv cont bound_variables'
 
 (*Convert Knorm.t to Closure.t*)
 (*Added another argument var_env (variable environment) to function convert. This is to enable us
@@ -105,8 +105,8 @@ let rec convert exp known_fun var_env =
       let f_is_known = List.mem f known_fun in
       match f_is_known with
       | true ->
-          let fun_label = Id.label_of_id f in
-          AppDir (fun_label, args)
+        let fun_label = Id.label_of_id f in
+        AppDir (fun_label, args)
       | false -> AppCls (f, args) )
   (*Function is initially assumed to contain no FV and added to known_fun + top_level. Then, the function body is converted first
     and the let_body after.*)
@@ -138,27 +138,27 @@ let rec convert exp known_fun var_env =
         let rec fun_id_occurs_as_variable id = function
           | Knorm.Var id' -> id = id'
           | Knorm.Let ((id', _typ), e1, e2) ->
-              fun_id_occurs_as_variable id e1
-              || if id = id' then false else fun_id_occurs_as_variable id e2
+            fun_id_occurs_as_variable id e1
+            || if id = id' then false else fun_id_occurs_as_variable id e2
           | Knorm.LetTuple (vars, def_body, let_body) ->
-              fun_id_occurs_as_variable id def_body
-              ||
-              let var_ids = List.map (fun (id, _typ) -> id) vars in
-              if List.mem id var_ids then false
-              else fun_id_occurs_as_variable id let_body
+            fun_id_occurs_as_variable id def_body
+            ||
+            let var_ids = List.map (fun (id, _typ) -> id) vars in
+            if List.mem id var_ids then false
+            else fun_id_occurs_as_variable id let_body
           | Knorm.LetRec
               ({ Knorm.name = id', _typ; args; body = fun_body }, let_body)
             when id = id' ->
-              false
+            false
           | Knorm.LetRec
               ({ Knorm.name = id', _typ; args; body = fun_body }, let_body) ->
-              let arg_ids = List.map (fun (arg_id, _typ) -> arg_id) args in
-              fun_id_occurs_as_variable id fun_body
-              ||
-              if List.mem id arg_ids then false
-              else fun_id_occurs_as_variable id let_body
+            let arg_ids = List.map (fun (arg_id, _typ) -> arg_id) args in
+            fun_id_occurs_as_variable id fun_body
+            ||
+            if List.mem id arg_ids then false
+            else fun_id_occurs_as_variable id let_body
           | Knorm.IfEq ((_, _), e1, e2) | Knorm.IfLe ((_, _), e1, e2) ->
-              fun_id_occurs_as_variable id e1 || fun_id_occurs_as_variable id e2
+            fun_id_occurs_as_variable id e1 || fun_id_occurs_as_variable id e2
           | Knorm.App (_, args) -> List.mem id args
           | Knorm.Tuple elements -> List.mem id elements
           | Knorm.Array (_arr_size, array_init) -> id = array_init
@@ -167,7 +167,7 @@ let rec convert exp known_fun var_env =
           | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Add _
           | Knorm.Sub _ | Knorm.FAdd _ | Knorm.FSub _ | Knorm.FMul _
           | Knorm.FDiv _ ->
-              false
+            false
         in
 
         let cls_rep_check = fun_id_occurs_as_variable fun_id let_body in
@@ -205,52 +205,52 @@ let rec convert exp known_fun var_env =
       (*if function has no free variables, convert let_body*)
       | [] -> convert_let_body []
       | _ ->
-          (*otherwise, restore known_funct and top_level to their previous state; reconvert fun_body; get actual FVs list  and then add funtion to top_level*)
-          top_level := previous_top_level;
-          let cfbody =
-            convert fun_body known_fun (((fun_id, fun_typ) :: args) @ var_env)
-          in
+        (*otherwise, restore known_funct and top_level to their previous state; reconvert fun_body; get actual FVs list  and then add funtion to top_level*)
+        top_level := previous_top_level;
+        let cfbody =
+          convert fun_body known_fun (((fun_id, fun_typ) :: args) @ var_env)
+        in
 
-          (*list of FVs*)
-          let fvs =
-            my_filter_map
-              (fun fv_id ->
-                match find new_var_env fv_id with
-                | None ->
-                    Printf.eprintf
-                      "Free variable %s is actually undefind in current \
-                       environment, while processing %s.\n"
-                      (Id.to_string fv_id) fun_id;
-                    exit 1
-                | Some typ -> Some (fv_id, typ))
-              fv_ids
-          in
-          (*current mapping of FVs in var_env*)
-          top_level :=
-            {
-              name = (fun_label, fun_typ);
-              args;
-              formal_fv = fvs;
-              body = cfbody;
-            }
-            :: !top_level;
-          convert_let_body fvs )
+        (*list of FVs*)
+        let fvs =
+          my_filter_map
+            (fun fv_id ->
+               match find new_var_env fv_id with
+               | None ->
+                 Printf.eprintf
+                   "Free variable %s is actually undefind in current \
+                    environment, while processing %s.\n"
+                   (Id.to_string fv_id) fun_id;
+                 exit 1
+               | Some typ -> Some (fv_id, typ))
+            fv_ids
+        in
+        (*current mapping of FVs in var_env*)
+        top_level :=
+          {
+            name = (fun_label, fun_typ);
+            args;
+            formal_fv = fvs;
+            body = cfbody;
+          }
+          :: !top_level;
+        convert_let_body fvs )
   (*For all if statements, convert the body - e1 and e2*)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
-      IfEq ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
+    IfEq ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
   | Knorm.IfLe ((v1, v2), e1, e2) ->
-      IfLe ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
+    IfLe ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
   (*For LetTuple and Let variable declariation, convert definition and body*)
   | Knorm.LetTuple (var, def, body) ->
-      LetTuple
-        ( var,
-          convert def known_fun var_env,
-          convert body known_fun (var @ var_env) )
+    LetTuple
+      ( var,
+        convert def known_fun var_env,
+        convert body known_fun (var @ var_env) )
   | Knorm.Let ((id, typ), def, body) ->
-      Let
-        ( (id, typ),
-          convert def known_fun ((id, typ) :: var_env),
-          convert body known_fun ((id, typ) :: var_env) )
+    Let
+      ( (id, typ),
+        convert def known_fun ((id, typ) :: var_env),
+        convert body known_fun ((id, typ) :: var_env) )
   (*For all other expressions, return*)
   | Knorm.Unit -> Unit
   | Knorm.Int i -> Int i
@@ -301,35 +301,35 @@ let rec to_string' exp =
   | Var id -> Id.to_string id
   | Tuple l -> Printf.sprintf "(%s)" (infix_to_string Id.to_string l ", ")
   | AppDir (e1, le2) ->
-      Printf.sprintf "(%s %s)" (Id.to_string e1)
-        (infix_to_string Id.to_string le2 " ")
+    Printf.sprintf "(%s %s)" (Id.to_string e1)
+      (infix_to_string Id.to_string le2 " ")
   | AppCls (e1, le2) ->
-      Printf.sprintf "(%s %s)" (Id.to_string e1)
-        (infix_to_string Id.to_string le2 " ")
+    Printf.sprintf "(%s %s)" (Id.to_string e1)
+      (infix_to_string Id.to_string le2 " ")
   | MkCls ((id, _t), (label, vs), e2) ->
-      Printf.sprintf "(let %s = %s %s in %s)" (Id.to_string id)
-        (Id.to_string label)
-        (infix_to_string (fun (x, _) -> Id.to_string x) vs " ")
-        (to_string' e2)
+    Printf.sprintf "(let %s = %s %s in %s)" (Id.to_string id)
+      (Id.to_string label)
+      (infix_to_string (fun (x, _) -> Id.to_string x) vs " ")
+      (to_string' e2)
   | Let ((id, _t), e1, e2) ->
-      Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string' e1)
-        (to_string' e2)
+    Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string' e1)
+      (to_string' e2)
   | LetTuple (l, e1, e2) ->
-      Printf.sprintf "(let (%s) = %s in %s)"
-        (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
-        (to_string' e1) (to_string' e2)
+    Printf.sprintf "(let (%s) = %s in %s)"
+      (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
+      (to_string' e1) (to_string' e2)
   | IfEq ((id1, id2), e1, e2) ->
-      Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
-        (Id.to_string id2) (to_string' e1) (to_string' e2)
+    Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
+      (Id.to_string id2) (to_string' e1) (to_string' e2)
   | IfLe ((id1, id2), e1, e2) ->
-      Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
-        (Id.to_string id2) (to_string' e1) (to_string' e2)
+    Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
+      (Id.to_string id2) (to_string' e1) (to_string' e2)
   | Get (e1, e2) -> Printf.sprintf "%s.(%s)" (Id.to_string e1) (Id.to_string e2)
   | Put (e1, e2, e3) ->
-      Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
-        (Id.to_string e3)
+    Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
+      (Id.to_string e3)
   | Array (e1, e2) ->
-      Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
+    Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
 
 (*Convert Closure.prog to string*)
 let prog_to_string prog =
@@ -338,12 +338,12 @@ let prog_to_string prog =
   let fundefs_string =
     List.map
       (fun { name = fun_label, _fun_typ; args; formal_fv; body } ->
-        Printf.sprintf "Label: %s Arguments: %s Free variables: %s\n%s\n"
-          fun_label
-          (List.map (fun (arg_id, _arg_typ) -> arg_id) args |> String.concat " ")
-          ( List.map (fun (fv_id, _fv_typ) -> fv_id) formal_fv
-          |> String.concat " " )
-          (to_string' body))
+         Printf.sprintf "Label: %s Arguments: %s Free variables: %s\n%s\n"
+           fun_label
+           (List.map (fun (arg_id, _arg_typ) -> arg_id) args |> String.concat " ")
+           ( List.map (fun (fv_id, _fv_typ) -> fv_id) formal_fv
+             |> String.concat " " )
+           (to_string' body))
       fundefs
   in
   String.concat "\n" fundefs_string ^ "\nMain:\n" ^ to_string' main_body
