@@ -40,43 +40,41 @@ min_caml_abs_float:
 /* sin utility function */
 min_caml_sin:
 	stmfd	sp!, {lr}
-  vmov s0, r0
-  vmov.f32 s1, #0.125
+  vmov s0, r0             @ s0 = x
+  vmov.f32 s1, #0.125     @ s1 = tolerance
   vmul.f32 s1, s1
   vmul.f32 s1, s1
   vmul.f32 s1, s1
   vmul.f32 s1, s1
-  vmov.f32 s2, #1.0
-  vmov.f32 s3, #1.0
-  vmov.f32 s4, #30.0
-  vmov.f32 s5, s0
-  vmov.f32 s6, s0
-  vmov.f32 s8, #-1.0
-  vmov.f32 s9, #1.0
-  vmov.f32 s10, #-1.0
+  vmov.f32 s2, #1.0       @ s2 = count
+  vmov.f32 s3, #1.0       @ s3 = factorial
+  vmov.f32 s4, #30.0      @ s4 = old
+  vmov.f32 s5, s0         @ s5 = current
+  vmov.f32 s6, s0         @ s6 = new
+  vmov.f32 s8, #-1.0      @ s8 = sign
+  vmov.f32 s9, #1.0       @ s9 = 1
   sincheck:
-    vsub.f32 s7, s4, s6
-    vabs.f32 s7, s7
-    vcmp.f32 s7, s1
-  ble sinfalse
+    vsub.f32 s7, s4, s6   @ s7 = old - new
+    vabs.f32 s7, s7       @ s7 = abs(old - new)
+    vcmp.f32 s7, s1       @ compare with tolerance
+    vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.
+    blt sinfalse            @ if abs(old - new) < tolerance then done
   sintrue:
-    vmul.f32 s5, s5, s0
-    vmul.f32 s5, s5, s0
-    vadd.f32 s2, s2, s9
-    vadd.f32 s3, s3, s2
-    vadd.f32 s2, s2, s9
-    vadd.f32 s3, s3, s2
-    vdiv.f32 s5, s5, s3
-    vmul.f32 s8, s8, s10
-    vmul.f32 s5, s5, s8
-    vmov.f32 s4, s6
-    vadd.f32 s6, s6, s5
+    vmul.f32 s5, s5, s0   @ current = current * x
+    vmul.f32 s5, s5, s0   @ current = current * x
+    vadd.f32 s2, s2, s9   @ count = count + 1
+    vdiv.f32 s5, s5, s2   @ current = current / count
+    vadd.f32 s2, s2, s9   @ count = count + 1
+    vdiv.f32 s5, s5, s2   @ current = current / count
+    vmul.f32 s5, s5, s8   @ current = current * -1
+    vmov.f32 s4, s6       @ old = new
+    vadd.f32 s6, s6, s5   @ new = new + current
     b sincheck
   sinfalse:
     vmov r0, s6
     ldmfd	sp!, {lr}
           bx	lr
-          .size	min_caml_sqrt, .-min_caml_sqrt
+          .size	min_caml_sin, .-min_caml_sin
 
   .globl min_caml_sqrt
 /* int_of_float utility function */
