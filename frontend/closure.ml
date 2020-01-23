@@ -12,7 +12,6 @@ type t =
   | Let of (Id.t * Type.t) * t * t
   | Var of Id.t
   | IfEq of (Id.t * Id.t) * t * t
-  (* cf. BLE branch if less than or equal *)
   | IfLe of (Id.t * Id.t) * t * t
   | Tuple of Id.t list
   | LetTuple of (Id.t * Type.t) list * t * t
@@ -32,8 +31,10 @@ type fundef = {
 
 type prog = Prog of fundef list * t
 
+(*list of top-level functions*)
 let top_level = ref []
 
+(* searches for and return the value of var in set*)
 let find set var = List.assoc_opt var set
 
 (*Returns a list of elements that are in a but not in b. In this case, the free variables*)
@@ -95,6 +96,7 @@ let rec find_fv expr bound_variables =
   to find the appropriate free variable (FV) when making closures*)
 let rec convert exp known_fun var_env =
   match exp with
+  (*if function f is part of known_fun(set of functions known to contain no FV), apply direct conversion. Otherwise, apply closure conversion*)
   | Knorm.App (f, args) -> (
       (*let fun_label = find known_fun f in
         match fun_label with
@@ -235,9 +237,10 @@ let rec convert exp known_fun var_env =
           convert_let_body fvs )
   (*For all if statements, convert the body - e1 and e2*)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
-    IfEq ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+      IfEq ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
   | Knorm.IfLe ((v1, v2), e1, e2) ->
-    IfLe ((v1, v2), convert e1 known_fun, convert e2 known_fun)
+      IfLe ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
+  (*For LetTuple and Let variable declariation, convert definition and body*)
   | Knorm.LetTuple (var, def, body) ->
       LetTuple
         ( var,
@@ -258,8 +261,6 @@ let rec convert exp known_fun var_env =
   | Knorm.FSub (v1, v2) -> FSub (v1, v2)
   | Knorm.FMul (v1, v2) -> FMul (v1, v2)
   | Knorm.FDiv (v1, v2) -> FDiv (v1, v2)
-  | Knorm.Let ((id, typ), def, body) ->
-    Let ((id, typ), convert def known_fun, convert body known_fun)
   | Knorm.Var x -> Var x
   | Knorm.Array (v1, v2) -> Array (v1, v2)
   | Knorm.Tuple tups -> Tuple tups
@@ -269,6 +270,7 @@ let rec convert exp known_fun var_env =
 (*wrapper function for convert function above
   let con exp = convert exp [ ("print_int", "min_caml_print_int") ] [] *)
 
+(*Convert Closure.t to Closure.prog*)
 let rec prog_of_knorm exp =
   (* If compiling multiple files, clean up previous fundefs *)
   top_level := [];
@@ -284,6 +286,7 @@ let rec infix_to_string to_s l op =
   | [ x ] -> to_s x
   | hd :: tl -> to_s hd ^ op ^ infix_to_string to_s tl op
 
+(*Convert Closure.t to string*)
 let rec to_string' exp =
   match exp with
   | Unit -> "()"
@@ -309,25 +312,26 @@ let rec to_string' exp =
         (infix_to_string (fun (x, _) -> Id.to_string x) vs " ")
         (to_string' e2)
   | Let ((id, _t), e1, e2) ->
-    Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string' e1)
-      (to_string' e2)
+      Printf.sprintf "(let %s = %s in %s)" (Id.to_string id) (to_string' e1)
+        (to_string' e2)
   | LetTuple (l, e1, e2) ->
-    Printf.sprintf "(let (%s) = %s in %s)"
-      (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
-      (to_string' e1) (to_string' e2)
+      Printf.sprintf "(let (%s) = %s in %s)"
+        (infix_to_string (fun (x, _) -> Id.to_string x) l ", ")
+        (to_string' e1) (to_string' e2)
   | IfEq ((id1, id2), e1, e2) ->
-    Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
-      (Id.to_string id2) (to_string' e1) (to_string' e2)
+      Printf.sprintf "(if %s  = %s then %s else %s)" (Id.to_string id1)
+        (Id.to_string id2) (to_string' e1) (to_string' e2)
   | IfLe ((id1, id2), e1, e2) ->
-    Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
-      (Id.to_string id2) (to_string' e1) (to_string' e2)
+      Printf.sprintf "(if %s  <= %s then %s else %s)" (Id.to_string id1)
+        (Id.to_string id2) (to_string' e1) (to_string' e2)
   | Get (e1, e2) -> Printf.sprintf "%s.(%s)" (Id.to_string e1) (Id.to_string e2)
   | Put (e1, e2, e3) ->
-    Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
-      (Id.to_string e3)
+      Printf.sprintf "(%s.(%s) <- %s)" (Id.to_string e1) (Id.to_string e2)
+        (Id.to_string e3)
   | Array (e1, e2) ->
-    Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
+      Printf.sprintf "(Array.create %s %s)" (Id.to_string e1) (Id.to_string e2)
 
+(*Convert Closure.prog to string*)
 let prog_to_string prog =
   let (Prog (fundefs, main_body)) = prog in
 
