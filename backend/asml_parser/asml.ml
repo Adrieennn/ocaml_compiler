@@ -80,6 +80,7 @@ and closure_to_exp = function
   | Closure.Unit -> Unit
   | Closure.Int i -> Int i
   | Closure.Float f ->
+      (* XXX Can it happen that there are still non-letted floats in the program? *)
       let label, _ = List.find (fun (label, f') -> f = f') !float_map in
       Ld (label, Int 0)
   | Closure.Add (id1, id2) -> Add (id1, Var id2)
