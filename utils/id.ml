@@ -17,6 +17,7 @@ let predefined_function_labels = function
   | "float_of_int" -> Some "_min_caml_float_of_int"
   | "truncate" -> Some "_min_caml_truncate"
   | "create_array" -> Some "_min_caml_create_array"
+  | "create_float_array" -> Some "_min_caml_create_float_array"
   | _ -> None
 
 let label_of_id x =

@@ -265,7 +265,9 @@ let rec convert exp known_fun var_env =
   (*For all other expressions, return*)
   | Knorm.Unit -> Unit
   | Knorm.Int i -> Int i
-  | Knorm.Float f -> Float f
+  | Knorm.Float f ->
+      let id = Id.genid () in
+      Let((id, Type.Float), Float f, Var id)
   | Knorm.Add (v1, v2) -> Add (v1, v2)
   | Knorm.Sub (v1, v2) -> Sub (v1, v2)
   | Knorm.FAdd (v1, v2) -> FAdd (v1, v2)
@@ -287,7 +289,19 @@ let rec prog_of_knorm exp =
   top_level := [];
 
   let main_body =
-    convert exp [ "print_int" ] [ ("print_int", Type.Var (ref None)) ]
+    convert exp
+      [
+        "print_int";
+        "print_newline";
+        "sin";
+        "cos";
+        "sqrt";
+        "abs_float";
+        "int_of_float";
+        "float_of_int";
+        "truncate";
+      ]
+      []
   in
   Prog (!top_level, main_body)
 
