@@ -48,6 +48,7 @@ let reset_sp args =
 (* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
   match exp with
+  | Unit -> ""
   | Int i -> move_integer "r0" i
   | Label l -> "ldr r0, =" ^ Id.remove_label_undersc l ^ "\n"
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"

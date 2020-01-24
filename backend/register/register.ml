@@ -84,6 +84,7 @@ let program_to_reg pg =
  * names and fp offsets; it modifies the variable name with its corresponding
  * fp offset from the list *)
 let modify_variable fn_name variable var_reg =
+  if variable = "()" then "()" else
   match List.assoc_opt (fn_name ^ "." ^ variable) var_reg with
   | Some a -> string_of_int a
   | None ->
