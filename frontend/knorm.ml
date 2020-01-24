@@ -31,7 +31,6 @@ type t =
 
 and fundef = { name : Id.t * Type.t; args : (Id.t * Type.t) list; body : t }
 
-
 (** We took inspiration from the paper and implemented the add_let function to
 simplify the implementation of the main normalisation function.
 
@@ -46,9 +45,8 @@ let rec add_let exp body =
   match exp with
   | Syntax.Var x -> body x
   | _ ->
-    let e_id = Id.genid () in
-    Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
-
+      let e_id = Id.genid () in
+      Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
 
 (**of_syntax is the main function responsible for k-normalisation, it takes an
  expression of type Syntax.t and return a normalised expression of type Knorm.t*)
@@ -98,11 +96,14 @@ and of_syntax exp_s =
 
       We used add_let function in the final implementation.
       *)
-        add_let (Syntax.Float 0.0) (fun e1_id -> add_let e (fun e2_id -> FSub (e1_id, e2_id))) 
+      add_let (Syntax.Float 0.0) (fun e1_id ->
+          add_let e (fun e2_id -> FSub (e1_id, e2_id)))
   | Syntax.Not e ->
-      add_let (Syntax.Int 1) (fun e1_id -> add_let e (fun e2_id -> Sub (e1_id, e2_id))) 
+      add_let (Syntax.Int 1) (fun e1_id ->
+          add_let e (fun e2_id -> Sub (e1_id, e2_id)))
   | Syntax.Neg e ->
-      add_let (Syntax.Int 0) (fun e1_id -> add_let e (fun e2_id -> Sub (e1_id, e2_id))) 
+      add_let (Syntax.Int 0) (fun e1_id ->
+          add_let e (fun e2_id -> Sub (e1_id, e2_id)))
   | Syntax.Eq (e1, e2) ->
       (* In the case of comparison, we treat it the same way as a binary operation 
       except we use an IfEq expression to get the result of comparison in the end, 
@@ -121,9 +122,11 @@ and of_syntax exp_s =
       
       We used add_let function in the final implementation.
       *)
-      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> IfEq ((e1_id, e2_id), Int 1, Int 0))) 
+      add_let e1 (fun e1_id ->
+          add_let e2 (fun e2_id -> IfEq ((e1_id, e2_id), Int 1, Int 0)))
   | Syntax.LE (e1, e2) ->
-      add_let e1 (fun e1_id -> add_let e2 (fun e2_id -> IfLe ((e1_id, e2_id), Int 1, Int 0))) 
+      add_let e1 (fun e1_id ->
+          add_let e2 (fun e2_id -> IfLe ((e1_id, e2_id), Int 1, Int 0)))
   (* In the case of a Let or LetRec expression we only have to normalise it's definition and its body *)
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
@@ -150,9 +153,13 @@ and of_syntax exp_s =
                   of_syntax e2',
                   IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3) ) )
           *)
-          add_let e1' (fun e1'_id -> add_let e2' (fun e2'_id -> IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3))) 
+          add_let e1' (fun e1'_id ->
+              add_let e2' (fun e2'_id ->
+                  IfEq ((e1'_id, e2'_id), of_syntax e2, of_syntax e3)))
       | Syntax.LE (e1', e2') ->
-          add_let e1' (fun e1'_id -> add_let e2' (fun e2'_id -> IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3)))
+          add_let e1' (fun e1'_id ->
+              add_let e2' (fun e2'_id ->
+                  IfLe ((e1'_id, e2'_id), of_syntax e2, of_syntax e3)))
       | e ->
           (*
           In the case where the boolean expression does not match to Eq or LE, 
@@ -171,17 +178,15 @@ and of_syntax exp_s =
 
           We used add_let function in the final implementation.
           *)
-          add_let e (fun e_id -> add_let (Syntax.Bool true) (fun e_true -> IfEq ((e_id, e_true), of_syntax e2, of_syntax e3))))
-          
-
+          add_let e (fun e_id ->
+              add_let (Syntax.Bool true) (fun e_true ->
+                  IfEq ((e_id, e_true), of_syntax e2, of_syntax e3))) )
   | Syntax.App (f, args) ->
-    (*Here since the arguments is a list, we have no other way except using 
+      (*Here since the arguments is a list, we have no other way except using 
       a pre-defined function like add_let. This is also why we implemented add_let.
     *)
       let l = ref [] in
-      let final_body () =
-        add_let f (fun f_id -> App(f_id, List.rev !l))
-      in
+      let final_body () = add_let f (fun f_id -> App (f_id, List.rev !l)) in
 
       let rec build_lets_and_collect_arg_names = function
         | [] -> final_body ()
