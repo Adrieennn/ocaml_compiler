@@ -329,3 +329,26 @@ ltrue_array:
 lnext_array:
 	ldmfd	sp!, {lr}
         bx	lr
+
+
+/* create float array function */
+        .globl min_caml_create_float_array
+min_caml_create_float_array:
+  b min_caml_create_array
+/* stmfd	sp!, {lr}
+  mov r2, r0
+  mov r0, r12
+  @ r0 = return; r2 = size; r1 = init
+        .globl ltrue_float_array
+ltrue_float_array:
+  cmp r2, #0
+  ble lnext_float_array
+  str r1, [r12]
+  add r12, r12, #4
+  sub r2, r2, #1
+  bl  ltrue_float_array
+        .globl lnext_float_array
+lnext_float_array:
+	ldmfd	sp!, {lr}
+        bx	lr
+*/
