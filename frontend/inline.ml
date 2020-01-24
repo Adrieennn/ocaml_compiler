@@ -23,25 +23,11 @@ let rec size exp =
       (size e1) + (size e2) + 1
   | Knorm.IfLe ((v1, v2), e1, e2) ->
       (size e1) + (size e2) + 1
-(*
-let rec rec_fun id body = 
-  match body with
-  | Knorm.App (id, _) -> true
-  | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Tuple _ | Knorm.Array _ | Knorm.Get _ | Knorm.Put _ | Knorm.Var _ | Knorm.Add _ | Knorm.Sub _ | Knorm.FAdd _ | Knorm.FSub _ | Knorm.FMul _ | Knorm.FDiv _ -> false
-  | Knorm.Let ((id, typ), def, lbody) -> 
-      (rec_fun id def) and (rec_fun id lbody)
-  | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body) ->
-      (rec_fun id fun_body) and (rec_fun id let_body) and (rec_fun fun_id fun_body)
-  | Knorm.LetTuple (vars, def, body) ->
-      (size def) (size body)
-  | Knorm.IfEq ((v1, v2), e1, e2) ->
-      (size e1) + (size e2) + 1
-  | Knorm.IfLe ((v1, v2), e1, e2) ->
-      (size e1) + (size e2) + 1  
-*)
 
 let rec expansion exp map = 
   match exp with
+  (*We used the same strategy as presented in the paper, alpha covert again 
+  the expanded body to make sure all variable names are still unique*)
   | Knorm.App (f, ys) -> 
     (match find map f with
     | None -> Knorm.App (f, ys)
@@ -55,10 +41,10 @@ let rec expansion exp map =
   | Knorm.Let ((id, typ), def, body) -> 
     Knorm.Let ((id, typ), expansion def map, expansion body map)
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body) -> 
-    (*add to map the expanded version*)
-    (*recursive? infinity recursion??*)
-    (*supress or not supress, it's a question*)
-    (*version non supress*)
+    (* We decided to implement a version without suppressing the LetRec expression 
+    for now but rather remove it later in the elimination of unnecessary 
+    definitions to avoid problems with a recursive function.  
+    *)
     let expanded_fun_body = (expansion fun_body map) in 
       if ((size fun_body)<threshold) then 
           Knorm.LetRec({ name = fun_id, fun_typ; args; body = expanded_fun_body }, expansion let_body ((fun_id,(args,expanded_fun_body)) :: map))
