@@ -266,8 +266,9 @@ let rec convert exp known_fun var_env =
   | Knorm.Unit -> Unit
   | Knorm.Int i -> Int i
   | Knorm.Float f ->
+      (* Naked floats can currently(?) not be translated to Asml.expr *)
       let id = Id.genid () in
-      Let((id, Type.Float), Float f, Var id)
+      Let ((id, Type.Float), Float f, Var id)
   | Knorm.Add (v1, v2) -> Add (v1, v2)
   | Knorm.Sub (v1, v2) -> Sub (v1, v2)
   | Knorm.FAdd (v1, v2) -> FAdd (v1, v2)
