@@ -1,3 +1,8 @@
+let safe_list_find p l =
+  try Some (List.find p l)
+  with Not_found -> None
+
+
 let rec effect e (l : 'a list ref) =
   match e with
   | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Tuple _ | Knorm.Array _
@@ -7,7 +12,7 @@ let rec effect e (l : 'a list ref) =
   | Knorm.FDiv _ ->
       false
   | Knorm.App (id, args) -> (
-      match List.find (fun elm -> elm = id) !l with id -> true | _ -> false )
+      match safe_list_find (fun elm -> elm = id) !l with id -> true | _ -> false )
   | Knorm.Let (var, def, body) -> effect def l && effect body l
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
@@ -64,7 +69,11 @@ let rec elim exp l =
       Knorm.LetTuple (vars, elim def l, elim body l)
   | Knorm.IfEq ((v1, v2), e1, e2) -> Knorm.IfEq ((v1, v2), elim e1 l, elim e2 l)
   | Knorm.IfLe ((v1, v2), e1, e2) -> Knorm.IfLe ((v1, v2), elim e1 l, elim e2 l)
-  | _ as c -> c
+  | ( Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Add _ | Knorm.Sub _
+    | Knorm.FAdd _ | Knorm.FSub _ | Knorm.FMul _ | Knorm.FDiv _ | Knorm.Var _
+    | Knorm.App _ | Knorm.Tuple _ | Knorm.Array _ | Knorm.Get _ | Knorm.Put _ )
+    as c ->
+      c
 
 let elimination exp =
   let l = ref [] in
