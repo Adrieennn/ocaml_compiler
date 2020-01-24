@@ -64,11 +64,7 @@ let rec elim exp l =
       Knorm.LetTuple (vars, elim def l, elim body l)
   | Knorm.IfEq ((v1, v2), e1, e2) -> Knorm.IfEq ((v1, v2), elim e1 l, elim e2 l)
   | Knorm.IfLe ((v1, v2), e1, e2) -> Knorm.IfLe ((v1, v2), elim e1 l, elim e2 l)
-  | ( Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Add _ | Knorm.Sub _
-    | Knorm.FAdd _ | Knorm.FSub _ | Knorm.FMul _ | Knorm.FDiv _ | Knorm.Var _
-    | Knorm.App _ | Knorm.Tuple _ | Knorm.Array _ | Knorm.Get _ | Knorm.Put _ )
-    as c ->
-      c
+  | _ as c -> c
 
 let elimination exp =
   let l = ref [] in
