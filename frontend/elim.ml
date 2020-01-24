@@ -1,8 +1,3 @@
-let safe_list_find p l =
-  try Some (List.find p l)
-  with Not_found -> None
-
-
 let rec effect e (l : 'a list ref) =
   match e with
   | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Tuple _ | Knorm.Array _
@@ -12,7 +7,7 @@ let rec effect e (l : 'a list ref) =
   | Knorm.FDiv _ ->
       false
   | Knorm.App (id, args) -> (
-      match safe_list_find (fun elm -> elm = id) !l with id -> true | _ -> false )
+      match List.find_opt (fun elm -> elm = id) !l with | Some _ -> true | None -> false )
   | Knorm.Let (var, def, body) -> effect def l && effect body l
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
@@ -29,7 +24,7 @@ let rec fvar (id : Id.t) (exp : Knorm.t) =
   match exp with
   | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Array _ -> true
   | Knorm.Put (e1, e2, e3) -> (not (id = e1)) && (not (id = e2)) && not (id = e3)
-  | Knorm.Var i -> ( match i with id -> false | _ -> true )
+  | Knorm.Var i -> (  if i = id then false else true )
   | Knorm.Add (v1, v2)
   | Knorm.Sub (v1, v2)
   | Knorm.FAdd (v1, v2)
