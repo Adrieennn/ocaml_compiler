@@ -190,10 +190,15 @@ and of_syntax exp_s =
 
       let rec build_lets_and_collect_arg_names = function
         | [] -> final_body ()
-        | hd :: tl ->
-            add_let hd (fun x ->
-                l := x :: !l;
-                build_lets_and_collect_arg_names tl)
+        | hd :: tl -> (
+            match hd with
+            | Syntax.Unit ->
+                l := "()" :: !l;
+                build_lets_and_collect_arg_names tl
+            | _ ->
+                add_let hd (fun x ->
+                    l := x :: !l;
+                    build_lets_and_collect_arg_names tl) )
       in
       build_lets_and_collect_arg_names args
   | Syntax.Tuple elements ->

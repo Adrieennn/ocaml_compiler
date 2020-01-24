@@ -33,22 +33,41 @@ type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
 type prog = Program of (Id.t * float) list * fu list * t
 
+(* Maps Id.t to flaots, before including in Asml.prog the ids need to be
+ * converted to the proper labels. This process relies on Id.label_of_id
+ * being deterministic *)
 let float_map = ref []
+
+(* List of float variables to decide whether to create an int or float array *)
+let float_ids = ref []
 
 let rec add_let exp body =
   let id = Id.genid () in
   Let ((id, Type.Var (ref None)), exp, body id)
 
 let rec closure_to_t = function
-  | Closure.Let ((id, typ), Closure.Float f, body) ->
-      let label = Id.label_of_id (Id.genid ()) in
-      float_map := (label, f) :: !float_map;
+  | Closure.Let ((id, typ), Closure.Float f, body) -> (
+      match List.find_opt (fun (l, f') -> f = f') !float_map with
+      | Some (l, _f) ->
+          float_ids := id :: !float_ids;
 
-      let new_id = Id.genid () in
-      Let
-        ( (new_id, Type.Int),
-          Var label,
-          Let ((id, Type.Float), Ld (new_id, Int 0), closure_to_t body) )
+          let label_var = Id.genid () in
+          Let
+            ( (label_var, Type.Int),
+              Var l,
+              Let ((id, Type.Float), Ld (label_var, Int 0), closure_to_t body)
+            )
+      | None ->
+          let label = Id.label_of_id (Id.genid ()) in
+          float_map := (label, f) :: !float_map;
+          float_ids := id :: !float_ids;
+
+          let label_var = Id.genid () in
+          Let
+            ( (label_var, Type.Int),
+              Var label,
+              Let ((id, Type.Float), Ld (label_var, Int 0), closure_to_t body)
+            ) )
   | Closure.Let ((id, typ), def, body) ->
       Let ((id, typ), closure_to_exp def, closure_to_t body)
   | Closure.MkCls ((cls_id, cls_typ), (fun_label, args), body) ->
@@ -80,9 +99,7 @@ and closure_to_exp = function
   | Closure.Unit -> Unit
   | Closure.Int i -> Int i
   | Closure.Float f ->
-      (* XXX Can it happen that there are still non-letted floats in the program? *)
-      let label, _ = List.find (fun (label, f') -> f = f') !float_map in
-      Ld (label, Int 0)
+      failwith "Naked floats should not reach the ASML generator"
   | Closure.Add (id1, id2) -> Add (id1, Var id2)
   | Closure.Sub (id1, id2) -> Sub (id1, Var id2)
   | Closure.FAdd (id1, id2) -> FAdd (id1, id2)
@@ -98,8 +115,10 @@ and closure_to_exp = function
       failwith "Closure.Let cannot be translated to Asml.exp"
   | Closure.AppDir (fun_label, arg_ids) -> CallDir (fun_label, arg_ids)
   | Closure.AppCls (id, arg_ids) -> CallCls (id, arg_ids)
-  | Closure.Array (size, init) ->
-      CallDir (Id.label_of_id "create_float_array", [ size; init ])
+  | Closure.Array (size, init) -> (
+      match List.mem init !float_ids with
+      | true -> CallDir (Id.label_of_id "create_float_array", [ size; init ])
+      | false -> CallDir (Id.label_of_id "create_array", [ size; init ]) )
   | Closure.Get (arr, index) -> Ld (arr, Var index)
   | Closure.Put (arr, index, value) -> St (arr, Var index, value)
   | e ->
@@ -135,6 +154,8 @@ let fundef_of_closure_fundef fd =
 
 let of_closure_prog prog =
   float_map := [];
+  float_ids := [];
+
   let (Closure.Prog (fundefs, main_body)) = prog in
   Program
     ( !float_map,
