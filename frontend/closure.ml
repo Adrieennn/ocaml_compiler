@@ -260,7 +260,7 @@ let rec convert exp known_fun var_env =
   | Knorm.Let ((id, typ), def, body) ->
       Let
         ( (id, typ),
-          convert def known_fun ((id, typ) :: var_env),
+          convert def known_fun var_env,
           convert body known_fun ((id, typ) :: var_env) )
   (*For all other expressions, return*)
   | Knorm.Unit -> Unit
