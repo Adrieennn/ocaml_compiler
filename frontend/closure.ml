@@ -91,161 +91,104 @@ let rec find_fv expr bound_variables =
       let fvar_ids = List.map (fun (id, _typ) -> id) fvars in
       find_fv_list fvar_ids bound_variables @ find_fv cont bound_variables'
 
+(* check if function appears as a value in let_body by checking if it is part of let_body's list of FVs *)
+let rec fun_id_occurs_as_variable id = function
+  | Knorm.Var id' -> id = id'
+  | Knorm.Let ((id', _typ), e1, e2) ->
+      fun_id_occurs_as_variable id e1
+      || if id = id' then false else fun_id_occurs_as_variable id e2
+  | Knorm.LetTuple (vars, def_body, let_body) ->
+      fun_id_occurs_as_variable id def_body
+      ||
+      let var_ids = List.map (fun (id, _typ) -> id) vars in
+      if List.mem id var_ids then false
+      else fun_id_occurs_as_variable id let_body
+  | Knorm.LetRec ({ Knorm.name = id', _typ; args; body = fun_body }, let_body)
+    when id = id' ->
+      false
+  | Knorm.LetRec ({ Knorm.name = id', _typ; args; body = fun_body }, let_body)
+    ->
+      let arg_ids = List.map (fun (arg_id, _typ) -> arg_id) args in
+      fun_id_occurs_as_variable id fun_body
+      ||
+      if List.mem id arg_ids then false
+      else fun_id_occurs_as_variable id let_body
+  | Knorm.IfEq ((_, _), e1, e2) | Knorm.IfLe ((_, _), e1, e2) ->
+      fun_id_occurs_as_variable id e1 || fun_id_occurs_as_variable id e2
+  | Knorm.App (_, args) -> List.mem id args
+  | Knorm.Tuple elements -> List.mem id elements
+  | Knorm.Array (_arr_size, array_init) -> id = array_init
+  | Knorm.Get (_, _) -> false
+  | Knorm.Put (_arr_name, _index, new_element) -> id = new_element
+  | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Add _ | Knorm.Sub _
+  | Knorm.FAdd _ | Knorm.FSub _ | Knorm.FMul _ | Knorm.FDiv _ ->
+      false
+
 (*Convert Knorm.t to Closure.t*)
 (*Added another argument var_env (variable environment) to function convert. This is to enable us
   to find the appropriate free variable (FV) when making closures*)
 let rec convert exp known_fun var_env =
   match exp with
   (*if function f is part of known_fun(set of functions known to contain no FV), apply direct conversion. Otherwise, apply closure conversion*)
-  | Knorm.App (f, args) -> (
-      (*let fun_label = find known_fun f in
-        match fun_label with
-        | Some label -> AppDir (label, args)
-          | None ->  AppCls(f, args) *)
-      let f_is_known = List.mem f known_fun in
-      match f_is_known with
-      | true ->
-          let fun_label = Id.label_of_id f in
-          AppDir (fun_label, args)
-      | false -> AppCls (f, args) )
-  (*Function is initially assumed to contain no FV and added to known_fun + top_level. Then, the function body is converted first
-    and the let_body after.*)
+  | Knorm.App (f, args) ->
+      if List.mem f known_fun then
+        let fun_label = Id.label_of_id f in
+        AppDir (fun_label, args)
+      else AppCls (f, args)
   | Knorm.LetRec
-      ( { Knorm.name = fun_id, fun_typ; Knorm.args; Knorm.body = fun_body },
-        let_body ) -> (
+      ({ Knorm.name = fun_id, fun_typ; args; body = fun_body }, let_body) -> (
       let previous_top_level = !top_level in
 
-      (*First step- function is initially assumed to contain no FV and added to known_fun + top_level. Then, the function body is converted*)
-      let new_known_fun = fun_id :: known_fun in
-      let new_var_env = (fun_id, fun_typ) :: var_env in
-      let converted_fun_body = convert fun_body new_known_fun new_var_env in
-      let fun_label = Id.label_of_id fun_id in
+      let fun_body_not_closure =
+        convert fun_body (fun_id :: known_fun) (args @ var_env)
+      in
       top_level :=
         {
-          name = (fun_label, fun_typ);
+          name = (Id.label_of_id fun_id, fun_typ);
           args;
           formal_fv = [];
-          body = converted_fun_body;
+          body = fun_body_not_closure;
         }
         :: !top_level;
 
-      (*Third step- if a function is returned as a value in let_body (irrespective of whether it contains FVs or not),
-            represent it as a closure. Otherwise, do not create closure for it. *)
-      let convert_let_body fvars =
-        (*fvars = list of FVs*)
-
-        (*check if function appears as a value in let_body by checking if it is part of let_body's list of FVs*)
-        let rec fun_id_occurs_as_variable id = function
-          | Knorm.Var id' -> id = id'
-          | Knorm.Let ((id', _typ), e1, e2) ->
-              fun_id_occurs_as_variable id e1
-              || if id = id' then false else fun_id_occurs_as_variable id e2
-          | Knorm.LetTuple (vars, def_body, let_body) ->
-              fun_id_occurs_as_variable id def_body
-              ||
-              let var_ids = List.map (fun (id, _typ) -> id) vars in
-              if List.mem id var_ids then false
-              else fun_id_occurs_as_variable id let_body
-          | Knorm.LetRec
-              ({ Knorm.name = id', _typ; args; body = fun_body }, let_body)
-            when id = id' ->
-              false
-          | Knorm.LetRec
-              ({ Knorm.name = id', _typ; args; body = fun_body }, let_body) ->
-              let arg_ids = List.map (fun (arg_id, _typ) -> arg_id) args in
-              fun_id_occurs_as_variable id fun_body
-              ||
-              if List.mem id arg_ids then false
-              else fun_id_occurs_as_variable id let_body
-          | Knorm.IfEq ((_, _), e1, e2) | Knorm.IfLe ((_, _), e1, e2) ->
-              fun_id_occurs_as_variable id e1 || fun_id_occurs_as_variable id e2
-          | Knorm.App (_, args) -> List.mem id args
-          | Knorm.Tuple elements -> List.mem id elements
-          | Knorm.Array (_arr_size, array_init) -> id = array_init
-          | Knorm.Get (_, _) -> false
-          | Knorm.Put (_arr_name, _index, new_element) -> id = new_element
-          | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Add _
-          | Knorm.Sub _ | Knorm.FAdd _ | Knorm.FSub _ | Knorm.FMul _
-          | Knorm.FDiv _ ->
-              false
-        in
-
-        let cls_rep_check = fun_id_occurs_as_variable fun_id let_body in
-        if List.length fvars > 0 || cls_rep_check then (
-          top_level := previous_top_level;
-
-          let alpha_mappings =
-            List.map (fun (id, typ) -> (id, Id.genid ())) fvars
-          in
-          let alpha_vars =
-            List.map2
-              (fun (_, new_id) (_, typ) -> (new_id, typ))
-              alpha_mappings fvars
-          in
-          let cfbody =
-            convert
-              (Alpha.convert fun_body alpha_mappings)
-              known_fun
-              ((fun_id, fun_typ) :: (alpha_vars @ var_env))
-          in
-          let new_closure =
-            {
-              name = (fun_label, fun_typ);
-              args;
-              formal_fv = alpha_vars;
-              body = cfbody;
-            }
-          in
-
-          top_level := new_closure :: !top_level;
-
-          let clbody =
-            convert let_body known_fun ((fun_id, fun_typ) :: var_env)
-          in
-          MkCls ((fun_id, fun_typ), (fun_label, fvars), clbody) )
-        else convert let_body new_known_fun new_var_env
-        (*Format.eprintf "Function appears as a lable in let_body. No need for MkCls"*)
-      in
-
-      (*Second step - Check if fun_body truly doesn't have free variables*)
-      let arg_ids = List.map (fun (id, _t) -> id) args in
-      (*compare Fvs found in fun_body with function arguments- the difference is the FV list*)
-      let bound_variables = fun_id :: arg_ids in
-      let fv_ids = find_fv converted_fun_body bound_variables in
-      match fv_ids with
-      (*if function has no free variables, convert let_body*)
-      | [] -> convert_let_body []
-      | _ ->
-          (*otherwise, restore known_funct and top_level to their previous state; reconvert fun_body; get actual FVs list  and then add funtion to top_level*)
-          top_level := previous_top_level;
-          let cfbody =
-            convert fun_body known_fun (((fun_id, fun_typ) :: args) @ var_env)
-          in
-
-          (*list of FVs*)
-          let fvs =
-            my_filter_map
-              (fun fv_id ->
-                match find new_var_env fv_id with
+      match
+        find_fv fun_body_not_closure (List.map (fun (id, _typ) -> id) args)
+      with
+      | [] when not (fun_id_occurs_as_variable fun_id let_body) ->
+          (* let body may not use `args` as free variables at this point *)
+          convert let_body (fun_id :: known_fun) var_env
+      | free_variable_ids ->
+          (* free_variables can be the empty list! *)
+          let free_variables =
+            List.map
+              (fun id ->
+                match List.assoc_opt id var_env with
                 | None ->
                     Printf.eprintf
-                      "Free variable %s is actually undefind in current \
-                       environment, while processing %s.\n"
-                      (Id.to_string fv_id) fun_id;
+                      "Free variable %s was not found while processing let rec \
+                       of %s"
+                      id fun_id;
                     exit 1
-                | Some typ -> Some (fv_id, typ))
-              fv_ids
+                | Some typ -> (id, typ))
+              free_variable_ids
           in
-          (*current mapping of FVs in var_env*)
+
+          (* reset top level which was built on incorrect assumption *)
+          top_level := previous_top_level;
+          let fun_body_closure = convert fun_body known_fun (args @ var_env) in
           top_level :=
             {
-              name = (fun_label, fun_typ);
+              name = (Id.label_of_id fun_id, fun_typ);
               args;
-              formal_fv = fvs;
-              body = cfbody;
+              formal_fv = free_variables;
+              body = fun_body_closure;
             }
             :: !top_level;
-          convert_let_body fvs )
+          MkCls
+            ( (fun_id, fun_typ),
+              (Id.label_of_id fun_id, free_variables),
+              (* let body may use `args` as free variables at this point *)
+              convert let_body known_fun (args @ var_env) ) )
   (*For all if statements, convert the body - e1 and e2*)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
       IfEq ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
