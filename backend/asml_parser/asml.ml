@@ -111,8 +111,10 @@ and closure_to_exp = function
       IfEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
   | Closure.IfLe ((id1, id2), e1, e2) ->
       IfLEq (id1, Var id2, closure_to_t e1, closure_to_t e2)
-  | Closure.Let (_, _, _) ->
-      failwith "Closure.Let cannot be translated to Asml.exp"
+  | Closure.Let ((id, _), _, _) ->
+      Printf.eprintf "Closure.Let %s = ... cannot be translated to Asml.exp\n"
+        id;
+      exit 1
   | Closure.AppDir (fun_label, arg_ids) -> CallDir (fun_label, arg_ids)
   | Closure.AppCls (id, arg_ids) -> CallCls (id, arg_ids)
   | Closure.Array (size, init) -> (
