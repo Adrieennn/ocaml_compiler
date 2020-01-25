@@ -35,7 +35,7 @@ expression.
 *)
 let rec fvar (id : Id.t) (exp : Knorm.t) =
   match exp with
-  | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Array _ -> true
+  | Knorm.Unit | Knorm.Int _ | Knorm.Float _ -> true
   | Knorm.Put (e1, e2, e3) -> id <> e1 && id <> e2 && id <> e3
   | Knorm.Var i -> i = id
   | Knorm.Add (v1, v2)
@@ -43,7 +43,8 @@ let rec fvar (id : Id.t) (exp : Knorm.t) =
   | Knorm.FAdd (v1, v2)
   | Knorm.FSub (v1, v2)
   | Knorm.FMul (v1, v2)
-  | Knorm.FDiv (v1, v2) ->
+  | Knorm.FDiv (v1, v2)
+  | Knorm.Array (v1, v2) ->
       id <> v1 && id <> v2
   | Knorm.Tuple l -> List.for_all (fun id' -> id <> id') l
   | Knorm.Get (e1, e2) -> id <> e1 && id <> e2
