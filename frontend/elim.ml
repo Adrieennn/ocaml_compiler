@@ -36,30 +36,25 @@ expression.
 let rec fvar (id : Id.t) (exp : Knorm.t) =
   match exp with
   | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Array _ -> true
-  | Knorm.Put (e1, e2, e3) -> (not (id = e1)) && (not (id = e2)) && not (id = e3)
-  | Knorm.Var i -> if i = id then false else true
+  | Knorm.Put (e1, e2, e3) -> id <> e1 && id <> e2 && id <> e3
+  | Knorm.Var i -> i = id
   | Knorm.Add (v1, v2)
   | Knorm.Sub (v1, v2)
   | Knorm.FAdd (v1, v2)
   | Knorm.FSub (v1, v2)
   | Knorm.FMul (v1, v2)
   | Knorm.FDiv (v1, v2) ->
-      (not (id = v1)) && not (id = v2)
-  | Knorm.Tuple l ->
-      List.for_all (fun b -> b = true) (List.map (fun i -> not (id = i)) l)
-  | Knorm.Get (e1, e2) -> (not (id = e1)) && not (id = e2)
-  (*assume that after alpha conversion all variable name is different*)
+      id <> v1 && id <> v2
+  | Knorm.Tuple l -> List.for_all (fun id' -> id <> id') l
+  | Knorm.Get (e1, e2) -> id <> e1 && id <> e2
+  (* assume that after alpha conversion all variable name is different *)
   | Knorm.Let ((name, _t), e1, e2) -> fvar id e1 && fvar id e2
   | Knorm.LetRec ({ name; args; body }, let_body) ->
       fvar id body && fvar id let_body
   | Knorm.LetTuple (l, e1, e2) -> fvar id e1 && fvar id e2
   | Knorm.IfEq ((v1, v2), e1, e2) | Knorm.IfLe ((v1, v2), e1, e2) ->
-      (not (id = v1)) && (not (id = v2)) && fvar id e1 && fvar id e2
-  | Knorm.App (f, args) ->
-      (not (f = id))
-      && List.for_all
-           (fun b -> b = true)
-           (List.map (fun i -> not (id = i)) args)
+      id <> v1 && id <> v2 && fvar id e1 && fvar id e2
+  | Knorm.App (f, args) -> f <> id && List.for_all (fun id' -> id <> id') args
 
 (** 
 elim takes 2 parameters, an expression and a list 
