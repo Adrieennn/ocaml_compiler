@@ -13,7 +13,9 @@ let rec effect e (l : 'a list ref) =
   | Knorm.FDiv _ ->
       false
   | Knorm.App (id, args) -> (
-      match List.find_opt (fun elm -> elm = id) !l with | Some _ -> true | None -> false )
+      match List.find_opt (fun elm -> elm = id) !l with
+      | Some _ -> true
+      | None -> false )
   | Knorm.Let (var, def, body) -> effect def l && effect body l
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
@@ -26,7 +28,6 @@ let rec effect e (l : 'a list ref) =
   | Knorm.IfEq ((v1, v2), e1, e2) -> effect e1 l && effect e2 l
   | Knorm.IfLe ((v1, v2), e1, e2) -> effect e1 l && effect e2 l
 
-
 (**
 fvar takes 2 paremeters, a variable name and an expression.
 This function checks if the variable is a free variable in the given 
@@ -36,7 +37,7 @@ let rec fvar (id : Id.t) (exp : Knorm.t) =
   match exp with
   | Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Array _ -> true
   | Knorm.Put (e1, e2, e3) -> (not (id = e1)) && (not (id = e2)) && not (id = e3)
-  | Knorm.Var i -> (  if i = id then false else true )
+  | Knorm.Var i -> if i = id then false else true
   | Knorm.Add (v1, v2)
   | Knorm.Sub (v1, v2)
   | Knorm.FAdd (v1, v2)
@@ -82,7 +83,6 @@ let rec elim exp l =
   | Knorm.IfEq ((v1, v2), e1, e2) -> Knorm.IfEq ((v1, v2), elim e1 l, elim e2 l)
   | Knorm.IfLe ((v1, v2), e1, e2) -> Knorm.IfLe ((v1, v2), elim e1 l, elim e2 l)
   | _ as c -> c
-
 
 (**
 elimination takes an expression as a parameter.
