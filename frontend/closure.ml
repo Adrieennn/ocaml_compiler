@@ -166,7 +166,7 @@ let rec convert exp known_fun var_env =
                 | None ->
                     Printf.eprintf
                       "Free variable %s was not found while processing let rec \
-                       of %s"
+                       of %s\n"
                       id fun_id;
                     exit 1
                 | Some typ -> (id, typ))
@@ -175,7 +175,9 @@ let rec convert exp known_fun var_env =
 
           (* reset top level which was built on incorrect assumption *)
           top_level := previous_top_level;
-          let fun_body_closure = convert fun_body known_fun (args @ var_env) in
+          let fun_body_closure =
+            convert fun_body known_fun (((fun_id, fun_typ) :: args) @ var_env)
+          in
           top_level :=
             {
               name = (Id.label_of_id fun_id, fun_typ);
@@ -187,8 +189,10 @@ let rec convert exp known_fun var_env =
           MkCls
             ( (fun_id, fun_typ),
               (Id.label_of_id fun_id, free_variables),
-              (* let body may use `args` as free variables at this point *)
-              convert let_body known_fun (args @ var_env) ) )
+              (* let body may use `args` as free variables at this point
+               * moreover, the function may be available as variable/closure too *)
+              convert let_body known_fun (((fun_id, fun_typ) :: args) @ var_env)
+            ) )
   (*For all if statements, convert the body - e1 and e2*)
   | Knorm.IfEq ((v1, v2), e1, e2) ->
       IfEq ((v1, v2), convert e1 known_fun var_env, convert e2 known_fun var_env)
