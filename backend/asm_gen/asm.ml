@@ -48,6 +48,7 @@ let reset_sp args =
 (* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
   match exp with
+  | Unit -> ""
   | Int i -> move_integer "r0" i
   | Label l -> "ldr r0, =" ^ Id.remove_label_undersc l ^ "\n"
   | Var v -> "ldr r0, [r11, #" ^ v ^ "]\n"
@@ -79,6 +80,24 @@ let rec exp_to_asm exp =
       ^ "mov r11, r13 @ move sp to fp\n" ^ "ldr r0, [r11, #8]\n"
       ^ "ldr r0, [r0]\n" ^ "blx r0\n" ^ "mov r13, r11 @ move fp to sp\n"
       ^ "ldr r11, [r11]\n" ^ reset_sp args
+  | IfFEq (s1, s2, t1, t2) ->
+      let label_index = string_of_int (if_count ()) in
+      ("ldr r4, [r11, #" ^ s1 ^ "]\n" ^ "ldr r5, [r11, #" ^ s2 ^ "]\n")
+      ^ "vmov.f32 s0, r4\n" ^ "vmov.f32 s1, r5\n" ^ "vcmp.f32 s0, s1\n"
+      ^ "vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.\n"
+      ^ "beq ltrue" ^ label_index ^ "\n" ^ "b lfalse" ^ label_index ^ "\n"
+      ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 ^ "b lnext" ^ label_index
+      ^ "\n" ^ "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 ^ "lnext"
+      ^ label_index ^ ":\n"
+  | IfFLEq (s1, s2, t1, t2) ->
+      let label_index = string_of_int (if_count ()) in
+      ("ldr r4, [r11, #" ^ s1 ^ "]\n" ^ "ldr r5, [r11, #" ^ s2 ^ "]\n")
+      ^ "vmov.f32 s0, r4\n" ^ "vmov.f32 s1, r5\n" ^ "vcmp.f32 s0, s1\n"
+      ^ "vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.\n"
+      ^ "ble ltrue" ^ label_index ^ "\n" ^ "b lfalse" ^ label_index ^ "\n"
+      ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 ^ "b lnext" ^ label_index
+      ^ "\n" ^ "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 ^ "lnext"
+      ^ label_index ^ ":\n"
   | IfEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
       ( "ldr r4, [r11, #" ^ s1 ^ "]\n"

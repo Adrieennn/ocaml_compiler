@@ -16,6 +16,14 @@ let ref_counter x =
  * Needed for IF statements where new variables can be defined *)
 let rec exp_to_reg exp fn_name count =
   match exp with
+  | IfFLEq (_, _, t1, t2) ->
+      let count1 = ref_counter (count Peak) in
+      let count2 = ref_counter (count Peak) in
+      t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
+  | IfFEq (_, _, t1, t2) ->
+      let count1 = ref_counter (count Peak) in
+      let count2 = ref_counter (count Peak) in
+      t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
   | IfLEq (_, _, t1, t2) ->
       let count1 = ref_counter (count Peak) in
       let count2 = ref_counter (count Peak) in
@@ -68,6 +76,7 @@ let program_to_reg pg =
  * names and fp offsets; it modifies the variable name with its corresponding
  * fp offset from the list *)
 let modify_variable fn_name variable var_reg =
+  if variable = "()" then "()" else
   match List.assoc_opt (fn_name ^ "." ^ variable) var_reg with
   | Some a -> string_of_int a
   | None ->
@@ -119,20 +128,12 @@ let rec modify_exp fn_name exp var_reg =
       FDiv
         (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
   | CallDir (label, args) ->
-      CallDir (label, modify_variable_list fn_name args var_reg)
+      let args_without_unit = List.filter (fun s -> s <> "()") args in
+      CallDir (label, modify_variable_list fn_name args_without_unit var_reg)
   | CallCls (id, args) ->
       CallCls
         ( modify_variable fn_name id var_reg,
           modify_variable_list fn_name args var_reg )
-  | IfLEq (s1, s2, t1, t2) -> (
-      let mod_s1 = modify_variable fn_name s1 var_reg in
-      let mod_t1 = modify_t fn_name t1 var_reg in
-      let mod_t2 = modify_t fn_name t2 var_reg in
-      match s2 with
-      | Int i -> IfLEq (mod_s1, s2, mod_t1, mod_t2)
-      | Var v ->
-          IfLEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
-      )
   | IfEq (s1, s2, t1, t2) -> (
       let mod_s1 = modify_variable fn_name s1 var_reg in
       let mod_t1 = modify_t fn_name t1 var_reg in
@@ -142,6 +143,27 @@ let rec modify_exp fn_name exp var_reg =
       | Var v ->
           IfEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
       )
+  | IfLEq (s1, s2, t1, t2) -> (
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      match s2 with
+      | Int i -> IfLEq (mod_s1, s2, mod_t1, mod_t2)
+      | Var v ->
+          IfLEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
+      )
+  | IfFEq (s1, s2, t1, t2) ->
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_s2 = modify_variable fn_name s2 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      IfFEq (mod_s1, mod_s2, mod_t1, mod_t2)
+  | IfFLEq (s1, s2, t1, t2) ->
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_s2 = modify_variable fn_name s2 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      IfFLEq (mod_s1, mod_s2, mod_t1, mod_t2)
   | Ld (s1, s2) -> (
       match s2 with
       | Var v ->
