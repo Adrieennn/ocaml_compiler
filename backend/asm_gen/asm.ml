@@ -32,18 +32,18 @@ let rec args_to_asm_pred args regnum =
 let rec args_to_asm args =
   match args with
   | h :: r -> "ldr r0, [r11, #" ^ h ^ "]\n" ^ "push {r0}\n" ^ args_to_asm r
-  | [] -> "add r13, r13, #-8 @ making space for lr and %self\n" ^ "push {r11}\n"
+  | [] -> "add sp, sp, #-8 @ making space for lr and %self\n" ^ "push {r11}\n"
 
 let rec args_to_asm_closure args =
   match args with
   | h :: r ->
       "ldr r0, [r11, #" ^ h ^ "]\n" ^ "push {r0}\n" ^ args_to_asm_closure r
-  | [] -> "add r13, r13, #-4 @ making space for lr\n" ^ "push {r11}\n"
+  | [] -> "add sp, sp, #-4 @ making space for lr\n" ^ "push {r11}\n"
 
 (* reset_sp: move stack pointer back to before function call *)
 let reset_sp args =
   let len = (List.length args + 3) * 4 in
-  "add r13, r13, #" ^ string_of_int len ^ "\n"
+  "add sp, sp, #" ^ string_of_int len ^ "\n"
 
 (* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
 let rec exp_to_asm exp =
@@ -71,14 +71,14 @@ let rec exp_to_asm exp =
       then
         args_to_asm_pred args 0 ^ "bl " ^ Id.remove_label_undersc label ^ "\n"
       else
-        args_to_asm args ^ "mov r11, r13 @ move sp to fp\n" ^ "bl "
+        args_to_asm args ^ "mov r11, sp @ move sp to fp\n" ^ "bl "
         ^ Id.remove_label_undersc label
-        ^ "\n" ^ "mov r13, r11 @ move fp to sp\n" ^ "ldr r11, [r11]\n"
+        ^ "\n" ^ "mov sp, r11 @ move fp to sp\n" ^ "ldr r11, [r11]\n"
         ^ reset_sp args
   | CallCls (label, args) ->
       args_to_asm_closure (args @ [ label ])
-      ^ "mov r11, r13 @ move sp to fp\n" ^ "ldr r0, [r11, #8]\n"
-      ^ "ldr r0, [r0]\n" ^ "blx r0\n" ^ "mov r13, r11 @ move fp to sp\n"
+      ^ "mov r11, sp @ move sp to fp\n" ^ "ldr r0, [r11, #8]\n"
+      ^ "ldr r0, [r0]\n" ^ "blx r0\n" ^ "mov sp, r11 @ move fp to sp\n"
       ^ "ldr r11, [r11]\n" ^ reset_sp args
   | IfFEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
@@ -161,8 +161,8 @@ and t_to_asm body sp_reset =
       exp_to_asm exp
       ^
       if sp_reset > 0 then
-        "add r13, r13, #" ^ string_of_int sp_reset ^ "\n" ^ "nop" ^ "\n"
-        (*move_integer "r10" sp_reset ^ "add r13, r13,r10\n"*)
+        "add sp, sp, #" ^ string_of_int sp_reset ^ "\n" ^ "nop" ^ "\n"
+        (*move_integer "r10" sp_reset ^ "add sp, sp,r10\n"*)
       else ""
 
 (* lfu_to_asm: for each function definition, generate assembly code *)
@@ -194,7 +194,7 @@ let prog_to_asm prog =
       ^ {|  .global _start
 
 _start:
-mov r11, r13 @ move sp to fp
+mov r11, sp @ move sp to fp
 bl min_caml_mmap
 |}
       ^ t_to_asm body 0 ^ "\n"
