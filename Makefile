@@ -1,4 +1,4 @@
-MAKEFLAGS += --no-print-directory
+MAKEFLAGS += --no-print-directory --silent
 PROG=mincamlc
 FAIL="$(KRED)FAILURE$(KNRM)"
 
