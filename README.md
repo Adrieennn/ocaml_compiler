@@ -18,14 +18,15 @@ PATH.
 
   `./mincamlc  filenames`
 
-  -o          Outputs to file <file>
-  -h          Display help
-  -v          Display compiler's version
-  -t          Only do typechecking
-  -asml       Print asml
-  -from-asml  Compile from ASML input file
-  -help       Display this list of options
-  --help      Display this list of options
+  -o                  Outputs to file <file>
+  -h                  Display help
+  -v                  Display compiler's version
+  -t                  Only do typechecking
+  -asml               Print asml
+  -from-asml          Compile from ASML input file
+  -inline-threshold   Configure inline expansion threshold
+  -help               Display this list of options
+  --help              Display this list of options
 
 ## Testing
 
@@ -70,6 +71,9 @@ easier to detect fault in our type inference implementation.
 
 Furthermore we do not yet implement the external variable environment i.e. we
 fail when we encounter unbound variables.
+
+### Frontend 
+The compiler has the following optimisations: beta reduction, inline expansion, constant folding and elimination of unnecessary definitions. The size of function to be expanded in inline expanded is user configurable.
 
 ### Remark
 
