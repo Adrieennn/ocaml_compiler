@@ -161,7 +161,7 @@ and t_to_asm body sp_reset =
       exp_to_asm exp
       ^
       if sp_reset > 0 then
-        "add sp, sp, #" ^ string_of_int sp_reset ^ "\n" ^ "nop" ^ "\n"
+        "add sp, sp, #" ^ string_of_int sp_reset ^ "\n"
         (*move_integer "r10" sp_reset ^ "add sp, sp,r10\n"*)
       else ""
 
