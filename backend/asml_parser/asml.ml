@@ -82,7 +82,7 @@ let rec closure_to_t = function
         | hd :: tl ->
             add_let
               (St (loc, Int counter, hd))
-              (fun _ -> arg_lets loc (counter + 4) tl)
+              (fun _ -> arg_lets loc (counter + 1) tl)
       in
       let arg_ids = List.map (fun (id, _typ) -> id) args in
       Let
@@ -92,7 +92,7 @@ let rec closure_to_t = function
           add_let (Var fun_label) (fun fun_label_var ->
               add_let
                 (St (cls_id, Int 0, fun_label_var))
-                (fun _ -> arg_lets cls_id 4 arg_ids)) )
+                (fun _ -> arg_lets cls_id 1 arg_ids)) )
   | exp -> Ans (closure_to_exp exp)
 
 and closure_to_exp = function
@@ -143,12 +143,12 @@ let fundef_of_closure_fundef fd =
               Let
                 ( (hd, Type.Var (ref None)),
                   Ld ("%self", Int counter),
-                  retrieve_environment (counter + 4) tl )
+                  retrieve_environment (counter + 1) tl )
         in
         Let
           ( (Id.id_of_label label, Type.Var (ref None)),
             Var "%self",
-            retrieve_environment 4 (List.map (fun (id, _typ) -> id) formal_fv)
+            retrieve_environment 1 (List.map (fun (id, _typ) -> id) formal_fv)
           )
       in
       let arg_names = List.map (fun (arg_id, _arg_typ) -> arg_id) args in
