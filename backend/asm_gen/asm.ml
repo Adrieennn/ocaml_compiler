@@ -160,7 +160,9 @@ and t_to_asm body sp_reset =
   | Ans exp ->
       exp_to_asm exp
       ^
-      if sp_reset > 0 then (move_integer "r10" sp_reset) ^ "add r13, r13, r10\n"
+      if sp_reset > 0 then
+        "add r13, r13, #" ^ string_of_int sp_reset ^ "\n" ^ "nop" ^ "\n"
+        (*move_integer "r10" sp_reset ^ "add r13, r13,r10\n"*)
       else ""
 
 (* lfu_to_asm: for each function definition, generate assembly code *)
