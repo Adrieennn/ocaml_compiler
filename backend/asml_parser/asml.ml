@@ -46,6 +46,17 @@ let rec add_let exp body =
   Let ((id, Type.Var (ref None)), exp, body id)
 
 let rec closure_to_t = function
+  | Closure.Float f -> (
+      match List.find_opt (fun (l, f') -> f = f') !float_map with
+      | Some (l, _f) ->
+          let label_var = Id.genid () in
+          Let ((label_var, Type.Int), Var l, Ans (Ld (label_var, Int 0)))
+      | None ->
+          let label = Id.label_of_id (Id.genid ()) in
+          float_map := (label, f) :: !float_map;
+
+          let label_var = Id.genid () in
+          Let ((label_var, Type.Int), Var label, Ans (Ld (label_var, Int 0))) )
   | Closure.Let ((id, typ), Closure.Float f, body) -> (
       match List.find_opt (fun (l, f') -> f = f') !float_map with
       | Some (l, _f) ->
@@ -68,8 +79,17 @@ let rec closure_to_t = function
               Var label,
               Let ((id, Type.Float), Ld (label_var, Int 0), closure_to_t body)
             ) )
-  | Closure.Let ((id, typ), def, body) ->
-      Let ((id, typ), closure_to_exp def, closure_to_t body)
+  | Closure.Let (id_and_typ, def, body) ->
+      (* adapted from NestedLetReduction.reduction
+       * it has become necessary because handling floating point values]
+       * with labels, variables and memory access causes us to introduce new
+       * let-bindings at this low level.
+       * Effectively, this function re-applies the nested-let reduction. *)
+      let rec insert = function
+        | Let (id_and_typ', def', body') -> Let (id_and_typ, def', insert body')
+        | Ans exp -> Let (id_and_typ, exp, closure_to_t body)
+      in
+      insert (closure_to_t def)
   | Closure.MkCls ((cls_id, cls_typ), (fun_label, args), body) ->
       (* reserve space
        * first word is for the method of the closure
@@ -99,7 +119,7 @@ and closure_to_exp = function
   | Closure.Unit -> Unit
   | Closure.Int i -> Int i
   | Closure.Float f ->
-      failwith "Naked floats should not reach the ASML generator"
+      failwith "Closure.Float to ASML is handled in closure_to_t instead"
   | Closure.Add (id1, id2) -> Add (id1, Var id2)
   | Closure.Sub (id1, id2) -> Sub (id1, Var id2)
   | Closure.FAdd (id1, id2) -> FAdd (id1, id2)
