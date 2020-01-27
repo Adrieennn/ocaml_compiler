@@ -32,7 +32,7 @@ let speclist =
     ("-t", Arg.Set typecheck_only, "Only do typechecking");
     ("-asml", Arg.Set disp_asml, "Print asml");
     ("-from-asml", Arg.Set compile_from_asml, "Compile from ASML input file");
-    ("-inline-threshold", Arg.Set_int threshold, "todo")
+    ("-inline-threshold", Arg.Set_int threshold, "Set the maximum size for functions to be expanded when inline expanding")
   ]
 
 let read_ast_from_file f =
