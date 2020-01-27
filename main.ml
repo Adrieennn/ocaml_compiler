@@ -17,6 +17,8 @@ let typecheck_only = ref false
 
 let disp_asml = ref false
 
+let threshold = ref 9
+
 let speclist =
   [
     ("-o", Arg.String set_output_file, "Outputs to file <file>");
@@ -30,6 +32,7 @@ let speclist =
     ("-t", Arg.Set typecheck_only, "Only do typechecking");
     ("-asml", Arg.Set disp_asml, "Print asml");
     ("-from-asml", Arg.Set compile_from_asml, "Compile from ASML input file");
+    ("-inline-threshold", Arg.Set_int threshold, "todo")
   ]
 
 let read_ast_from_file f =
@@ -64,7 +67,7 @@ let asml_prog_of_ml_file f =
   let ast_knorm = Knorm.of_syntax ast in
   let ast_alpha = Alpha.convert ast_knorm [] in
   let ast_beta = Beta.convert ast_alpha [] in
-  let ast_inline_expansion = Inline.expansion ast_beta [] in
+  let ast_inline_expansion = Inline.expansion ast_beta [] !threshold in
   let ast_reduced_nested_lets = NestedLetReduction.reduction ast_inline_expansion in
   let ast_constant_folding = Constant.folding ast_reduced_nested_lets [] in
   let ast_elimination = Elim.elimination ast_constant_folding in
