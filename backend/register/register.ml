@@ -136,7 +136,8 @@ let rec modify_exp fn_name exp var_reg =
       FDiv
         (modify_variable fn_name s1 var_reg, modify_variable fn_name s2 var_reg)
   | CallDir (label, args) ->
-      CallDir (label, modify_variable_list fn_name args var_reg)
+      let args_without_unit = List.filter (fun s -> s <> "()") args in
+      CallDir (label, modify_variable_list fn_name args_without_unit var_reg)
   | CallCls (id, args) ->
       CallCls
         ( modify_variable fn_name id var_reg,
