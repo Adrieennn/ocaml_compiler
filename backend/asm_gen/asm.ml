@@ -86,8 +86,8 @@ let rec exp_to_asm exp =
       ^ "vmov.f32 s0, r4\n" ^ "vmov.f32 s1, r5\n" ^ "vcmp.f32 s0, s1\n"
       ^ "vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.\n"
       ^ "beq ltrue" ^ label_index ^ "\n" ^ "b lfalse" ^ label_index ^ "\n"
-      ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 ^ "b lnext" ^ label_index
-      ^ "\n" ^ "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 ^ "lnext"
+      ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 0 ^ "b lnext" ^ label_index
+      ^ "\n" ^ "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 0 ^ "lnext"
       ^ label_index ^ ":\n"
   | IfFLEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
@@ -95,8 +95,8 @@ let rec exp_to_asm exp =
       ^ "vmov.f32 s0, r4\n" ^ "vmov.f32 s1, r5\n" ^ "vcmp.f32 s0, s1\n"
       ^ "vmrs     APSR_nzcv, FPSCR    @ Get the flags into APSR.\n"
       ^ "ble ltrue" ^ label_index ^ "\n" ^ "b lfalse" ^ label_index ^ "\n"
-      ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 ^ "b lnext" ^ label_index
-      ^ "\n" ^ "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 ^ "lnext"
+      ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 0 ^ "b lnext" ^ label_index
+      ^ "\n" ^ "lfalse" ^ label_index ^ ":\n" ^ t_to_asm t2 0 ^ "lnext"
       ^ label_index ^ ":\n"
   | IfEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
@@ -106,9 +106,9 @@ let rec exp_to_asm exp =
       | Int i -> move_integer "r5" i
       | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n" )
       ^ "cmp r4, r5\n" ^ "beq ltrue" ^ label_index ^ "\n" ^ "b lfalse"
-      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
+      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 0
       ^ "b lnext" ^ label_index ^ "\n" ^ "lfalse" ^ label_index ^ ":\n"
-      ^ t_to_asm t2 ^ "lnext" ^ label_index ^ ":\n"
+      ^ t_to_asm t2 0 ^ "lnext" ^ label_index ^ ":\n"
   | IfLEq (s1, s2, t1, t2) ->
       let label_index = string_of_int (if_count ()) in
       ( "ldr r4, [r11, #" ^ s1 ^ "]\n"
@@ -117,9 +117,9 @@ let rec exp_to_asm exp =
       | Int i -> move_integer "r5" i
       | Var v -> "ldr r5, [r11, #" ^ v ^ "]\n" )
       ^ "cmp r4, r5\n" ^ "ble ltrue" ^ label_index ^ "\n" ^ "b lfalse"
-      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1
+      ^ label_index ^ "\n" ^ "ltrue" ^ label_index ^ ":\n" ^ t_to_asm t1 0
       ^ "b lnext" ^ label_index ^ "\n" ^ "lfalse" ^ label_index ^ ":\n"
-      ^ t_to_asm t2 ^ "lnext" ^ label_index ^ ":\n"
+      ^ t_to_asm t2 0 ^ "lnext" ^ label_index ^ ":\n"
   | Ld (s1, s2) ->
       "ldr r4, [r11, #" ^ s1 ^ "]\n"
       ^ ( match s2 with
@@ -148,15 +148,20 @@ let rec exp_to_asm exp =
   | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
 
 (* t_to_asm: transform let and exp to assembly *)
-and t_to_asm body =
+and t_to_asm body sp_reset =
   match body with
   | Let ((id, _), e, t) ->
       ( match e with
       | Int i -> move_integer "r0" i
       | Var a -> "ldr r0, [r11, #" ^ a ^ "]\n"
       | _ -> exp_to_asm e )
-      ^ "push {r0}\n" ^ t_to_asm t ^ "add r13, r13, #4\n"
-  | Ans exp -> exp_to_asm exp
+      ^ "push {r0}\n"
+      ^ t_to_asm t (sp_reset + 4)
+  | Ans exp ->
+      exp_to_asm exp
+      ^
+      if sp_reset > 0 then (move_integer "r10" sp_reset) ^ "add r13, r13, r10\n"
+      else ""
 
 (* lfu_to_asm: for each function definition, generate assembly code *)
 let rec lfu_to_asm lfu =
@@ -167,8 +172,8 @@ let rec lfu_to_asm lfu =
       ^ "\n"
       ^ Id.remove_label_undersc fu.name
       ^ ":\n" ^ "str r14, [r11, #4] @ store lr on the stack\n"
-      ^ t_to_asm fu.body ^ "\n"
-      ^ "ldr r15, [r11, #4] @ load lr (fp + 4) into pc\n" ^ lfu_to_asm r
+      ^ t_to_asm fu.body 0 ^ "ldr r15, [r11, #4] @ load lr (fp + 4) into pc\n"
+      ^ lfu_to_asm r
   | [] -> "\n"
 
 let rec lfl_to_asm lfl =
@@ -190,4 +195,4 @@ _start:
 mov r11, r13 @ move sp to fp
 bl min_caml_mmap
 |}
-      ^ t_to_asm body ^ "\n"
+      ^ t_to_asm body 0 ^ "\n"
