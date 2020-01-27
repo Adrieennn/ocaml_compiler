@@ -7,7 +7,7 @@ let add x_id y_id mapping = (x_id, y_id) :: mapping
 
 
 
-let threshold = 9
+(* let threshold = 9 *)
 
 let rec size exp = 
   match exp with
@@ -24,7 +24,7 @@ let rec size exp =
   | Knorm.IfLe ((v1, v2), e1, e2) ->
       (size e1) + (size e2) + 1
 
-let rec expansion exp map = 
+let rec expansion exp map threshold = 
   match exp with
   (*We used the same strategy as presented in the paper, alpha covert again 
   the expanded body to make sure all variable names are still unique*)
@@ -39,21 +39,21 @@ let rec expansion exp map =
       Alpha.convert body env'
     )
   | Knorm.Let ((id, typ), def, body) -> 
-    Knorm.Let ((id, typ), expansion def map, expansion body map)
+    Knorm.Let ((id, typ), expansion def map threshold, expansion body map threshold)
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body) -> 
     (* We decided to implement a version without suppressing the LetRec expression 
     for now but rather remove it later in the elimination of unnecessary 
     definitions to avoid problems with a recursive function.  
     *)
-    let expanded_fun_body = (expansion fun_body map) in 
+    let expanded_fun_body = (expansion fun_body map threshold) in 
       if ((size fun_body)<threshold) then 
-          Knorm.LetRec({ name = fun_id, fun_typ; args; body = expanded_fun_body }, expansion let_body ((fun_id,(args,expanded_fun_body)) :: map))
+          Knorm.LetRec({ name = fun_id, fun_typ; args; body = expanded_fun_body }, expansion let_body ((fun_id,(args,expanded_fun_body)) :: map) threshold)
       else
-          Knorm.LetRec({ name = fun_id, fun_typ; args; body = expanded_fun_body }, expansion let_body map) 
+          Knorm.LetRec({ name = fun_id, fun_typ; args; body = expanded_fun_body }, expansion let_body map threshold) 
   | Knorm.LetTuple (vars, defs, body) ->
-      Knorm.LetTuple (vars, expansion defs map, expansion body map)
+      Knorm.LetTuple (vars, expansion defs map threshold, expansion body map threshold)
   | Knorm.IfEq ((v1, v2), e1, e2) -> 
-      Knorm.IfEq ((v1, v2), expansion e1 map, expansion e2 map)
+      Knorm.IfEq ((v1, v2), expansion e1 map threshold, expansion e2 map threshold)
   | Knorm.IfLe ((v1, v2), e1, e2) -> 
-      Knorm.IfLe ((v1, v2), expansion e1 map, expansion e2 map)
+      Knorm.IfLe ((v1, v2), expansion e1 map threshold, expansion e2 map threshold)
   | _ as c -> c
