@@ -53,12 +53,13 @@ let reset_sp args =
   let len = (List.length args + 3) * 4 in
   tabs ^ "add sp, sp, #" ^ string_of_int len ^ "\n"
 
-(* exp_to_asm: match exp with corresponding assembly operations and store in r0 *)
+(* exp_to_asm: matches exp with corresponding assembly operations and store them
+ * in r0 *)
 let rec exp_to_asm exp =
   match exp with
   | Unit -> ""
   | Int i -> move_integer "r0" i
-  | Label l -> tabs ^ "ldr r0, =" ^ Id.remove_label_undersc l ^ "\n"
+  | Label l -> tabs ^ "adrl r0, " ^Id.remove_label_undersc l ^ "\n"
   | Var v -> tabs ^ "ldr r0, [fp, #" ^ v ^ "]\n"
   | Add (x, y) ->
       tabs ^ "ldr r4, [fp, #" ^ x ^ "]\n"
