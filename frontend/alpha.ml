@@ -9,11 +9,6 @@ function
 let replace_name mapping name =
   match find mapping name with None -> name | Some new_name -> new_name
 
-(** new_name takes the same parameters as replace_name, it generates a new 
-variable name using Id.genid when encountering a non-external variable.
-*)
-let new_name mapping name = Id.genid ()
-
 (** convert is the main conversion function. It takes 2 variable: the 
 expression needs to be converted and the mapping environment. The goal 
 is to make every variable name unique.
@@ -65,7 +60,7 @@ let rec convert exp mapping =
       (*Here we have a similar situation with Let expression, we need to use the
     updated mapping environment to evaluate both the function body and the Let
     body*)
-      let new_args = List.map (fun (id, t) -> (new_name mapping id, t)) args in
+      let new_args = List.map (fun (id, t) -> (Id.genid (), t)) args in
       let old_arg_names = List.map (fun (id, _t) -> id) args in
       let new_arg_names = List.map (fun (id, _t) -> id) new_args in
       let new_arg_mappings =
@@ -74,7 +69,7 @@ let rec convert exp mapping =
           old_arg_names new_arg_names
       in
 
-      let new_fun_id = new_name mapping fun_id in
+      let new_fun_id = Id.genid () in
       let new_fun_name = (new_fun_id, fun_typ) in
 
       let new_mapping = ((fun_id, new_fun_id) :: new_arg_mappings) @ mapping in
@@ -103,7 +98,7 @@ let rec convert exp mapping =
   | Knorm.LetTuple (vars, def, body) ->
       (*The mapping environment is updated before the evaluation of the Let 
        * body*)
-      let new_vars = List.map (fun (id, t) -> (new_name mapping id, t)) vars in
+      let new_vars = List.map (fun (id, t) -> (Id.genid (), t)) vars in
       let old_vars_names = List.map (fun (id, _t) -> id) vars in
       let new_vars_names = List.map (fun (id, _t) -> id) new_vars in
       let new_vars_mappings =
