@@ -12,15 +12,19 @@ let label_counter x =
 let if_count = label_counter 0
 
 let move_integer register i =
-  if i > 65535 then
+  if i >= -257 && i <= 65535 then
+    tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i ^ "\n"
+  else
     let i' = abs i in
-    let i_low = i' land 65535 in
-    let i_top = i' lsr 16 in
-    tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i_low ^ "\n" ^ tabs
-    ^ "movt " ^ register ^ ", #" ^ string_of_int i_top ^ "\n"
+    (if i' > 65535 then
+      let i_low = i' land 65535 in
+      let i_top = i' lsr 16 in
+      tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i_low ^ "\n" ^ tabs
+      ^ "movt " ^ register ^ ", #" ^ string_of_int i_top ^ "\n"
+    else
+      tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i' ^ "\n")
     ^
     if i < 0 then tabs ^ "rsb " ^ register ^ ", " ^ register ^ ", #0\n" else ""
-  else tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i ^ "\n"
 
 (* args_to_asm_pred: NOT spilling args of predefined functions but store them in
  * registers *)
