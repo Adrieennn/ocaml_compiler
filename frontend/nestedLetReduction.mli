@@ -1,1 +1,1 @@
-val reduction: Knorm.t -> Knorm.t
+val reduction : Knorm.t -> Knorm.t
