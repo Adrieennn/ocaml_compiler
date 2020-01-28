@@ -16,13 +16,12 @@ let move_integer register i =
     tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i ^ "\n"
   else
     let i' = abs i in
-    (if i' > 65535 then
+    ( if i' > 65535 then
       let i_low = i' land 65535 in
       let i_top = i' lsr 16 in
       tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i_low ^ "\n" ^ tabs
       ^ "movt " ^ register ^ ", #" ^ string_of_int i_top ^ "\n"
-    else
-      tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i' ^ "\n")
+    else tabs ^ "mov " ^ register ^ ", #" ^ string_of_int i' ^ "\n" )
     ^
     if i < 0 then tabs ^ "rsb " ^ register ^ ", " ^ register ^ ", #0\n" else ""
 
@@ -63,7 +62,7 @@ let rec exp_to_asm exp =
   match exp with
   | Unit -> ""
   | Int i -> move_integer "r0" i
-  | Label l -> tabs ^ "adrl r0, " ^Id.remove_label_undersc l ^ "\n"
+  | Label l -> tabs ^ "adrl r0, " ^ Id.remove_label_undersc l ^ "\n"
   | Var v -> tabs ^ "ldr r0, [fp, #" ^ v ^ "]\n"
   | Add (x, y) ->
       tabs ^ "ldr r4, [fp, #" ^ x ^ "]\n"
