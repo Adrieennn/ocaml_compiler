@@ -16,7 +16,8 @@ type t =
    * | Ifgt
    * | IfGe
    * | IfLt
-   * Also, MinCaml only has signed integers so unsigned comparisons are unnecessary
+   * Also, MinCaml only has signed integers so unsigned comparisons are
+   * unnecessary
    *)
   (* cf. BEQ branch if equal *)
   | IfEq of (Id.t * Id.t) * t * t
@@ -49,7 +50,8 @@ let rec add_let exp body =
       Let ((e_id, Type.Var (ref None)), of_syntax exp, body e_id)
 
 (**of_syntax is the main function responsible for k-normalisation, it takes an
- expression of type Syntax.t and return a normalised expression of type Knorm.t*)
+ expression of type Syntax.t and return a normalised expression of type
+ Knorm.t*)
 and of_syntax exp_s =
   match exp_s with
   | Syntax.Unit -> Unit
@@ -58,9 +60,9 @@ and of_syntax exp_s =
   | Syntax.Int i -> Int i
   | Syntax.Float f -> Float f
   | Syntax.Add (e1, e2) ->
-      (* In the case of a binary operation with, we have to create 2 new variable 
-      to store the intermediate result, return a let expression and use the 
-      operation as the let body. As in
+      (* In the case of a binary operation with, we have to create 2 new
+      variable to store the intermediate result, return a let expression and use
+      the operation as the let body. As in
       
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
@@ -105,10 +107,10 @@ and of_syntax exp_s =
       add_let (Syntax.Int 0) (fun e1_id ->
           add_let e (fun e2_id -> Sub (e1_id, e2_id)))
   | Syntax.Eq (e1, e2) ->
-      (* In the case of comparison, we treat it the same way as a binary operation 
-      except we use an IfEq expression to get the result of comparison in the end, 
-      thus transform all comparison to if expressions to make the code more assembly
-      like. As in
+      (* In the case of comparison, we treat it the same way as a binary
+      operation except we use an IfEq expression to get the result of comparison
+      in the end, thus transform all comparison to if expressions to make the
+      code more assembly like. As in
 
       let e1_id = Id.genid () in
       let e2_id = Id.genid () in
@@ -127,7 +129,8 @@ and of_syntax exp_s =
   | Syntax.LE (e1, e2) ->
       add_let e1 (fun e1_id ->
           add_let e2 (fun e2_id -> IfLe ((e1_id, e2_id), Int 1, Int 0)))
-  (* In the case of a Let or LetRec expression we only have to normalise it's definition and its body *)
+  (* In the case of a Let or LetRec expression we only have to normalise it's
+   * definition and its body *)
   | Syntax.Let ((id, typ), def, body) ->
       Let ((id, typ), of_syntax def, of_syntax body)
   | Syntax.LetRec ({ Syntax.name; args; body }, e) ->
@@ -137,8 +140,8 @@ and of_syntax exp_s =
   | Syntax.Var id -> Var id
   | Syntax.If (e1, e2, e3) -> (
       match e1 with
-      (* Here our goal is to transform a Syntax.If to a Knorm.IfEq or Knorm.IfLE 
-      according to the boolean expression. *)
+      (* Here our goal is to transform a Syntax.If to a Knorm.IfEq or 
+       * Knorm.IfLE according to the boolean expression. *)
       | Syntax.Eq (e1', e2') ->
           (*
           Implementation without using add_let
@@ -183,8 +186,8 @@ and of_syntax exp_s =
                   IfEq ((e_id, e_true), of_syntax e2, of_syntax e3))) )
   | Syntax.App (f, args) ->
       (*Here since the arguments is a list, we have no other way except using 
-      a pre-defined function like add_let. This is also why we implemented add_let.
-    *)
+      a pre-defined function like add_let. This is also why we implemented 
+      add_let. *)
       let l = ref [] in
       let final_body () = add_let f (fun f_id -> App (f_id, List.rev !l)) in
 

@@ -13,15 +13,15 @@ let rec effect e =
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
       (* We must run `effect` on fun_body so that
-       * the mutable list of effectful functions is updated. That is when checking
-       * the `let_body`, we must detect those functions which were defined inside of
-       * the current function definition too, including the function being currently
-       * defined itself *)
+       * the mutable list of effectful functions is updated. That is when
+       * checking the `let_body`, we must detect those functions which were
+       * defined inside of the current function definition too, including the
+       * function being currently defined itself *)
       if effect fun_body then
         effectful_functions := StringSet.add fun_id !effectful_functions;
 
-      (* Even if a fun_body is effectful, the LetRec might not be if that function
-       * is not actaully run inside the body. *)
+      (* Even if a fun_body is effectful, the LetRec might not be if that
+       * function is not actaully run inside the body. *)
       effect let_body
   | Knorm.Let (var, def, body) ->
       let b1 = effect def in
@@ -66,9 +66,9 @@ let rec not_occurs (id : Id.t) (exp : Knorm.t) =
       id <> v1 && id <> v2 && not_occurs id e1 && not_occurs id e2
   | Knorm.App (f, args) -> f <> id && List.for_all (fun id' -> id <> id') args
 
-(* elim takes 2 parameters, an expression and a list. This function is the main body
- * of elimination, it checks every definition and determine if it's unnecessary. If so
- * the definition will be suppressed. *)
+(* elim takes 2 parameters, an expression and a list. This function is the main
+ * body of elimination, it checks every definition and determine if it's
+ * unnecessary. If so the definition will be suppressed. *)
 let rec elim exp =
   match exp with
   | Knorm.Let ((id, _t), e1, e2) ->
@@ -79,9 +79,9 @@ let rec elim exp =
       if (not (effect fun_body)) && not_occurs fun_id let_body then
         elim let_body
       else (
-        (* It is necessary to add the function here to because we will otherwise miss
-         * an effectful occurence of the outermost function since it will not be added
-         * to the list of effectful functions by `not_occurs`. *)
+        (* It is necessary to add the function here to because we will otherwise
+         * miss an effectful occurence of the outermost function since it will
+         * not be added to the list of effectful functions by `not_occurs`. *)
         effectful_functions := StringSet.add fun_id !effectful_functions;
         Knorm.LetRec
           ( { name = (fun_id, fun_typ); args; body = elim fun_body },
@@ -93,10 +93,12 @@ let rec elim exp =
   | ( Knorm.Unit | Knorm.Int _ | Knorm.Float _ | Knorm.Tuple _ | Knorm.Array _
     | Knorm.Get _ | Knorm.Var _ | Knorm.Add _ | Knorm.Sub _ | Knorm.FAdd _
     | Knorm.FSub _ | Knorm.FMul _ | Knorm.FDiv _ | Knorm.App _ | Knorm.Put _ )
-    as non_definition -> non_definition
+    as non_definition ->
+      non_definition
 
 (* elimination takes an expression as a parameter.
- * This function uses elim defined previously to eliminate unnecessary definitions. *)
+ * This function uses elim defined previously to eliminate unnecessary
+ * definitions. *)
 let elimination exp =
   (* reset mutable state *)
   effectful_functions :=

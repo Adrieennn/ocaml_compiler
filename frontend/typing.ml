@@ -124,7 +124,8 @@ let rec gen_equations env exp expected_type =
         |> List.concat
       in
 
-      (* The function's return type must match the expected_type since it is applied *)
+      (* The function's return type must match the expected_type since it is
+       * applied *)
       let fun_typ = Type.Fun (arg_typs, expected_type) in
       let fun_eqs = gen_equations env e1 fun_typ in
 
@@ -137,7 +138,8 @@ let rec gen_equations env exp expected_type =
       let fun_body_env =
         (* Add function arguments to environment of function body *)
         List.fold_right TypingEnvironment.add (List.rev fun_args) env
-        (* Add function name to environment of function body for recursive calls *)
+        (* Add function name to environment of function body for recursive
+         * calls *)
         |> TypingEnvironment.add fun_name
       in
       (* The function body's type is not yet known *)
@@ -271,7 +273,8 @@ let rec substitue_type_exn typ =
   | T.Var v -> (
       match !v with
       | None ->
-          (* The paper suggests, arbitrarily, instantiating these variables to Type.Int *)
+          (* The paper suggests, arbitrarily, instantiating these variables to
+           * Type.Int *)
           failwith "Type variable is still undefined"
       | Some t -> substitue_type_exn t )
 
