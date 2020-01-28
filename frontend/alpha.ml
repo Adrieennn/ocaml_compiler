@@ -12,8 +12,7 @@ let replace_name mapping name =
 (** new_name takes the same parameters as replace_name, it generates a new 
 variable name using Id.genid when encountering a non-external variable.
 *)
-let new_name mapping name =
-  match find mapping name with None -> name | Some _ -> name ^ Id.genid ()
+let new_name mapping name = Id.genid ()
 
 (** convert is the main conversion function. It takes 2 variable: the 
 expression needs to be converted and the mapping environment. The goal 
