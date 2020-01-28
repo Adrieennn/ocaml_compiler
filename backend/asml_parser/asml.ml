@@ -86,7 +86,7 @@ let rec closure_to_t = function
        * let-bindings at this low level.
        * Effectively, this function re-applies the nested-let reduction. *)
       let rec insert = function
-        | Let (id_and_typ', def', body') -> Let (id_and_typ, def', insert body')
+        | Let (id_and_typ', def', body') -> Let (id_and_typ', def', insert body')
         | Ans exp -> Let (id_and_typ, exp, closure_to_t body)
       in
       insert (closure_to_t def)
