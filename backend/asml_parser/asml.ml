@@ -195,7 +195,7 @@ let rec to_string_id_or_imm (i : id_or_imm) =
   match i with Int i -> string_of_int i | Var id -> Id.to_string id
 
 (* to_string: returns a string out of an expresssion exp *)
-let rec to_string exp =
+let rec to_string_e exp =
   match exp with
   | Unit -> "nop"
   | Int i -> string_of_int i
@@ -239,9 +239,9 @@ let rec to_string exp =
 (* to_string_t: match t to correct substring *)
 and to_string_t t =
   match t with
-  | Ans e -> "  " ^ to_string e
+  | Ans e -> "  " ^ to_string_e e
   | Let ((id, t), e1, e2) ->
-      sprintf "  (let %s = %s in\n%s)" (Id.to_string id) (to_string e1)
+      sprintf "  (let %s = %s in\n%s)" (Id.to_string id) (to_string_e e1)
         (to_string_t e2)
 
 (* to_string_f: fundef to string *)
