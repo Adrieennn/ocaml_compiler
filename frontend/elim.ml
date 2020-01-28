@@ -1,7 +1,3 @@
-module StringSet = Set.Make (String)
-
-let effectful_functions = ref StringSet.empty
-
 (* effect takes 2 parameters, an expression and a mutable list.
  * This function checks if the given expression has a side effect or not by
  * comparing the function names used in the expression to a list of function
@@ -9,7 +5,7 @@ let effectful_functions = ref StringSet.empty
 let rec effect e =
   match e with
   | Knorm.Put _ -> true
-  | Knorm.App (id, args) -> StringSet.mem id !effectful_functions
+  | Knorm.App (id, args) -> true (*StringSet.mem id !effectful_functions*)
   | Knorm.LetRec ({ name = fun_id, fun_typ; args; body = fun_body }, let_body)
     ->
       (* We must run `effect` on fun_body so that
@@ -17,8 +13,6 @@ let rec effect e =
        * checking the `let_body`, we must detect those functions which were
        * defined inside of the current function definition too, including the
        * function being currently defined itself *)
-      if effect fun_body then
-        effectful_functions := StringSet.add fun_id !effectful_functions;
 
       (* Even if a fun_body is effectful, the LetRec might not be if that
        * function is not actaully run inside the body. *)
@@ -82,7 +76,6 @@ let rec elim exp =
         (* It is necessary to add the function here to because we will otherwise
          * miss an effectful occurence of the outermost function since it will
          * not be added to the list of effectful functions by `not_occurs`. *)
-        effectful_functions := StringSet.add fun_id !effectful_functions;
         Knorm.LetRec
           ( { name = (fun_id, fun_typ); args; body = elim fun_body },
             elim let_body ) )
@@ -101,7 +94,4 @@ let rec elim exp =
  * definitions. *)
 let elimination exp =
   (* reset mutable state *)
-  effectful_functions :=
-    StringSet.empty |> StringSet.add "print_int"
-    |> StringSet.add "print_newline";
   elim exp
