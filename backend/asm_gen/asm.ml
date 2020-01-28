@@ -167,7 +167,7 @@ let rec exp_to_asm exp =
   | FDiv (s1, s2) ->
       tabs ^ "vldr s0, [fp, #" ^ s1 ^ "]\n" ^ tabs ^ "vldr s1, [fp, #" ^ s2
       ^ "]\n" ^ tabs ^ "vdiv.f32 s0, s0, s1\n" ^ tabs ^ "vmov.32 r0, s0\n"
-  | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string e)
+  | e -> Printf.sprintf "%s IGNORED FOR NOW\n" (Asml.to_string_e e)
 
 (* t_to_asm: transform let and exp to assembly *)
 and t_to_asm body sp_reset =
