@@ -6,6 +6,8 @@ let remove_label_undersc label = String.sub label 1 (String.length label - 1)
 
 let to_string x = x
 
+let compare = String.compare
+
 let predefined_function_labels = function
   | "print_int" -> Some "_min_caml_print_int"
   | "print_newline" -> Some "_min_caml_print_newline"

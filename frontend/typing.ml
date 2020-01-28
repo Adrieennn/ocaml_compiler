@@ -11,27 +11,28 @@ module TypingEnvironment : sig
 
   val find_opt : Id.t -> t -> Type.t option
 end = struct
-  type t = (Id.t * Type.t) list
+  module IdMap = Map.Make (Id)
 
-  let empty () = []
+  type t = Type.t IdMap.t
 
-  let add (x : Id.t * Type.t) (env : t) = x :: env
+  let empty () = IdMap.empty
 
-  let find_opt x env = List.assoc_opt x env
+  let add (id, typ) env = IdMap.add id typ env
+
+  let find_opt x env = IdMap.find_opt x env
 
   let default () =
-    empty ()
-    (* random selection of predefined functions so that we can type
-     * more programs *)
-    |> add ("print_int", Type.Fun ([ Type.Int ], Type.Unit))
-    |> add ("print_newline", Type.Fun ([ Type.Unit ], Type.Unit))
-    |> add ("sin", Type.Fun ([ Type.Float ], Type.Float))
-    |> add ("cos", Type.Fun ([ Type.Float ], Type.Float))
-    |> add ("sqrt", Type.Fun ([ Type.Float ], Type.Float))
-    |> add ("abs_float", Type.Fun ([ Type.Float ], Type.Float))
-    |> add ("int_of_float", Type.Fun ([ Type.Float ], Type.Int))
-    |> add ("float_of_int", Type.Fun ([ Type.Int ], Type.Float))
-    |> add ("truncate", Type.Fun ([ Type.Float ], Type.Int))
+    IdMap.(
+      empty
+      |> add "print_int" (Type.Fun ([ Type.Int ], Type.Unit))
+      |> add "print_newline" (Type.Fun ([ Type.Unit ], Type.Unit))
+      |> add "sin" (Type.Fun ([ Type.Float ], Type.Float))
+      |> add "cos" (Type.Fun ([ Type.Float ], Type.Float))
+      |> add "sqrt" (Type.Fun ([ Type.Float ], Type.Float))
+      |> add "abs_float" (Type.Fun ([ Type.Float ], Type.Float))
+      |> add "int_of_float" (Type.Fun ([ Type.Float ], Type.Int))
+      |> add "float_of_int" (Type.Fun ([ Type.Int ], Type.Float))
+      |> add "truncate" (Type.Fun ([ Type.Float ], Type.Int)))
 end
 
 module TypingEquation = struct
