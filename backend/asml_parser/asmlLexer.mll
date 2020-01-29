@@ -31,6 +31,8 @@ rule token = parse
     { FEQUAL }  
 | "<="
     { LE }
+| ">="
+    { GE }
 | "<=."
     { FLE }
 | "if"

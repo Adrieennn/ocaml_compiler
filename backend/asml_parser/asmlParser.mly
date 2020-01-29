@@ -10,6 +10,7 @@ let addtyp x = (x, Type.gentyp ())
 %token EQUAL
 %token FEQUAL
 %token LE
+%token GE
 %token FLE
 %token IF
 %token THEN
@@ -87,10 +88,10 @@ exp: /* expressions */
     { FMul($2, $3) }
 | FDIV IDENT IDENT
     { FDiv($2, $3) }
-/*
+
 | NEW ident_or_imm
-    { Mem() } 
-*/
+    { New($2) } 
+
 | ADD IDENT ident_or_imm
     { Add($2, $3) }
 | SUB IDENT ident_or_imm
@@ -105,6 +106,9 @@ exp: /* expressions */
 | IF IDENT LE ident_or_imm THEN asmt ELSE asmt
     %prec prec_if
     { IfLEq($2, $4, $6, $8) }
+| IF IDENT GE ident_or_imm THEN asmt ELSE asmt
+    %prec prec_if
+    { IfGEq($2, $4, $6, $8) }
 | IF IDENT FEQUAL IDENT THEN asmt ELSE asmt
     %prec prec_if
     { IfFEq($2, $4, $6, $8) }
@@ -116,8 +120,6 @@ exp: /* expressions */
     { CallDir($2, $3) }
 | CALLCLO IDENT formal_args
     { CallCls($2, $3) }
-| NEW INT
-    { New($2) }
 | error
     { failwith
 	(Printf.sprintf "parse error near characters %d-%d"

@@ -143,6 +143,18 @@ let rec exp_to_asm exp =
       ^ t_to_asm t1 0 ^ tabs ^ "b lnext" ^ label_index ^ "\n" ^ tabs ^ "lfalse"
       ^ label_index ^ ":\n" ^ t_to_asm t2 0 ^ tabs ^ "lnext" ^ label_index
       ^ ":\n"
+  | IfGEq (s1, s2, t1, t2) ->
+      let label_index = string_of_int (if_count ()) in
+      ( tabs ^ "ldr r4, [fp, #" ^ s1 ^ "]\n"
+      ^
+      match s2 with
+      | Int i -> move_integer "r5" i
+      | Var v -> tabs ^ "ldr r5, [fp, #" ^ v ^ "]\n" )
+      ^ tabs ^ "cmp r4, r5\n" ^ tabs ^ "bge ltrue" ^ label_index ^ "\n" ^ tabs
+      ^ "b lfalse" ^ label_index ^ "\n" ^ tabs ^ "ltrue" ^ label_index ^ ":\n"
+      ^ t_to_asm t1 0 ^ tabs ^ "b lnext" ^ label_index ^ "\n" ^ tabs ^ "lfalse"
+      ^ label_index ^ ":\n" ^ t_to_asm t2 0 ^ tabs ^ "lnext" ^ label_index
+      ^ ":\n"
   | Ld (s1, s2) ->
       tabs ^ "ldr r4, [fp, #" ^ s1 ^ "]\n"
       ^ ( match s2 with
@@ -156,8 +168,12 @@ let rec exp_to_asm exp =
         | Int i -> move_integer "r5" i )
       ^ tabs ^ "ldr r6, [fp, #" ^ s3 ^ "]\n" ^ tabs ^ "lsl r5, r5, #2\n" ^ tabs
       ^ "str r6, [r4, r5]\n"
-  | New i ->
-      tabs ^ "mov r0, r12\n" ^ move_integer "r4" i ^ tabs ^ "add r12, r12, r4\n"
+  | New s ->
+      tabs ^ "mov r0, r12\n"
+      ^ ( match s with
+        | Var v -> tabs ^ "ldr r4, [fp, #" ^ v ^ "]\n"
+        | Int i -> move_integer "r4" i )
+      ^ tabs ^ "add r12, r12, r4\n"
   | FAdd (s1, s2) ->
       tabs ^ "vldr s0, [fp, #" ^ s1 ^ "]\n" ^ tabs ^ "vldr s1, [fp, #" ^ s2
       ^ "]\n" ^ tabs ^ "vadd.f32 s0, s0, s1\n" ^ tabs ^ "vmov.f32 r0, s0\n"
