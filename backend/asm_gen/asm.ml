@@ -25,7 +25,8 @@ let move_integer register i =
     ^
     if i < 0 then tabs ^ "rsb " ^ register ^ ", " ^ register ^ ", #0\n" else ""
 
-(* args_to_asm_pred: NOT spilling args of predefined functions but store them in
+(* Prologue for calling a predefined function
+ * args_to_asm_pred: NOT spilling args of predefined functions but store them in
  * registers *)
 let rec args_to_asm_pred args regnum =
   match args with
@@ -34,7 +35,8 @@ let rec args_to_asm_pred args regnum =
       ^ args_to_asm_pred r (regnum + 1)
   | [] -> ""
 
-(* args_to_asm: spilling arguments of user-defined functions *)
+(* Prologue for calling a user-defined function
+* args_to_asm: spilling arguments of user-defined functions *)
 let rec args_to_asm args =
   match args with
   | h :: r ->
@@ -43,6 +45,7 @@ let rec args_to_asm args =
       tabs ^ "add sp, sp, #-8 @ making space for lr and %self\n" ^ tabs
       ^ "push {fp}\n"
 
+(* Prologue for calling a closure *)
 let rec args_to_asm_closure args =
   match args with
   | h :: r ->
@@ -173,12 +176,7 @@ let rec exp_to_asm exp =
 and t_to_asm body sp_reset =
   match body with
   | Let ((id, _), e, t) ->
-      ( match e with
-      | Int i -> move_integer "r0" i
-      | Var a -> tabs ^ "ldr r0, [fp, #" ^ a ^ "]\n"
-      | _ -> exp_to_asm e )
-      ^ tabs ^ "push {r0}\n"
-      ^ t_to_asm t (sp_reset + 4)
+      exp_to_asm e ^ tabs ^ "push {r0}\n" ^ t_to_asm t (sp_reset + 4)
   | Ans exp ->
       exp_to_asm exp
       ^

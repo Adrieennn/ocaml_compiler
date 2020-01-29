@@ -10,7 +10,7 @@ all:
 doc: all
 	mkdir -p _build/doc
 	ocamldoc -html -colorize-code  _build/main.ml _build/utils/*.ml \
-		_build/backend/*/*.ml _build/frontend/*.ml -I _build/utils \
+		_build/backend/*/*.mli _build/frontend/*.ml -I _build/utils \
 		-I _build/backend/asml_parser -I _build/backend/register \
 		-I _build/backend/asm_gen	-I _build/frontend -d _build/doc
 	echo -e "\e[42m\033[1mDocumentation ready at: _build/doc/index.html\033[0m"

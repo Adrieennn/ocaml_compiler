@@ -9,7 +9,7 @@ function
 let replace_name mapping name =
   match find mapping name with None -> name | Some new_name -> new_name
 
-(** convert is the main conversion function. It takes 2 variable: the 
+(** convert is the main conversion function. It takes 2 parameters: the 
 expression needs to be converted and the mapping environment. The goal 
 is to make every variable name unique.
 *)

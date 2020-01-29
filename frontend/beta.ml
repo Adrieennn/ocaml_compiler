@@ -9,12 +9,10 @@ envirement.
 let replace_name mapping name =
   match find mapping name with None -> name | Some def_name -> def_name
 
-(** new_name takes the same parameters as replace_name, it generates a new 
-variable name using Id.genid when encountering a non-external variable.
-*)
-let new_name mapping name =
-  match find mapping name with None -> name | Some _ -> Id.genid () ^ name
-
+(** convert is the main conversion function. It takes 2 parameters: the 
+expression needs to be converted and the mapping environment. The goal 
+is to expand the aliasing of variables thus increase the efficiency of 
+the compiler.*)
 let rec convert exp mapping =
   match exp with
   | (Knorm.Unit | Knorm.Int _ | Knorm.Float _) as c -> c
@@ -58,7 +56,6 @@ let rec convert exp mapping =
           convert let_body mapping )
   (*only remove t*)
   | Knorm.LetTuple (vars, def, body) ->
-      (* TODO?: Beta reduction on LetTuples *)
       Knorm.LetTuple (vars, convert def mapping, convert body mapping)
   | Knorm.App (f, args) ->
       let new_args = List.map (fun id -> replace_name mapping id) args in
