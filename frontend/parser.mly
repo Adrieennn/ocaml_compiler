@@ -133,7 +133,7 @@ exp: /* expressions */
     { Array($2, $3) }
 | error
     { failwith
-	(Printf.sprintf "parse error near characters %d-%d"
+	(Printf.sprintf "Error during parsing of minCaml: parse error near characters %d-%d"
 	   (Parsing.symbol_start ())
 	   (Parsing.symbol_end ())) }
 

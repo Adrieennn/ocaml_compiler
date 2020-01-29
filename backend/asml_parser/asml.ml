@@ -181,7 +181,7 @@ and closure_to_exp = function
   | Closure.Put (arr, index, value) -> St (arr, Var index, value)
   | e ->
       Printf.eprintf
-        "Conversion from Closure's %s to Asml.exp not yet implemented\n"
+        "Conversion from Closure's %s to Asml.exp is not implemented.\n"
         (Closure.to_string' e);
       exit 1
 

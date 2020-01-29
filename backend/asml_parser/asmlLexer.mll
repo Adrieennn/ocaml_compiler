@@ -83,7 +83,7 @@ rule token = parse
     { EOF }
 | _
     { failwith
-	(Printf.sprintf "you are stupid because unknown token %s near characters %d-%d"
+	(Printf.sprintf "Error during lexing of ASML: unknown token %s near characters %d-%d"
 	   (Lexing.lexeme lexbuf)
 	   (Lexing.lexeme_start lexbuf)
 	   (Lexing.lexeme_end lexbuf)) }
@@ -94,6 +94,6 @@ and comment = parse
     { comment lexbuf;
       comment lexbuf }
 | eof
-    { Format.eprintf "warning: unterminated comment@." }
+    { Format.eprintf "warning (ASML): unterminated comment@." }
 | _
     { comment lexbuf }
