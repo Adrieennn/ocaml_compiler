@@ -27,7 +27,7 @@ and exp =
   | Ld of Id.t * id_or_imm
       (** Load a value represented by imm/var into a var *)
   | St of Id.t * id_or_imm * Id.t  (** Store *)
-  | New of int  (** Used for closures and tuples *)
+  | New of id_or_imm  (** Used for closures and tuples *)
   | Neg of Id.t  (** Negative of an integer *)
   | FNeg of Id.t  (** Negative of a floating point *)
   | FAdd of Id.t * Id.t  (** Float addition *)
@@ -37,6 +37,7 @@ and exp =
   | IfEq of Id.t * id_or_imm * t * t  (** If [=] for integers *)
   | IfFEq of Id.t * Id.t * t * t  (** If [=.] for floats *)
   | IfLEq of Id.t * id_or_imm * t * t  (** If [<=] for integers *)
+  | IfGEq of Id.t * id_or_imm * t * t  (** If [>=] for integers *)
   | IfFLEq of Id.t * Id.t * t * t  (** If [<=.] for floats *)
   | CallCls of Id.t * Id.t list  (** Calling a closure *)
   | CallDir of Id.l * Id.t list  (** Calling a function *)

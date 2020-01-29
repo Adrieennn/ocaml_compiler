@@ -28,6 +28,10 @@ let rec exp_to_reg exp fn_name count =
       let count1 = ref_counter (count Peak) in
       let count2 = ref_counter (count Peak) in
       t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
+  | IfGEq (_, _, t1, t2) ->
+      let count1 = ref_counter (count Peak) in
+      let count2 = ref_counter (count Peak) in
+      t_to_reg fn_name t1 [] count1 @ t_to_reg fn_name t2 [] count2
   | IfEq (_, _, t1, t2) ->
       let count1 = ref_counter (count Peak) in
       let count2 = ref_counter (count Peak) in
@@ -76,13 +80,14 @@ let program_to_reg pg =
  * names and fp offsets; it modifies the variable name with its corresponding
  * fp offset from the list *)
 let modify_variable fn_name variable var_reg =
-  if variable = "()" then "()" else
-  match List.assoc_opt (fn_name ^ "." ^ variable) var_reg with
-  | Some a -> string_of_int a
-  | None ->
-      failwith
-        ( "Variable " ^ fn_name ^ "." ^ variable
-        ^ " does not exist in association list." )
+  if variable = "()" then "()"
+  else
+    match List.assoc_opt (fn_name ^ "." ^ variable) var_reg with
+    | Some a -> string_of_int a
+    | None ->
+        failwith
+          ( "Variable " ^ fn_name ^ "." ^ variable
+          ^ " does not exist in association list." )
 
 (* function that takes a list of variables and an association list between variable
  * names and fp offsets; it modifies all variables in the list with their
@@ -152,6 +157,15 @@ let rec modify_exp fn_name exp var_reg =
       | Var v ->
           IfLEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
       )
+  | IfGEq (s1, s2, t1, t2) -> (
+      let mod_s1 = modify_variable fn_name s1 var_reg in
+      let mod_t1 = modify_t fn_name t1 var_reg in
+      let mod_t2 = modify_t fn_name t2 var_reg in
+      match s2 with
+      | Int i -> IfGEq (mod_s1, s2, mod_t1, mod_t2)
+      | Var v ->
+          IfGEq (mod_s1, Var (modify_variable fn_name v var_reg), mod_t1, mod_t2)
+      )
   | IfFEq (s1, s2, t1, t2) ->
       let mod_s1 = modify_variable fn_name s1 var_reg in
       let mod_s2 = modify_variable fn_name s2 var_reg in
@@ -183,6 +197,10 @@ let rec modify_exp fn_name exp var_reg =
             ( modify_variable fn_name s1 var_reg,
               s2,
               modify_variable fn_name s3 var_reg ) )
+  | New s -> (
+      match s with
+      | Var v -> New (Var (modify_variable fn_name v var_reg))
+      | _ -> New s )
   | _ -> exp
 
 (* function that takes a function body and an association list between variable

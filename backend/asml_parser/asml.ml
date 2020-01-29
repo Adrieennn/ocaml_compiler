@@ -13,7 +13,7 @@ and exp =
   | Sub of Id.t * id_or_imm
   | Ld of Id.t * id_or_imm
   | St of Id.t * id_or_imm * Id.t
-  | New of int
+  | New of id_or_imm
   | Neg of Id.t
   | FNeg of Id.t
   | FAdd of Id.t * Id.t
@@ -23,6 +23,7 @@ and exp =
   | IfEq of Id.t * id_or_imm * t * t
   | IfFEq of Id.t * Id.t * t * t
   | IfLEq of Id.t * id_or_imm * t * t
+  | IfGEq of Id.t * id_or_imm * t * t
   | IfFLEq of Id.t * Id.t * t * t
   | CallCls of Id.t * Id.t list
   | CallDir of Id.l * Id.t list
@@ -69,7 +70,9 @@ let rec closure_to_t = function
                 load_elements (counter + 1) tl )
       in
       Let
-        ((tuple_id, Type.Int), New (num_elements * 4), load_elements 0 elements)
+        ( (tuple_id, Type.Int),
+          New (Int (num_elements * 4)),
+          load_elements 0 elements )
   | Closure.LetTuple (vars, def, body) ->
       let rec insert = function
         | Let (id_and_typ', def', body') -> Let (id_and_typ', def', insert body')
@@ -141,7 +144,7 @@ let rec closure_to_t = function
       Let
         ( (cls_id, cls_typ),
           (* Space for arguments plus (+ 1) the fun_label in the beginning *)
-          New ((num_vars + 1) * word_size),
+          New (Int ((num_vars + 1) * word_size)),
           add_let (Var fun_label) (fun fun_label_var ->
               add_let
                 (St (cls_id, Int 0, fun_label_var))
@@ -233,7 +236,7 @@ let rec to_string_e exp =
   | Unit -> "nop"
   | Int i -> string_of_int i
   | Neg e -> sprintf "(neg %s)" (Id.to_string e)
-  | New i -> sprintf "(new %d)" i
+  | New s -> sprintf "(new %s)" (to_string_id_or_imm s)
   | Add (e1, e2) ->
       sprintf "(add %s %s)" (Id.to_string e1) (to_string_id_or_imm e2)
   | Sub (e1, e2) ->
@@ -251,6 +254,9 @@ let rec to_string_e exp =
         (Id.to_string e2) (to_string_t e3) (to_string_t e4)
   | IfLEq (e1, e2, e3, e4) ->
       sprintf "(if %s <= %s then\n%s\n  else\n%s)" (Id.to_string e1)
+        (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
+  | IfGEq (e1, e2, e3, e4) ->
+      sprintf "(if %s >= %s then\n%s\n  else\n%s)" (Id.to_string e1)
         (to_string_id_or_imm e2) (to_string_t e3) (to_string_t e4)
   | IfFLEq (e1, e2, e3, e4) ->
       sprintf "(if %s <=. %s then\n%s\n  else\n%s)" (Id.to_string e1)
