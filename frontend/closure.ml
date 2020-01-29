@@ -230,7 +230,7 @@ let rec convert exp known_fun var_env =
 (*wrapper function for convert function above
   let con exp = convert exp [ ("print_int", "min_caml_print_int") ] [] *)
 
-(*Convert Closure.t to Closure.prog*)
+(*Convert Knorm.t to Closure.prog*)
 let rec prog_of_knorm exp =
   (* If compiling multiple files, clean up previous fundefs *)
   top_level := [];
