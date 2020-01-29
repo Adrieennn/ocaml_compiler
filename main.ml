@@ -77,12 +77,9 @@ let asml_prog_of_ml_file f =
 
 let asml_prog_to_arm prog output_file_name =
   ( if !disp_asml then
-      let asml_fundef = Asml.prog_to_fd prog in
-      Printf.printf "%s\n" (Asml.to_string_f asml_fundef) );
-  let var_reg = Register.program_to_reg prog in
-  let modified_prog = Register.modify_program prog var_reg in
+      Printf.printf "%s\n" (Asml.to_string_p prog) );
   let outchan = open_out output_file_name in
-  output_string outchan (Asm.prog_to_asm modified_prog);
+  output_string outchan (Asm.prog_to_asm prog);
   close_out outchan
 
 let () =

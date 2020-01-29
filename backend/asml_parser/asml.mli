@@ -37,6 +37,8 @@ val to_string_t : t -> string
 
 val to_string_f : fundef -> string
 
+val to_string_p : prog -> string
+
 val fd_to_prog : fundef -> prog -> prog
 
 val of_closure_prog : Closure.prog -> prog

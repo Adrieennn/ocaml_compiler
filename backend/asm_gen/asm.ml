@@ -210,7 +210,9 @@ let rec lfl_to_asm lfl =
 
 (* prog_to_asm: main function called, transform prog into assembly *)
 let prog_to_asm prog =
-  match prog with
+  let var_reg = Register.program_to_reg prog in
+  let modified_prog = Register.modify_program prog var_reg in
+  match modified_prog with
   | Program (lfl, lfu, body) ->
       lfl_to_asm lfl ^ lfu_to_asm lfu ^ tabs ^ ".global _start\n" ^ "_start:\n"
       ^ tabs ^ "mov fp, sp @ move sp to fp\n" ^ tabs ^ "bl min_caml_mmap\n"

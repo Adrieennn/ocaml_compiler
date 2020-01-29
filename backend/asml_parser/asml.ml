@@ -282,3 +282,8 @@ let rec prog_to_fd prog =
   match prog with
   | Program (lfl, lfu, body) ->
       prog_fu_to_fd (List.rev lfu) (List.rev lfl) (Main body)
+
+
+let to_string_p prog =
+  let fundef = prog_to_fd prog in
+  to_string_f fundef
