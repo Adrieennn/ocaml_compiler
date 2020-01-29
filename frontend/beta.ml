@@ -13,7 +13,7 @@ let replace_name mapping name =
 variable name using Id.genid when encountering a non-external variable.
 *)
 let new_name mapping name =
-  match find mapping name with None -> name | Some _ -> name ^ Id.genid ()
+  match find mapping name with None -> name | Some _ -> Id.genid () ^ name
 
 let rec convert exp mapping =
   match exp with

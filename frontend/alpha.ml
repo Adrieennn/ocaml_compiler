@@ -47,8 +47,8 @@ let rec convert exp mapping =
         match find mapping id with
         | None -> id
         | Some _ ->
-            let suffix = Id.genid () in
-            id ^ suffix
+            let prefix = Id.genid () in
+            prefix ^ id
       in
       Knorm.Let
         ( (new_id, typ),
