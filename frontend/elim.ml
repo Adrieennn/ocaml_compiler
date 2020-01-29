@@ -40,7 +40,7 @@ let rec not_occurs (id : Id.t) (exp : Knorm.t) =
   match exp with
   | Knorm.Unit | Knorm.Int _ | Knorm.Float _ -> true
   | Knorm.Put (e1, e2, e3) -> id <> e1 && id <> e2 && id <> e3
-  | Knorm.Var i -> i = id
+  | Knorm.Var i -> i <> id
   | Knorm.Add (v1, v2)
   | Knorm.Sub (v1, v2)
   | Knorm.FAdd (v1, v2)
