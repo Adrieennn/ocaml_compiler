@@ -9,7 +9,7 @@ all:
 
 doc: all
 	mkdir -p _build/doc
-	ocamldoc -html -colorize-code  _build/main.ml _build/utils/*.ml \
+	ocamldoc -html -colorize-code _build/utils/*.ml \
 		_build/backend/*/*.mli _build/frontend/*.mli -I _build/utils \
 		-I _build/backend/asml_parser -I _build/backend/register \
 		-I _build/backend/asm_gen	-I _build/frontend -d _build/doc
