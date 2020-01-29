@@ -1,8 +1,5 @@
 let find mapping var = List.assoc_opt var mapping
 
-let mem mapping var =
-  match find mapping var with None -> false | Some _ -> true
-
 let add x_id y_id mapping = (x_id, y_id) :: mapping
 
 (* let threshold = 9 *)
@@ -23,10 +20,20 @@ let rec size exp =
   | Knorm.IfEq ((v1, v2), e1, e2) -> size e1 + size e2 + 1
   | Knorm.IfLe ((v1, v2), e1, e2) -> size e1 + size e2 + 1
 
+
+
+(**
+  expansion is the main function responsable for inline expansion, it takes
+  a expression, a list that maps a function name with it's list of arguments 
+  and function body, and a interger for the max size of function to be 
+  expanded in inline expansion. [(Id.t * ((Id.t * Type.t) list * Knorm.t))] 
+  correspondes to the sturcture of Knorm.fundef.
+*)
 let rec expansion exp map threshold =
   match exp with
-  (*We used the same strategy as presented in the paper, alpha covert again 
-  the expanded body to make sure all variable names are still unique*)
+  (*We used the same strategy as presented in the paper, using Alpha.convert 
+  to replace all variable names of an argument in the function body by the 
+  variable names of the parematers of the function application.*)
   | Knorm.App (f, ys) -> (
       match find map f with
       | None -> Knorm.App (f, ys)
