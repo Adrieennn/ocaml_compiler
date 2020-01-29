@@ -76,7 +76,6 @@ let asml_prog_of_ml_file f =
   in
   let ast_constant_folding = Constant.folding ast_reduced_nested_lets [] in
   let ast_elimination = Elim.elimination ast_constant_folding in
-  (*Printf.eprintf "%s\n" (Knorm.to_string ast_elimination) ;*)
   let ast_closure_conversion = Closure.prog_of_knorm ast_elimination in
   Asml.of_closure_prog ast_closure_conversion
 
