@@ -57,6 +57,39 @@ let rec closure_to_t = function
 
           let label_var = Id.genid () in
           Let ((label_var, Type.Int), Var label, Ans (Ld (label_var, Int 0))) )
+  | Closure.Tuple elements ->
+      let num_elements = List.length elements in
+      let tuple_id = Id.genid () in
+      let rec load_elements counter = function
+        | [] -> Ans (Var tuple_id)
+        | hd :: tl ->
+            Let
+              ( (Id.genid (), Type.Var (ref None)),
+                St (tuple_id, Int counter, hd),
+                load_elements (counter + 1) tl )
+      in
+      Let
+        ((tuple_id, Type.Int), New (num_elements * 4), load_elements 0 elements)
+  | Closure.LetTuple (vars, def, body) ->
+      let rec insert = function
+        | Let (id_and_typ', def', body') -> Let (id_and_typ', def', insert body')
+        | Ans exp -> (
+            match exp with
+            | Var tuple_id ->
+                let rec add_lets counter = function
+                  | [] -> closure_to_t body
+                  | hd :: tl ->
+                      Let
+                        ( hd,
+                          Ld (tuple_id, Int counter),
+                          add_lets (counter + 1) tl )
+                in
+                add_lets 0 vars
+            | _ ->
+                failwith
+                  "LetTuple definition body did not evaluate to a variable" )
+      in
+      insert (closure_to_t def)
   | Closure.Let ((id, typ), Closure.Float f, body) -> (
       match List.find_opt (fun (l, f') -> f = f') !float_map with
       | Some (l, _f) ->
@@ -282,7 +315,6 @@ let rec prog_to_fd prog =
   match prog with
   | Program (lfl, lfu, body) ->
       prog_fu_to_fd (List.rev lfu) (List.rev lfl) (Main body)
-
 
 let to_string_p prog =
   let fundef = prog_to_fd prog in
