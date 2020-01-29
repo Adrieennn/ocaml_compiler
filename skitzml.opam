@@ -1,0 +1,17 @@
+opam-version: "2.0"
+name: "skitzml"
+version: "1.0"
+synopsis: "The mincaml compiler team skitzML developed for uni"
+description: """
+TODO
+"""
+maintainer: "skitzML <skitz@obviousfakemail.com>"
+license: ""
+dev-repo: ""
+depends: [ "ocaml" "ocamlbuild" ]
+build: [
+  [make]
+]
+remove: [
+  [make "clean"]
+]
