@@ -31,11 +31,13 @@ type fundef = Fu of fu * fundef | Fl of Id.t * float * fundef | Main of t
 
 type prog = Program of (Id.t * float) list * fu list * t
 
-val to_string : exp -> string
+val to_string_e : exp -> string
 
 val to_string_t : t -> string
 
 val to_string_f : fundef -> string
+
+val to_string_p : prog -> string
 
 val fd_to_prog : fundef -> prog -> prog
 
