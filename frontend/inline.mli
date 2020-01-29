@@ -1,3 +1,9 @@
+(**
+This module is for inline expansion which replaces function application with 
+function body (if shorter than the user configurable threshold(default to 9)).
+*)
+
+
 val expansion :
   Knorm.t -> (Id.t * ((Id.t * Type.t) list * Knorm.t)) list -> int -> Knorm.t
 

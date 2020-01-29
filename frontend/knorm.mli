@@ -1,3 +1,8 @@
+(**
+  This module is for [k-normalisation] which turns the result of 
+  expressions computations into variables and make the code more 
+  assembly like.
+*)
 type t =
   | Unit
   | Int of int

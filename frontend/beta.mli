@@ -1,3 +1,7 @@
+(**
+This moudle is for beta reduction which can reduce unecessary redrclarations.
+*)
+
 val convert : Knorm.t -> (Id.t * Id.t) list -> Knorm.t
 (**
 convert is the main conversion function. It takes 2 parameters: the 

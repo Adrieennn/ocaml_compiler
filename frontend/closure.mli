@@ -1,3 +1,8 @@
+(**
+This module is for closure conversion which transforms a [Knorm.t] program to 
+a [Closure.prog] that resembles asml code more. 
+*)
+
 type t =
   | Unit
   | Int of int
@@ -31,5 +36,8 @@ type fundef = {
 type prog = Prog of fundef list * t
 
 val prog_of_knorm : Knorm.t -> prog
+(**
+This function take a Knorm.t expression and transform it to a Closure.prog.  
+*)
 
 val to_string' : t -> string
