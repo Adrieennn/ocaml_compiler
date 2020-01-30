@@ -15,7 +15,8 @@ doc: all
 		-I _build/backend/asm_gen	-I _build/frontend -d _build/doc
 	echo -e "\e[42m\033[1mDocumentation ready at: _build/doc/index.html\033[0m"
 
-test: clean all test_typechecking test_asml_gen test_asm_gen test_asm_output
+test: clean all test_typechecking test_asml_gen test_asm_gen test_asm_output \
+	test_from_asml
 
 test_typechecking: all
 	PROG=$(PROG) ./tests/typechecking/suite.sh
@@ -28,6 +29,9 @@ test_asm_gen: all
 
 test_asm_output: all
 	PROG=$(PROG) ./tests/suite_asm_output.sh
+
+test_from_asml: all
+	PROG=$(PROG) ./tests/suite_from_asml.sh
 
 clean:
 	rm -rf _build $(PROG) *.s *.asml ARM/*.ml* *.output

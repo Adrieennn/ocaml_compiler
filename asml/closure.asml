@@ -1,5 +1,5 @@
 let _add_x y =
-    let x = mem(%self + 4) in
+    let x = mem(%self + 1) in
     add y x
 
 let _apply_to_zero u =
@@ -11,6 +11,6 @@ let _ =
     let add_x = new 8 in
     let addr_add_x = _add_x in
     let tu0 = mem(add_x + 0) <- addr_add_x in
-    let tu1 = mem(add_x + 4) <- x0 in
+    let tu1 = mem(add_x + 1) <- x0 in
     let res = call _apply_to_zero add_x in
     call _min_caml_print_int res 
