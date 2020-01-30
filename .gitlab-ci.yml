@@ -28,3 +28,8 @@ asm_output:
   stage: tests
   script:
     - make test_asm_output
+
+from_asml:
+  stage: tests
+  script:
+    - make test_from_asml
