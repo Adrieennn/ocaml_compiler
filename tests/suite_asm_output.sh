@@ -55,4 +55,18 @@ for f in tests/mincaml/closures/*.ml; do
     cd ..
 done
 
+echo -e "\n\e[4m\033[1m--> Complex arithmetics\033[0m"
+
+for f in tests/mincaml/complex_arithm/*.ml; do
+    base=$(basename "$f")
+    printf "$base:\n"
+    printf "tools/asml: "
+    ./$PROG $f -asml > tmp.asml && ./tools/asml tmp.asml
+    printf "\nmincamlc: "
+    ./$PROG $f -o ARM/$base.s
+    cd ARM && make && qemu-arm $base.arm  && \
+      printf "\n\e[1;32mOK -> check output \e[0m\n" || exit 1
+    cd ..
+done
+
 exit 0
