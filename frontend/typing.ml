@@ -256,6 +256,8 @@ let rec unify equations =
             (Type.to_string t1) (Type.to_string t2);
           exit 1 )
 
+let default_to_int = ref false
+
 (* Instantiate (replace) type variables by their content *)
 (* Currently fails if a type variable in the AST has not been resolved *)
 let rec substitue_type_exn typ =
@@ -276,7 +278,10 @@ let rec substitue_type_exn typ =
       | None ->
           (* The paper suggests, arbitrarily, instantiating these variables to
            * Type.Int *)
-          failwith "Type variable is still undefined"
+          if !default_to_int then
+            Type.Int
+          else
+            failwith "Type variable is still undefined"
       | Some t -> substitue_type_exn t )
 
 (* Substitute type variables by their content and return the resulting AST *)

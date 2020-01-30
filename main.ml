@@ -36,6 +36,10 @@ let speclist =
       Arg.Set_int threshold,
       "Set the maximum size for functions to be expanded when inline expanding"
     );
+    ( "-int-as-default-type",
+      Arg.Set Typing.default_to_int,
+      "If given, any uninferred/uninstantiated types will be defaulted to type \
+       Type.Int." );
   ]
 
 let read_ast_from_file f =

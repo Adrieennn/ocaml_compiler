@@ -18,15 +18,16 @@ PATH.
 
   `./mincamlc  filenames`
 
-  -o                  Outputs to file <file>
-  -h                  Display help
-  -v                  Display compiler's version
-  -t                  Only do typechecking
-  -asml               Print asml
-  -from-asml          Compile from ASML input file
-  -inline-threshold   Configure inline expansion threshold
-  -help               Display this list of options
-  --help              Display this list of options
+  -o                     Outputs to file <file>
+  -h                     Display help
+  -v                     Display compiler's version
+  -t                     Only do typechecking
+  -asml                  Print asml
+  -from-asml             Compile from ASML input file
+  -inline-threshold      Configure inline expansion threshold
+  -int-as-default-type   Use Int as fallback type
+  -help                  Display this list of options
+  --help                 Display this list of options
 
 ## Testing
 
